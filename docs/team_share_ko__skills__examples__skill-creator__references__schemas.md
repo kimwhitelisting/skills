@@ -2,39 +2,6 @@
 
 이 문서는 Skill-creator에서 사용하는 JSON 스키마를 정의합니다.
 
----
-
-## evals.json
-
-기술에 대한 평가를 정의합니다. 스킬 디렉터리 내 `evals/evals.json`에 있습니다.
-
-```json
-{
-  "skill_name": "example-skill",
-  "evals": [
-    {
-      "id": 1,
-      "prompt": "User's example prompt",
-      "expected_output": "Description of expected result",
-      "files": ["evals/files/sample1.pdf"],
-      "expectations": [
-        "The output includes X",
-        "The skill used script Y"
-      ]
-    }
-  ]
-}
-```
-
-**전지:**
-- `skill_name` : 스킬의 머리말과 일치하는 이름
-- `evals[].id`: 고유한 정수 식별자
-- `evals[].prompt` : 실행할 작업
-- `evals[].expected_output`: 사람이 읽을 수 있는 성공 설명
-- `evals[].files`: 입력 파일 경로의 선택적 목록(스킬 루트 기준)
-- `evals[].expectations` : 검증가능한 진술 목록
-
----
 
 ## 역사.json
 
@@ -198,7 +165,8 @@
 
 달리기를 위한 벽시계 타이밍. `<run-dir>/timing.json`에 위치합니다.
 
-**캡처 방법:** 하위 에이전트 작업이 완료되면 작업 알림에 `total_tokens` 및 `duration_ms`이 포함됩니다. 이를 즉시 저장하십시오. 다른 곳에서는 지속되지 않으며 사후에는 복구할 수 없습니다.
+**캡처 방법:** 하위 에이전트 작업이 완료되면 작업 알림에 `total_tokens` 및 `duration_ms`이 포함됩니다. 이를 즉시 저장하십시오. 다른 곳에서는
+지속되지 않으며 사후에는 복구할 수 없습니다.
 
 ```json
 {
@@ -294,15 +262,18 @@
 - `runs[]` : 개별 실행 결과
 - `eval_id`: 숫자 평가 식별자
 - `eval_name`: 사람이 읽을 수 있는 평가 이름(뷰어에서 섹션 헤더로 사용됨)
-- `configuration`: `"with_skill"` 또는 `"without_skill"`이어야 합니다(시청자는 그룹화 및 색상 코딩을 위해 이 정확한 문자열을 사용합니다).
+- `configuration`: `"with_skill"` 또는 `"without_skill"`이어야 합니다(시청자는 그룹화 및 색상 코딩을 위해 이 정확한 문자열을
+  사용합니다).
 - `run_number`: 정수 실행 번호(1, 2, 3...)
 - `result`: `pass_rate`, `passed`, `total`, `time_seconds`, `tokens`, `errors`이 포함된 중첩 개체
 - `run_summary`: 구성별 통계 집계
-- `with_skill` / `without_skill`: 각각 `mean` 및 `stddev` 필드가 있는 `pass_rate`, `time_seconds`, `tokens` 개체를 포함합니다.
+- `with_skill` / `without_skill`: 각각 `mean` 및 `stddev` 필드가 있는 `pass_rate`, `time_seconds`,
+  `tokens` 개체를 포함합니다.
 - `delta`: `"+0.50"`, `"+13.0"`, `"+1700"`과 같은 차이점 문자열
 - `notes`: 분석기의 자유형 관찰
 
-**중요:** 뷰어는 이러한 필드 이름을 정확하게 읽습니다. `configuration` 대신 `config`을 사용하거나 `result` 아래에 중첩되는 대신 실행의 최상위 수준에 `pass_rate`을 배치하면 뷰어에 빈/0 값이 표시됩니다. benchmark.json을 수동으로 생성할 때는 항상 이 스키마를 참조하세요.
+**중요:** 뷰어는 이러한 필드 이름을 정확하게 읽습니다. `configuration` 대신 `config`을 사용하거나 `result` 아래에 중첩되는 대신 실행의 최상위
+수준에 `pass_rate`을 배치하면 뷰어에 빈/0 값이 표시됩니다. benchmark.json을 수동으로 생성할 때는 항상 이 스키마를 참조하세요.
 
 ---
 

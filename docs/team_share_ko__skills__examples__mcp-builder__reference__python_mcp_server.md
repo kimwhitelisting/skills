@@ -2,35 +2,9 @@
 
 ## 개요
 
-이 문서에서는 MCP Python SDK를 사용하여 MCP 서버를 구현하기 위한 Python 관련 모범 사례와 예제를 제공합니다. 서버 설정, 도구 등록 패턴, Pydantic을 통한 입력 검증, 오류 처리 및 전체 작업 예제를 다룹니다.
+이 문서에서는 MCP Python SDK를 사용하여 MCP 서버를 구현하기 위한 Python 관련 모범 사례와 예제를 제공합니다. 서버 설정, 도구 등록 패턴,
+Pydantic을 통한 입력 검증, 오류 처리 및 전체 작업 예제를 다룹니다.
 
----
-
-## 빠른 참조
-
-### 주요 수입품
-```python
-from mcp.server.fastmcp import FastMCP
-from pydantic import BaseModel, Field, field_validator, ConfigDict
-from typing import Optional, List, Dict, Any
-from enum import Enum
-import httpx
-```
-
-### 서버 초기화
-```python
-mcp = FastMCP("service_mcp")
-```
-
-### 도구 등록 패턴
-```python
-@mcp.tool(name="tool_name", annotations={...})
-async def tool_function(params: InputModel) -> str:
-    # Implementation
-    pass
-```
-
----
 
 ## MCP Python SDK 및 FastMCP
 
@@ -58,7 +32,8 @@ Python MCP 서버는 다음 이름 지정 패턴을 따라야 합니다.
 
 ### 도구 이름 지정
 
-명확하고 작업 지향적인 이름으로 도구 이름(예: "search_users", "create_project", "get_channel_info")에 snake_case를 사용합니다.
+명확하고 작업 지향적인 이름으로 도구 이름(예: "search_users", "create_project", "get_channel_info")에 snake_case를
+사용합니다.
 
 **명칭 충돌 방지**: 중복을 방지하기 위해 서비스 컨텍스트를 포함합니다.
 - "send_message" 대신 "slack_send_message"를 사용하세요.
@@ -73,10 +48,10 @@ Python MCP 서버는 다음 이름 지정 패턴을 따라야 합니다.
 from pydantic import BaseModel, Field, ConfigDict
 from mcp.server.fastmcp import FastMCP
 
-# Initialize the MCP server
+## Initialize the MCP server
 mcp = FastMCP("example_mcp")
 
-# Define Pydantic model for input validation
+## Define Pydantic model for input validation
 class ServiceToolInput(BaseModel):
     '''Input model for service tool operation.'''
     model_config = ConfigDict(
@@ -229,7 +204,7 @@ def _handle_api_error(e: Exception) -> str:
 공통 기능을 재사용 가능한 기능으로 추출합니다.
 
 ```python
-# Shared API request function
+## Shared API request function
 async def _make_api_request(endpoint: str, method: str = "GET", **kwargs) -> dict:
     '''Reusable function for all API calls.'''
     async with httpx.AsyncClient() as client:
@@ -248,14 +223,14 @@ async def _make_api_request(endpoint: str, method: str = "GET", **kwargs) -> dic
 네트워크 요청 및 I/O 작업에는 항상 async/await를 사용하세요.
 
 ```python
-# Good: Async network request
+## Good: Async network request
 async def fetch_data(resource_id: str) -> dict:
     async with httpx.AsyncClient() as client:
         response = await client.get(f"{API_URL}/resource/{resource_id}")
         response.raise_for_status()
         return response.json()
 
-# Bad: Synchronous request
+## Bad: Synchronous request
 def fetch_data(resource_id: str) -> dict:
     response = requests.get(f"{API_URL}/resource/{resource_id}")  # Blocks
     return response.json()
@@ -346,19 +321,19 @@ import httpx
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 from mcp.server.fastmcp import FastMCP
 
-# Initialize the MCP server
+## Initialize the MCP server
 mcp = FastMCP("example_mcp")
 
-# Constants
+## Constants
 API_BASE_URL = "https://api.example.com/v1"
 
-# Enums
+## Enums
 class ResponseFormat(str, Enum):
     '''Output format for tool responses.'''
     MARKDOWN = "markdown"
     JSON = "json"
 
-# Pydantic Models for Input Validation
+## Pydantic Models for Input Validation
 class UserSearchInput(BaseModel):
     '''Input model for user search operations.'''
     model_config = ConfigDict(
@@ -378,7 +353,7 @@ class UserSearchInput(BaseModel):
             raise ValueError("Query cannot be empty or whitespace only")
         return v.strip()
 
-# Shared utility functions
+## Shared utility functions
 async def _make_api_request(endpoint: str, method: str = "GET", **kwargs) -> dict:
     '''Reusable function for all API calls.'''
     async with httpx.AsyncClient() as client:
@@ -405,7 +380,7 @@ def _handle_api_error(e: Exception) -> str:
         return "Error: Request timed out. Please try again."
     return f"Error: Unexpected error occurred: {type(e).__name__}"
 
-# Tool definitions
+## Tool definitions
 @mcp.tool(
     name="example_search_users",
     annotations={
@@ -560,7 +535,7 @@ from typing import TypedDict
 from dataclasses import dataclass
 from pydantic import BaseModel
 
-# TypedDict for structured returns
+## TypedDict for structured returns
 class UserData(TypedDict):
     id: str
     name: str
@@ -571,7 +546,7 @@ async def get_user_typed(user_id: str) -> UserData:
     '''Returns structured data - FastMCP handles serialization.'''
     return {"id": user_id, "name": "John Doe", "email": "john@example.com"}
 
-# Pydantic models for complex validation
+## Pydantic models for complex validation
 class DetailedUser(BaseModel):
     id: str
     name: str
@@ -621,11 +596,11 @@ async def query_data(query: str, ctx: Context) -> str:
 FastMCP는 두 가지 주요 전송 메커니즘을 지원합니다.
 
 ```python
-# stdio transport (for local tools) - default
+## stdio transport (for local tools) - default
 if __name__ == "__main__":
     mcp.run()
 
-# Streamable HTTP transport (for remote servers)
+## Streamable HTTP transport (for remote servers)
 if __name__ == "__main__":
     mcp.run(transport="streamable_http", port=8000)
 ```

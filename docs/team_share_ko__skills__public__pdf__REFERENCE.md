@@ -5,28 +5,29 @@
 ## pypdfium2 라이브러리(Apache/BSD 라이센스)
 
 ### 개요
-pypdfium2는 PDFium(Chromium의 PDF 라이브러리)에 대한 Python 바인딩입니다. 빠른 PDF 렌더링, 이미지 생성에 탁월하며 PyMuPDF를 대체하는 역할을 합니다.
+pypdfium2는 PDFium(Chromium의 PDF 라이브러리)에 대한 Python 바인딩입니다. 빠른 PDF 렌더링, 이미지 생성에 탁월하며 PyMuPDF를 대체하는
+역할을 합니다.
 
 ### PDF를 이미지로 렌더링
 ```python
 import pypdfium2 as pdfium
 from PIL import Image
 
-# Load PDF
+## Load PDF
 pdf = pdfium.PdfDocument("document.pdf")
 
-# Render page to image
+## Render page to image
 page = pdf[0]  # First page
 bitmap = page.render(
     scale=2.0,  # Higher resolution
     rotation=0  # No rotation
 )
 
-# Convert to PIL Image
+## Convert to PIL Image
 img = bitmap.to_pil()
 img.save("page_1.png", "PNG")
 
-# Process multiple pages
+## Process multiple pages
 for i, page in enumerate(pdf):
     bitmap = page.render(scale=1.5)
     img = bitmap.to_pil()
@@ -268,33 +269,33 @@ async function extractAnnotations() {
 
 #### 경계 상자 좌표를 사용하여 텍스트 추출
 ```bash
-# Extract text with bounding box coordinates (essential for structured data)
+## Extract text with bounding box coordinates (essential for structured data)
 pdftotext -bbox-layout document.pdf output.xml
 
-# The XML output contains precise coordinates for each text element
+## The XML output contains precise coordinates for each text element
 ```
 
 #### 고급 이미지 변환
 ```bash
-# Convert to PNG images with specific resolution
+## Convert to PNG images with specific resolution
 pdftoppm -png -r 300 document.pdf output_prefix
 
-# Convert specific page range with high resolution
+## Convert specific page range with high resolution
 pdftoppm -png -r 600 -f 1 -l 3 document.pdf high_res_pages
 
-# Convert to JPEG with quality setting
+## Convert to JPEG with quality setting
 pdftoppm -jpeg -jpegopt quality=85 -r 200 document.pdf jpeg_output
 ```
 
 #### 삽입된 이미지 추출
 ```bash
-# Extract all embedded images with metadata
+## Extract all embedded images with metadata
 pdfimages -j -p document.pdf page_images
 
-# List image info without extracting
+## List image info without extracting
 pdfimages -list document.pdf
 
-# Extract images in their original format
+## Extract images in their original format
 pdfimages -all document.pdf images/img
 ```
 
@@ -302,41 +303,41 @@ pdfimages -all document.pdf images/img
 
 #### 복잡한 페이지 조작
 ```bash
-# Split PDF into groups of pages
+## Split PDF into groups of pages
 qpdf --split-pages=3 input.pdf output_group_%02d.pdf
 
-# Extract specific pages with complex ranges
+## Extract specific pages with complex ranges
 qpdf input.pdf --pages input.pdf 1,3-5,8,10-end -- extracted.pdf
 
-# Merge specific pages from multiple PDFs
+## Merge specific pages from multiple PDFs
 qpdf --empty --pages doc1.pdf 1-3 doc2.pdf 5-7 doc3.pdf 2,4 -- combined.pdf
 ```
 
 #### PDF 최적화 및 복구
 ```bash
-# Optimize PDF for web (linearize for streaming)
+## Optimize PDF for web (linearize for streaming)
 qpdf --linearize input.pdf optimized.pdf
 
-# Remove unused objects and compress
+## Remove unused objects and compress
 qpdf --optimize-level=all input.pdf compressed.pdf
 
-# Attempt to repair corrupted PDF structure
+## Attempt to repair corrupted PDF structure
 qpdf --check input.pdf
 qpdf --fix-qdf damaged.pdf repaired.pdf
 
-# Show detailed PDF structure for debugging
+## Show detailed PDF structure for debugging
 qpdf --show-all-pages input.pdf > structure.txt
 ```
 
 #### 고급 암호화
 ```bash
-# Add password protection with specific permissions
+## Add password protection with specific permissions
 qpdf --encrypt user_pass owner_pass 256 --print=none --modify=none -- input.pdf encrypted.pdf
 
-# Check encryption status
+## Check encryption status
 qpdf --show-encryption encrypted.pdf
 
-# Remove password protection (requires password)
+## Remove password protection (requires password)
 qpdf --password=secret123 --decrypt encrypted.pdf decrypted.pdf
 ```
 
@@ -350,12 +351,12 @@ import pdfplumber
 
 with pdfplumber.open("document.pdf") as pdf:
     page = pdf.pages[0]
-    
+
     # Extract all text with coordinates
     chars = page.chars
     for char in chars[:10]:  # First 10 characters
         print(f"Char: '{char['text']}' at x:{char['x0']:.1f} y:{char['y0']:.1f}")
-    
+
     # Extract text by bounding box (left, top, right, bottom)
     bbox_text = page.within_bbox((100, 100, 400, 200)).extract_text()
 ```
@@ -367,7 +368,7 @@ import pandas as pd
 
 with pdfplumber.open("complex_table.pdf") as pdf:
     page = pdf.pages[0]
-    
+
     # Extract tables with custom settings for complex layouts
     table_settings = {
         "vertical_strategy": "lines",
@@ -376,7 +377,7 @@ with pdfplumber.open("complex_table.pdf") as pdf:
         "intersection_tolerance": 15
     }
     tables = page.extract_tables(table_settings)
-    
+
     # Visual debugging for table extraction
     img = page.to_image(resolution=150)
     img.save("debug_layout.png")
@@ -390,23 +391,23 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
 
-# Sample data
+## Sample data
 data = [
     ['Product', 'Q1', 'Q2', 'Q3', 'Q4'],
     ['Widgets', '120', '135', '142', '158'],
     ['Gadgets', '85', '92', '98', '105']
 ]
 
-# Create PDF with table
+## Create PDF with table
 doc = SimpleDocTemplate("report.pdf")
 elements = []
 
-# Add title
+## Add title
 styles = getSampleStyleSheet()
 title = Paragraph("Quarterly Sales Report", styles['Title'])
 elements.append(title)
 
-# Add table with advanced styling
+## Add table with advanced styling
 table = Table(data)
 table.setStyle(TableStyle([
     ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
@@ -429,7 +430,7 @@ doc.build(elements)
 
 #### 방법 1: pdfimage 사용(가장 빠름)
 ```bash
-# Extract all images with original quality
+## Extract all images with original quality
 pdfimages -all document.pdf images/img
 ```
 
@@ -441,21 +442,21 @@ import numpy as np
 
 def extract_figures(pdf_path, output_dir):
     pdf = pdfium.PdfDocument(pdf_path)
-    
+
     for page_num, page in enumerate(pdf):
         # Render high-resolution page
         bitmap = page.render(scale=3.0)
         img = bitmap.to_pil()
-        
+
         # Convert to numpy for processing
         img_array = np.array(img)
-        
+
         # Simple figure detection (non-white regions)
         mask = np.any(img_array != [255, 255, 255], axis=2)
-        
+
         # Find contours and extract bounding boxes
         # (This is simplified - real implementation would need more sophisticated detection)
-        
+
         # Save detected figures
         # ... implementation depends on specific needs
 ```
@@ -472,7 +473,7 @@ logger = logging.getLogger(__name__)
 
 def batch_process_pdfs(input_dir, operation='merge'):
     pdf_files = glob.glob(os.path.join(input_dir, "*.pdf"))
-    
+
     if operation == 'merge':
         writer = PdfWriter()
         for pdf_file in pdf_files:
@@ -484,10 +485,10 @@ def batch_process_pdfs(input_dir, operation='merge'):
             except Exception as e:
                 logger.error(f"Failed to process {pdf_file}: {e}")
                 continue
-        
+
         with open("batch_merged.pdf", "wb") as output:
             writer.write(output)
-    
+
     elif operation == 'extract_text':
         for pdf_file in pdf_files:
             try:
@@ -495,12 +496,12 @@ def batch_process_pdfs(input_dir, operation='merge'):
                 text = ""
                 for page in reader.pages:
                     text += page.extract_text()
-                
+
                 output_file = pdf_file.replace('.pdf', '.txt')
                 with open(output_file, 'w', encoding='utf-8') as f:
                     f.write(text)
                 logger.info(f"Extracted text from: {pdf_file}")
-                
+
             except Exception as e:
                 logger.error(f"Failed to extract text from {pdf_file}: {e}")
                 continue
@@ -513,7 +514,7 @@ from pypdf import PdfWriter, PdfReader
 reader = PdfReader("input.pdf")
 writer = PdfWriter()
 
-# Crop page (left, bottom, right, top in points)
+## Crop page (left, bottom, right, top in points)
 page = reader.pages[0]
 page.mediabox.left = 50
 page.mediabox.bottom = 50
@@ -547,18 +548,18 @@ with open("cropped.pdf", "wb") as output:
 
 ### 5. 메모리 관리
 ```python
-# Process PDFs in chunks
+## Process PDFs in chunks
 def process_large_pdf(pdf_path, chunk_size=10):
     reader = PdfReader(pdf_path)
     total_pages = len(reader.pages)
-    
+
     for start_idx in range(0, total_pages, chunk_size):
         end_idx = min(start_idx + chunk_size, total_pages)
         writer = PdfWriter()
-        
+
         for i in range(start_idx, end_idx):
             writer.add_page(reader.pages[i])
-        
+
         # Process chunk
         with open(f"chunk_{start_idx//chunk_size}.pdf", "wb") as output:
             writer.write(output)
@@ -568,7 +569,7 @@ def process_large_pdf(pdf_path, chunk_size=10):
 
 ### 암호화된 PDF
 ```python
-# Handle password-protected PDFs
+## Handle password-protected PDFs
 from pypdf import PdfReader
 
 try:
@@ -581,14 +582,14 @@ except Exception as e:
 
 ### 손상된 PDF
 ```bash
-# Use qpdf to repair
+## Use qpdf to repair
 qpdf --check corrupted.pdf
 qpdf --replace-input corrupted.pdf
 ```
 
 ### 텍스트 추출 문제
 ```python
-# Fallback to OCR for scanned PDFs
+## Fallback to OCR for scanned PDFs
 import pytesseract
 from pdf2image import convert_from_path
 

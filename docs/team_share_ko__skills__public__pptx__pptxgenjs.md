@@ -58,7 +58,8 @@ slide.addText("Title", {
 });
 ```
 
-**도움말:** 텍스트 상자에는 기본적으로 내부 여백이 있습니다. 동일한 x 위치에 있는 도형, 선 또는 아이콘과 정확하게 정렬하기 위해 텍스트가 필요한 경우 `margin: 0`을 설정하세요.
+**도움말:** 텍스트 상자에는 기본적으로 내부 여백이 있습니다. 동일한 x 위치에 있는 도형, 선 또는 아이콘과 정확하게 정렬하기 위해 텍스트가 필요한 경우 `margin:
+0`을 설정하세요.
 
 ---
 
@@ -231,7 +232,8 @@ slide.addImage({
 });
 ```
 
-**참고**: 선명한 아이콘을 위해서는 크기 256 이상을 사용하세요. 크기 매개 변수는 슬라이드의 표시 크기(`w` 및 `h`(인치 단위로 설정))가 아닌 래스터화 해상도를 제어합니다.
+**참고**: 선명한 아이콘을 위해서는 크기 256 이상을 사용하세요. 크기 매개 변수는 슬라이드의 표시 크기(`w` 및 `h`(인치 단위로 설정))가 아닌 래스터화 해상도를
+제어합니다.
 
 ### 아이콘 라이브러리
 
@@ -373,7 +375,8 @@ titleSlide.addText("My Title", { placeholder: "title" });
    color: "#FF0000"     // ❌ WRONG
    ```
 
-2. **16진수 색상 문자열로 불투명도를 인코딩하지 마세요** - 8자 색상(예: `"00000020"`)으로 인해 파일이 손상됩니다. 대신 `opacity` 속성을 사용하세요.
+2. **16진수 색상 문자열로 불투명도를 인코딩하지 마세요** - 8자 색상(예: `"00000020"`)으로 인해 파일이 손상됩니다. 대신 `opacity` 속성을
+   사용하세요.
    ```javascript
    shadow: { type: "outer", blur: 6, offset: 2, color: "00000020" }          // ❌ CORRUPTS FILE
    shadow: { type: "outer", blur: 6, offset: 2, color: "000000", opacity: 0.12 }  // ✅ CORRECT
@@ -387,7 +390,8 @@ titleSlide.addText("My Title", { placeholder: "title" });
 
 6. **각 프리젠테이션에는 새로운 인스턴스가 필요합니다** - `pptxgen()` 개체를 재사용하지 마세요.
 
-7. **호출 전체에서 옵션 객체를 재사용하지 마세요** - PptxGenJS는 객체를 내부에서 변경합니다(예: 그림자 값을 EMU로 변환). 여러 호출 간에 하나의 개체를 공유하면 두 번째 모양이 손상됩니다.
+7. **호출 전체에서 옵션 객체를 재사용하지 마세요** - PptxGenJS는 객체를 내부에서 변경합니다(예: 그림자 값을 EMU로 변환). 여러 호출 간에 하나의
+   개체를 공유하면 두 번째 모양이 손상됩니다.
    ```javascript
    const shadow = { type: "outer", blur: 6, offset: 2, color: "000000", opacity: 0.15 };
    slide.addShape(pres.shapes.RECTANGLE, { shadow, ... });  // ❌ second call gets already-converted values
@@ -398,7 +402,8 @@ titleSlide.addText("My Title", { placeholder: "title" });
    slide.addShape(pres.shapes.RECTANGLE, { shadow: makeShadow(), ... });
    ```
 
-8. **악센트 테두리가 있는 `ROUNDED_RECTANGLE`을 사용하지 마세요** - 직사각형 오버레이 막대는 둥근 모서리를 덮지 않습니다. 대신 `RECTANGLE`을 사용하세요.
+8. **악센트 테두리가 있는 `ROUNDED_RECTANGLE`을 사용하지 마세요** - 직사각형 오버레이 막대는 둥근 모서리를 덮지 않습니다. 대신
+   `RECTANGLE`을 사용하세요.
    ```javascript
    // ❌ WRONG: Accent bar doesn't cover rounded corners
    slide.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: 1, y: 1, w: 3, h: 1.5, fill: { color: "FFFFFF" } });

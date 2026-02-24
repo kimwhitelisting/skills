@@ -1,51 +1,17 @@
-# Node/TypeScript MCP 서버 구현 가이드
+# "service-mcp-server",
+
+## 문서 정보
+
+- **이름**: `"service-mcp-server",`
+- **설명**: "What the tool does",
+- **라이선스**: -
+
 
 ## 개요
 
-이 문서에서는 MCP TypeScript SDK를 사용하여 MCP 서버를 구현하기 위한 Node/TypeScript 관련 모범 사례와 예제를 제공합니다. 프로젝트 구조, 서버 설정, 도구 등록 패턴, Zod를 통한 입력 검증, 오류 처리 및 전체 작업 예제를 다룹니다.
+이 문서에서는 MCP TypeScript SDK를 사용하여 MCP 서버를 구현하기 위한 Node/TypeScript 관련 모범 사례와 예제를 제공합니다. 프로젝트 구조, 서버
+설정, 도구 등록 패턴, Zod를 통한 입력 검증, 오류 처리 및 전체 작업 예제를 다룹니다.
 
----
-
-## 빠른 참조
-
-### 주요 수입품
-```typescript
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import express from "express";
-import { z } from "zod";
-```
-
-### 서버 초기화
-```typescript
-const server = new McpServer({
-  name: "service-mcp-server",
-  version: "1.0.0"
-});
-```
-
-### 도구 등록 패턴
-```typescript
-server.registerTool(
-  "tool_name",
-  {
-    title: "Tool Display Name",
-    description: "What the tool does",
-    inputSchema: { param: z.string() },
-    outputSchema: { result: z.string() }
-  },
-  async ({ param }) => {
-    const output = { result: `Processed: ${param}` };
-    return {
-      content: [{ type: "text", text: JSON.stringify(output) }],
-      structuredContent: output // Modern pattern for structured data
-    };
-  }
-);
-```
-
----
 
 ## MCP 타입스크립트 SDK
 
@@ -57,7 +23,8 @@ server.registerTool(
 
 **중요 - 최신 API만 사용하세요:**
 - **사용하세요**: `server.registerTool()`, `server.registerResource()`, `server.registerPrompt()`
-- **사용하지 마세요**: `server.tool()`, `server.setRequestHandler(ListToolsRequestSchema, ...)` 또는 수동 핸들러 등록과 같이 더 이상 사용되지 않는 오래된 API
+- **사용하지 마세요**: `server.tool()`, `server.setRequestHandler(ListToolsRequestSchema, ...)` 또는 수동
+  핸들러 등록과 같이 더 이상 사용되지 않는 오래된 API
 - `register*` 메서드는 더 나은 유형 안전성과 자동 스키마 처리를 제공하며 권장되는 접근 방식입니다.
 
 자세한 내용은 참조의 MCP SDK 설명서를 참조하세요.
@@ -97,7 +64,8 @@ Node/TypeScript MCP 서버에 대해 다음 구조를 만듭니다.
 
 ### 도구 이름 지정
 
-명확하고 작업 지향적인 이름으로 도구 이름(예: "search_users", "create_project", "get_channel_info")에 snake_case를 사용합니다.
+명확하고 작업 지향적인 이름으로 도구 이름(예: "search_users", "create_project", "get_channel_info")에 snake_case를
+사용합니다.
 
 **명칭 충돌 방지**: 중복을 방지하기 위해 서비스 컨텍스트를 포함합니다.
 - "send_message" 대신 "slack_send_message"를 사용하세요.
@@ -900,13 +868,13 @@ server.notification({
 실행하기 전에 항상 TypeScript 코드를 빌드하세요.
 
 ```bash
-# Build the project
+## Build the project
 npm run build
 
-# Run the server
+## Run the server
 npm start
 
-# Development with auto-reload
+## Development with auto-reload
 npm run dev
 ```
 

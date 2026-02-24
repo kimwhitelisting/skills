@@ -1,4 +1,4 @@
-﻿# Claude 공개 Skills 번역 가이드
+# Claude 공개 Skills 번역 가이드
 
 > Anthropic 공개 Skills 저장소의 문서를 팀 학습용으로 정리한 문서 허브입니다.
 
@@ -60,10 +60,15 @@
 ## 빠른 이동: 예제 스킬
 
 <div class="skill-cards">
-  <a class="skill-card" href="team_share_ko__skills__examples__algorithmic-art__SKILL/"><strong>알고리즘 아트</strong>시각 생성 예제</a>
-  <a class="skill-card" href="team_share_ko__skills__examples__mcp-builder__SKILL/"><strong>MCP 빌더</strong>MCP 서버/도구 구축 예제</a>
-  <a class="skill-card" href="team_share_ko__skills__examples__skill-creator__SKILL/"><strong>스킬 크리에이터</strong>스킬 생성/개선 메타 스킬</a>
-  <a class="skill-card" href="team_share_ko__skills__examples__web-artifacts-builder__SKILL/"><strong>웹 산출물 빌더</strong>웹 결과물 빌드 파이프라인</a>
+<a class="skill-card" href="team_share_ko__skills__examples__algorithmic-art__SKILL/"><strong>알고리즘
+아트</strong>시각 생성 예제</a>
+<a class="skill-card" href="team_share_ko__skills__examples__mcp-builder__SKILL/"><strong>MCP
+빌더</strong>MCP 서버/도구 구축 예제</a>
+<a class="skill-card" href="team_share_ko__skills__examples__skill-creator__SKILL/"><strong>스킬
+크리에이터</strong>스킬 생성/개선 메타 스킬</a>
+<a class="skill-card"
+href="team_share_ko__skills__examples__web-artifacts-builder__SKILL/"><strong>웹 산출물 빌더</strong>웹
+결과물 빌드 파이프라인</a>
 </div>
 
 ## 실제 사용법

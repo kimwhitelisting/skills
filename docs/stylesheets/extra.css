@@ -12,9 +12,19 @@ body,
   max-width: 1220px;
 }
 
+.md-main__inner {
+  max-width: 1040px;
+}
+
+.md-content__inner {
+  max-width: 920px;
+  margin-inline: auto;
+}
+
 .md-typeset h1 {
   font-weight: 800;
   letter-spacing: -0.01em;
+  margin-bottom: 0.8rem;
 }
 
 .md-typeset h2,
@@ -27,6 +37,25 @@ body,
 .md-typeset li {
   line-height: 1.75;
   word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.md-typeset p {
+  margin: 0.65em 0;
+}
+
+.md-typeset ul li,
+.md-typeset ol li {
+  margin-bottom: 0.22em;
+}
+
+.md-typeset blockquote {
+  border-left-width: 3px;
+  padding-left: 0.9em;
+}
+
+.md-typeset table:not([class]) td {
+  line-height: 1.6;
 }
 
 .md-typeset a {

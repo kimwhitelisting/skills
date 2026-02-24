@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import re
 import textwrap
@@ -6,198 +6,164 @@ from pathlib import Path
 
 
 DOCS_ROOT = Path(r"C:/dev/my-docs/docs")
-FRONT_RE = re.compile(r"^\ufeff?---\n(.*?)\n---\n?", re.S)
+TARGET_PREFIX = "team_share_ko__"
+WRAP_WIDTH = 98
 
 
-def _normalize_key(raw: str) -> str:
-    key = raw.strip().lower().strip("*` ")
-    compact = re.sub(r"[*`\s_\-]+", "", key)
+def _find_top_frontmatter(lines: list[str]) -> tuple[int, int] | None:
+    max_probe = min(12, len(lines))
+    for start in range(max_probe):
+        if lines[start].strip() != "---":
+            continue
+        for end in range(start + 1, min(start + 120, len(lines))):
+            if lines[end].strip() == "---":
+                between = lines[start + 1 : end]
+                if any(":" in line for line in between):
+                    return start, end
+                return None
+        return None
+    return None
 
-    if compact in {"name", "이름", "?대쫫"} or "이름" in compact or "대쫫" in compact:
+
+def _normalize_field_name(raw_key: str) -> str:
+    key = raw_key.strip().lower()
+    compact = re.sub(r"[^a-z0-9가-힣]", "", key)
+    if "name" in compact or "이름" in compact:
         return "name"
-    if compact in {"description", "설명", "?ㅻ챸"} or "설명" in compact or "ㅻ챸" in compact:
+    if "description" in compact or "설명" in compact:
         return "description"
-    if (
-        compact in {
-            "license",
-            "licence",
-            "라이선스",
-            "라이센스",
-            "?쇱씠?좎뒪",
-            "?쇱씠?쇱뒪",
-        }
-        or "license" in compact
-        or "licence" in compact
-        or "라이" in compact
-        or "쇱씠" in compact
-    ):
+    if "license" in compact or "licence" in compact or "라이선스" in compact:
         return "license"
     return ""
 
 
-def _parse_frontmatter(front: str) -> dict[str, str]:
-    meta = {"name": "", "description": "", "license": ""}
-    for raw in front.splitlines():
-        line = raw.strip()
-        if not line or ":" not in line:
-            continue
-        key_raw, value_raw = line.split(":", 1)
-        field = _normalize_key(key_raw)
-        if not field:
-            continue
-        meta[field] = value_raw.strip().strip("\"'")
-    return meta
+def _parse_frontmatter(meta_lines: list[str]) -> dict[str, str]:
+    buckets: dict[str, list[str]] = {}
+    current_key = ""
 
-
-def _parse_info_admonition_top(text: str) -> tuple[dict[str, str], str]:
-    t = text.lstrip("\ufeff")
-    lines = t.splitlines()
-    meta = {"name": "", "description": "", "license": ""}
-
-    if not lines:
-        return meta, t
-
-    start = 0
-    while start < len(lines) and not lines[start].strip():
-        start += 1
-    if start >= len(lines) or not lines[start].lstrip().startswith("!!! info"):
-        return meta, t
-
-    block_lines: list[str] = []
-    i = start + 1
-    while i < len(lines):
-        line = lines[i]
-        if line.startswith("    "):
-            block_lines.append(line[4:])
-            i += 1
-            continue
+    key_value_re = re.compile(r"^([A-Za-z0-9가-힣_-]+)\s*:\s*(.*)$")
+    for raw in meta_lines:
+        line = raw.rstrip()
         if not line.strip():
-            block_lines.append("")
-            i += 1
             continue
-        break
-
-    body = "\n".join(lines[i:]).lstrip("\n")
-    current_field = ""
-    for raw in block_lines:
-        line = raw.strip()
-        if not line:
-            continue
-        m = re.match(r"^\*{0,2}\s*([^:]+?)\s*\*{0,2}\s*:\s*(.*)$", line)
+        m = key_value_re.match(line.strip())
         if m:
-            field = _normalize_key(m.group(1))
-            value = m.group(2).strip().strip("`")
+            field = _normalize_field_name(m.group(1))
+            value = m.group(2).strip()
             if field:
-                meta[field] = value
-                current_field = field
+                current_key = field
+                buckets.setdefault(field, [])
+                if value:
+                    buckets[field].append(value)
             else:
-                current_field = ""
+                current_key = ""
             continue
+        if current_key:
+            buckets[current_key].append(line.strip())
 
-        if current_field == "description":
-            meta["description"] = (
-                f"{meta['description']} {line}".strip()
-                if meta["description"]
-                else line
-            )
+    def finish(parts: list[str]) -> str:
+        text = " ".join(part for part in parts if part).strip()
+        if not text:
+            return ""
+        if (text.startswith('"') and text.endswith('"')) or (
+            text.startswith("'") and text.endswith("'")
+        ):
+            text = text[1:-1].strip()
+        text = text.replace(r"\"", '"').replace(r"\'", "'")
+        text = re.sub(r"\s+", " ", text).strip()
+        return text
 
-    for k in meta:
-        meta[k] = re.sub(r"\s+", " ", meta[k]).strip()
-
-    return meta, body
-
-
-def _parse_existing_meta_header(text: str) -> tuple[dict[str, str], str]:
-    t = text.lstrip("\ufeff")
-    lines = t.splitlines()
-    meta = {"name": "", "description": "", "license": ""}
-    if not lines or not lines[0].startswith("## "):
-        return meta, t
-
-    i = 1
-    while i < len(lines):
-        line = lines[i].strip()
-        if not line:
-            i += 1
-            continue
-        if line.startswith("- **") and ":" in line:
-            left, right = line.split(":", 1)
-            field = _normalize_key(left)
-            if field:
-                meta[field] = right.strip().strip("`")
-            i += 1
-            continue
-        break
-
-    body = "\n".join(lines[i:]).lstrip("\n")
-    return meta, body
+    return {
+        "name": finish(buckets.get("name", [])),
+        "description": finish(buckets.get("description", [])),
+        "license": finish(buckets.get("license", [])),
+    }
 
 
-def _strip_legacy_block_if_duplicated(text: str) -> str:
-    t = text.lstrip("\ufeff")
-    if t.startswith("## ") and "!!! info " in t[:4000]:
-        idx = t.find("!!! info ")
-        if idx > 0:
-            return t[idx:]
-    return t
+def _remove_existing_info_section(lines: list[str]) -> list[str]:
+    start = -1
+    for i, line in enumerate(lines):
+        if line.strip() == "## 문서 정보":
+            start = i
+            break
+    if start < 0:
+        return lines
+
+    end = start + 1
+    while end < len(lines):
+        if lines[end].startswith("## ") and lines[end].strip() != "## 문서 정보":
+            break
+        end += 1
+    while end < len(lines) and not lines[end].strip():
+        end += 1
+    return lines[:start] + lines[end:]
 
 
-def _build_meta_header(name: str, description: str, license_text: str) -> str:
-    wrapped = textwrap.fill(description, width=96)
-    return (
-        "## 문서 정보\n\n"
-        f"- **이름**: `{name}`\n"
-        f"- **설명**: {wrapped}\n"
-        f"- **라이선스**: {license_text}\n\n"
+def _wrap_bullet(label: str, value: str) -> list[str]:
+    prefix = f"- **{label}**: "
+    if label == "이름":
+        shown = value if value else "SKILL"
+        return [f"{prefix}`{shown}`"]
+    if not value:
+        return [f"{prefix}-"]
+    wrapped = textwrap.fill(
+        value,
+        width=WRAP_WIDTH,
+        initial_indent=prefix,
+        subsequent_indent=" " * len(prefix),
+        break_long_words=False,
+        break_on_hyphens=False,
     )
+    return wrapped.splitlines()
 
 
-def _apply_fallbacks(meta: dict[str, str], path: Path) -> dict[str, str]:
-    out = dict(meta)
-    if not out["name"]:
-        parts = path.stem.split("__")
-        if parts and parts[-1].lower() == "skill" and len(parts) >= 2:
-            out["name"] = parts[-2]
-        elif parts:
-            out["name"] = parts[-1]
-        else:
-            out["name"] = path.stem
-    if not out["description"]:
-        out["description"] = "-"
-    if not out["license"]:
-        out["license"] = "-"
-    return out
+def _inject_info_block(lines: list[str], meta: dict[str, str]) -> list[str]:
+    h1_idx = next((i for i, line in enumerate(lines) if line.startswith("# ")), -1)
+    if h1_idx < 0:
+        return lines
+
+    title = (meta.get("name") or "").strip()
+    if title and title.upper() != "SKILL":
+        lines[h1_idx] = f"# {title}"
+
+    tail = lines[h1_idx + 1 :]
+    while tail and not tail[0].strip():
+        tail = tail[1:]
+
+    block: list[str] = ["## 문서 정보", ""]
+    block.extend(_wrap_bullet("이름", meta.get("name", "")))
+    block.extend(_wrap_bullet("설명", meta.get("description", "")))
+    block.extend(_wrap_bullet("라이선스", meta.get("license", "")))
+    block.extend(["", ""])
+
+    return lines[: h1_idx + 1] + [""] + block + tail
 
 
 def main() -> None:
     changed = 0
-    for path in sorted(DOCS_ROOT.glob("team_share_ko__*.md")):
-        original = path.read_text(encoding="utf-8", errors="replace")
-        text = _strip_legacy_block_if_duplicated(original)
-
+    for path in sorted(DOCS_ROOT.glob(f"{TARGET_PREFIX}*.md")):
+        original = path.read_text(encoding="utf-8-sig")
+        lines = original.replace("\r\n", "\n").replace("\r", "\n").split("\n")
         meta = {"name": "", "description": "", "license": ""}
-        body = text
+        had_frontmatter = False
 
-        front_match = FRONT_RE.match(text)
-        if front_match:
-            meta = _parse_frontmatter(front_match.group(1))
-            body = text[front_match.end() :].lstrip("\n")
-        elif text.lstrip().startswith("!!! info "):
-            meta, body = _parse_info_admonition_top(text)
-        elif text.lstrip().startswith("## "):
-            meta, body = _parse_existing_meta_header(text)
-        else:
-            continue
+        span = _find_top_frontmatter(lines)
+        if span is not None:
+            start, end = span
+            meta = _parse_frontmatter(lines[start + 1 : end])
+            lines = lines[:start] + lines[end + 1 :]
+            had_frontmatter = True
 
-        fixed = _apply_fallbacks(meta, path)
-        new_text = _build_meta_header(
-            fixed["name"], fixed["description"], fixed["license"]
-        ) + body
-        if not new_text.endswith("\n"):
-            new_text += "\n"
+        if had_frontmatter:
+            lines = _remove_existing_info_section(lines)
+            if any(meta.values()):
+                lines = _inject_info_block(lines, meta)
 
-        if new_text != original:
-            path.write_text(new_text, encoding="utf-8")
+        text = "\n".join(line.rstrip() for line in lines)
+        text = text.strip("\n") + "\n"
+
+        if text != original.replace("\r\n", "\n").replace("\r", "\n"):
+            path.write_text(text, encoding="utf-8")
             changed += 1
 
     print(f"changed={changed}")

@@ -104,3 +104,8 @@ nav:
       - Slack GIF 생성기: team_share_ko__skills__examples__slack-gif-creator__SKILL.md
       - 테마 팩토리: team_share_ko__skills__examples__theme-factory__SKILL.md
       - 웹 산출물 빌더: team_share_ko__skills__examples__web-artifacts-builder__SKILL.md
+
+  - 참고:
+      - 문서 품질 운영 가이드: docs_quality_guide.md
+      - 번역 문서 개요: team_share_ko__README.md
+      - 전체 인덱스(원본 기반): team_share_ko__INDEX.md

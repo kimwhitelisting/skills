@@ -282,6 +282,26 @@
   
 
       
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../docs_quality_guide/" class="md-tabs__link">
+          
+  
+  
+  참고
+
+        </a>
+      </li>
+    
+  
+
+      
     </ul>
   </div>
 </nav>
@@ -1919,6 +1939,147 @@
   
 
     
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    참고
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    참고
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../docs_quality_guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    문서 품질 운영 가이드
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../team_share_ko__README/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    번역 문서 개요
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../team_share_ko__INDEX/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    전체 인덱스(원본 기반)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -2250,16 +2411,19 @@
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>python<span class="w"> </span>scripts/thumbnail.py<span class="w"> </span>input.pptx<span class="w"> </span><span class="o">[</span>output_prefix<span class="o">]</span><span class="w"> </span><span class="o">[</span>--cols<span class="w"> </span>N<span class="o">]</span>
 </span></code></pre></div>
 <p>슬라이드 파일 이름을 레이블로 사용하여 <code>thumbnails.jpg</code>을 만듭니다. 기본 열 3개, 그리드당 최대 12개.</p>
-<p><strong>템플릿 분석에만 사용하세요</strong>(레이아웃 선택). 시각적 QA의 경우 <code>soffice</code> + <code>pdftoppm</code>을 사용하여 전체 해상도의 개별 슬라이드 이미지를 만듭니다. SKILL.md를 참조하세요.</p>
+<p><strong>템플릿 분석에만 사용하세요</strong>(레이아웃 선택). 시각적 QA의 경우 <code>soffice</code> + <code>pdftoppm</code>을 사용하여 전체 해상도의 개별 슬라이드 이미지를 만듭니다.
+SKILL.md를 참조하세요.</p>
 <hr />
 <h2 id="_4">슬라이드 작업<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
 <p>슬라이드 순서는 <code>ppt/presentation.xml</code> → <code>&lt;p:sldIdLst&gt;</code> 입니다.</p>
 <p><strong>재순서</strong>: <code>&lt;p:sldId&gt;</code> 요소를 재정렬합니다.</p>
 <p><strong>삭제</strong>: <code>&lt;p:sldId&gt;</code>을 제거한 다음 <code>clean.py</code>을 실행합니다.</p>
-<p><strong>추가</strong>: <code>add_slide.py</code>을 사용하세요. 슬라이드 파일을 수동으로 복사하지 마십시오. 스크립트는 수동 복사에서 누락된 메모 참조, Content_Types.xml 및 관계 ID를 처리합니다.</p>
+<p><strong>추가</strong>: <code>add_slide.py</code>을 사용하세요. 슬라이드 파일을 수동으로 복사하지 마십시오. 스크립트는 수동 복사에서 누락된 메모 참조, Content_Types.xml
+및 관계 ID를 처리합니다.</p>
 <hr />
 <h2 id="_5">콘텐츠 편집<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
-<p><strong>하위 에이전트:</strong> 가능한 경우 여기에서 사용하세요(4단계 완료 후). 각 슬라이드는 별도의 XML 파일이므로 하위 에이전트가 동시에 편집할 수 있습니다. 하위 에이전트에 대한 프롬프트에 다음을 포함합니다.
+<p><strong>하위 에이전트:</strong> 가능한 경우 여기에서 사용하세요(4단계 완료 후). 각 슬라이드는 별도의 XML 파일이므로 하위 에이전트가 동시에 편집할 수 있습니다. 하위 에이전트에
+대한 프롬프트에 다음을 포함합니다.
 - 편집할 슬라이드 파일 경로
 - <strong>"모든 변경 사항에 편집 도구를 사용하세요"</strong>
 - 아래의 서식 규칙과 일반적인 함정</p>
@@ -2289,7 +2453,8 @@
 - <strong>교체 기간이 길어짐</strong>: 예기치 않게 넘치거나 포장될 수 있음
 - 텍스트 변경 후 시각적 QA로 테스트
 - 템플릿의 디자인 제약에 맞게 콘텐츠를 자르거나 분할하는 것을 고려하세요.</p>
-<p><strong>템플릿 슬롯 ≠ 소스 항목</strong>: 템플릿에는 팀 구성원이 4명, 소스에는 사용자가 3명인 경우 텍스트뿐만 아니라 4번째 구성원의 전체 그룹(이미지 + 텍스트 상자)을 삭제합니다.</p>
+<p><strong>템플릿 슬롯 ≠ 소스 항목</strong>: 템플릿에는 팀 구성원이 4명, 소스에는 사용자가 3명인 경우 텍스트뿐만 아니라 4번째 구성원의 전체 그룹(이미지 + 텍스트 상자)을
+삭제합니다.</p>
 <h3 id="_9">다중 항목 콘텐츠<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
 <p>소스에 여러 항목(번호가 매겨진 목록, 여러 섹션)이 있는 경우 각각에 대해 별도의 <code>&lt;a:p&gt;</code> 요소를 만듭니다. <strong>절대 하나의 문자열로 연결하지 마세요</strong>.</p>
 <p><strong>❌ 틀렸음</strong> — 한 단락의 모든 항목:

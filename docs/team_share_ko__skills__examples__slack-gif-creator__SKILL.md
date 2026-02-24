@@ -1,11 +1,12 @@
+# slack-gif-creator
+
 ## 문서 정보
 
 - **이름**: `slack-gif-creator`
-- **설명**: Slack에 최적화된 애니메이션 GIF를 생성하기 위한 지식 및 유틸리티입니다. 제약 조건, 유효성 검사 도구 및 애니메이션 개념을 제공합니다. 사용자가 "Slack에서
-Y를 수행하는 X의 GIF를 만들어 주세요."와 같이 Slack용 애니메이션 GIF를 요청할 때 사용하세요.
-- **라이선스**: LICENSE.txt의 전체 조항
+- **설명**: Slack에 최적화된 애니메이션 GIF를 생성하기 위한 지식 및 유틸리티입니다. 제약 조건, 유효성 검사 도구 및 애니메이션 개념을 제공합니다. 사용자가
+          "Slack에서 Y를 수행하는 X의 GIF를 만들어 주세요."와 같이 Slack용 애니메이션 GIF를 요청할 때 사용하세요.
+- **라이선스**: -
 
-# 슬랙 GIF 생성기
 
 Slack에 최적화된 애니메이션 GIF를 생성하기 위한 유틸리티와 지식을 제공하는 툴킷입니다.
 
@@ -26,10 +27,10 @@ Slack에 최적화된 애니메이션 GIF를 생성하기 위한 유틸리티와
 from core.gif_builder import GIFBuilder
 from PIL import Image, ImageDraw
 
-# 1. Create builder
+## 1. Create builder
 builder = GIFBuilder(width=128, height=128, fps=10)
 
-# 2. Generate frames
+## 2. Generate frames
 for i in range(12):
     frame = Image.new('RGB', (128, 128), (240, 248, 255))
     draw = ImageDraw.Draw(frame)
@@ -39,7 +40,7 @@ for i in range(12):
 
     builder.add_frame(frame)
 
-# 3. Save with optimization
+## 3. Save with optimization
 builder.save('output.gif', num_colors=48, optimize_for_emoji=True)
 ```
 
@@ -55,7 +56,7 @@ PIL을 사용하여 이미지를 로드하고 작업합니다.
 from PIL import Image
 
 uploaded = Image.open('file.png')
-# Use directly, or just as reference for colors/style
+## Use directly, or just as reference for colors/style
 ```
 
 ### 처음부터 그리기
@@ -66,17 +67,17 @@ from PIL import ImageDraw
 
 draw = ImageDraw.Draw(frame)
 
-# Circles/ovals
+## Circles/ovals
 draw.ellipse([x1, y1, x2, y2], fill=(r, g, b), outline=(r, g, b), width=3)
 
-# Stars, triangles, any polygon
+## Stars, triangles, any polygon
 points = [(x1, y1), (x2, y2), (x3, y3), ...]
 draw.polygon(points, fill=(r, g, b), outline=(r, g, b), width=3)
 
-# Lines
+## Lines
 draw.line([(x1, y1), (x2, y2)], fill=(r, g, b), width=5)
 
-# Rectangles
+## Rectangles
 draw.rectangle([x1, y1, x2, y2], fill=(r, g, b), outline=(r, g, b), width=3)
 ```
 
@@ -125,10 +126,10 @@ GIF가 Slack 요구 사항을 충족하는지 확인하세요.
 ```python
 from core.validators import validate_gif, is_slack_ready
 
-# Detailed validation
+## Detailed validation
 passes, info = validate_gif('my.gif', is_emoji=True, verbose=True)
 
-# Quick check
+## Quick check
 if is_slack_ready('my.gif'):
     print("Ready!")
 ```
@@ -138,14 +139,14 @@ if is_slack_ready('my.gif'):
 ```python
 from core.easing import interpolate
 
-# Progress from 0.0 to 1.0
+## Progress from 0.0 to 1.0
 t = i / (num_frames - 1)
 
-# Apply easing
+## Apply easing
 y = interpolate(start=0, end=400, t=t, easing='ease_out')
 
-# Available: linear, ease_in, ease_out, ease_in_out,
-#           bounce_out, elastic_out, back_out
+## Available: linear, ease_in, ease_out, ease_in_out,
+##           bounce_out, elastic_out, back_out
 ```
 
 ### 프레임 도우미(`core.frame_composer`)
@@ -223,7 +224,7 @@ from core.frame_composer import (
 5. **이모지 모드** - `optimize_for_emoji=True` 자동 최적화
 
 ```python
-# Maximum optimization for emoji
+## Maximum optimization for emoji
 builder.save(
     'emoji.gif',
     num_colors=48,
@@ -244,7 +245,8 @@ builder.save(
 - 이모티콘 글꼴 렌더링(플랫폼 전반에 걸쳐 신뢰할 수 없음)
 - 스킬에 내장된 사전 패키지 그래픽 라이브러리
 
-**사용자 업로드에 대한 참고 사항**: 이 기술에는 사전 제작된 그래픽이 포함되어 있지 않지만, 사용자가 이미지를 업로드하는 경우 PIL을 사용하여 해당 이미지를 로드하고 작업합니다. 요청에 따라 직접 사용하려는지 또는 영감으로 사용하려는지 해석합니다.
+**사용자 업로드에 대한 참고 사항**: 이 기술에는 사전 제작된 그래픽이 포함되어 있지 않지만, 사용자가 이미지를 업로드하는 경우 PIL을 사용하여 해당 이미지를 로드하고
+작업합니다. 요청에 따라 직접 사용하려는지 또는 영감으로 사용하려는지 해석합니다.
 
 창의력을 발휘하세요! 개념(바운싱 + 회전, 펄스 + 슬라이딩 등)을 결합하고 PIL의 전체 기능을 사용하세요.
 
