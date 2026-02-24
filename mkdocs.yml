@@ -1,0 +1,106 @@
+﻿site_name: Claude 공개 Skills 번역 가이드
+site_description: Anthropic 공개 Skills 한국어 번역 문서 허브
+site_author: One A Day Team
+
+repo_url: https://github.com/anthropics/skills
+repo_name: anthropics/skills
+
+docs_dir: docs
+site_dir: site
+use_directory_urls: true
+
+theme:
+  name: material
+  language: ko
+  features:
+    - navigation.tabs
+    - navigation.top
+    - navigation.instant
+    - search.highlight
+    - search.suggest
+    - content.code.copy
+  palette:
+    - scheme: default
+      primary: blue grey
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: 다크 모드로 전환
+    - scheme: slate
+      primary: blue grey
+      accent: light blue
+      toggle:
+        icon: material/weather-sunny
+        name: 라이트 모드로 전환
+
+plugins:
+  - search:
+      lang:
+        - ko
+        - en
+      separator: '[\s\-]+'
+
+markdown_extensions:
+  - toc:
+      permalink: true
+  - tables
+  - fenced_code
+  - admonition
+  - attr_list
+  - def_list
+  - md_in_html
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+
+extra_css:
+  - stylesheets/extra.css
+
+nav:
+  - 홈: index.md
+
+  - 공개 스킬:
+      - 문서 처리 (DOCX): team_share_ko__skills__public__docx__SKILL.md
+      - 프론트엔드 디자인: team_share_ko__skills__public__frontend-design__SKILL.md
+      - PDF:
+          - 스킬 개요: team_share_ko__skills__public__pdf__SKILL.md
+          - 양식 처리 (FORMS): team_share_ko__skills__public__pdf__FORMS.md
+          - 참고 문서 (REFERENCE): team_share_ko__skills__public__pdf__REFERENCE.md
+      - 프레젠테이션 (PPTX):
+          - 스킬 개요: team_share_ko__skills__public__pptx__SKILL.md
+          - 편집 가이드: team_share_ko__skills__public__pptx__editing.md
+          - PptxGenJS 참고: team_share_ko__skills__public__pptx__pptxgenjs.md
+      - 제품 셀프 진단: team_share_ko__skills__public__product-self-knowledge__SKILL.md
+      - 스프레드시트 (XLSX): team_share_ko__skills__public__xlsx__SKILL.md
+
+  - 예제 스킬:
+      - 알고리즘 아트: team_share_ko__skills__examples__algorithmic-art__SKILL.md
+      - Benepass 정산: team_share_ko__skills__examples__benepass-reimbursement__SKILL.md
+      - 브랜드 가이드라인: team_share_ko__skills__examples__brand-guidelines__SKILL.md
+      - 캔버스 디자인: team_share_ko__skills__examples__canvas-design__SKILL.md
+      - 문서 공동작성: team_share_ko__skills__examples__doc-coauthoring__SKILL.md
+      - 사내 커뮤니케이션:
+          - 스킬 개요: team_share_ko__skills__examples__internal-comms__SKILL.md
+          - 3P 업데이트: team_share_ko__skills__examples__internal-comms__examples__3p-updates.md
+          - 사내 뉴스레터: team_share_ko__skills__examples__internal-comms__examples__company-newsletter.md
+          - FAQ 답변: team_share_ko__skills__examples__internal-comms__examples__faq-answers.md
+          - 일반 커뮤니케이션: team_share_ko__skills__examples__internal-comms__examples__general-comms.md
+      - MCP 빌더:
+          - 스킬 개요: team_share_ko__skills__examples__mcp-builder__SKILL.md
+          - 평가 가이드: team_share_ko__skills__examples__mcp-builder__reference__evaluation.md
+          - MCP 모범 사례: team_share_ko__skills__examples__mcp-builder__reference__mcp_best_practices.md
+          - Node MCP 서버: team_share_ko__skills__examples__mcp-builder__reference__node_mcp_server.md
+          - Python MCP 서버: team_share_ko__skills__examples__mcp-builder__reference__python_mcp_server.md
+      - 스킬 크리에이터:
+          - 스킬 개요: team_share_ko__skills__examples__skill-creator__SKILL.md
+          - 분석기: team_share_ko__skills__examples__skill-creator__agents__analyzer.md
+          - 비교기: team_share_ko__skills__examples__skill-creator__agents__comparator.md
+          - 채점기: team_share_ko__skills__examples__skill-creator__agents__grader.md
+          - 스키마: team_share_ko__skills__examples__skill-creator__references__schemas.md
+      - Slack GIF 생성기: team_share_ko__skills__examples__slack-gif-creator__SKILL.md
+      - 테마 팩토리: team_share_ko__skills__examples__theme-factory__SKILL.md
+      - 웹 산출물 빌더: team_share_ko__skills__examples__web-artifacts-builder__SKILL.md
