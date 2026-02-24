@@ -282,6 +282,26 @@
   
 
       
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../docs_quality_guide/" class="md-tabs__link">
+          
+  
+  
+  참고
+
+        </a>
+      </li>
+    
+  
+
+      
     </ul>
   </div>
 </nav>
@@ -561,6 +581,24 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    양식 처리 (FORMS)
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -577,6 +615,235 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="목차">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      목차
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        채울 수 있는 필드
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        채울 수 없는 필드
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1단계: 먼저 구조 추출 시도
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        접근법 A: 구조 기반 좌표(선호)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="접근법 A: 구조 기반 좌표(선호)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A.1: 구조 분석
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A.2: 누락된 요소 확인
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a3-pdf-fieldsjson" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A.3: PDF 좌표를 사용하여 fields.json 만들기
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A.4: 경계 상자 유효성 검사
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#b" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        접근법 B: 시각적 추정(대체)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="접근법 B: 시각적 추정(대체)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#b1-pdf" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        B.1: PDF를 이미지로 변환
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        B.2: 초기 필드 식별
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        B.3: 확대/축소 개선(정확도가 중요)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b4-fieldsjson" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        B.4: 세련된 좌표를 사용하여 fields.json 만들기
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        B.5: 경계 상자 유효성 검사
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        하이브리드 접근 방식: 구조 + 시각적
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2단계: 작성 전 확인
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3단계: 양식 작성
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4단계: 출력 확인
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -1699,6 +1966,147 @@
   
 
     
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    참고
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    참고
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../docs_quality_guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    문서 품질 운영 가이드
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../team_share_ko__README/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    번역 문서 개요
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../team_share_ko__INDEX/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    전체 인덱스(원본 기반)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -1719,6 +2127,224 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      목차
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        채울 수 있는 필드
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        채울 수 없는 필드
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1단계: 먼저 구조 추출 시도
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        접근법 A: 구조 기반 좌표(선호)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="접근법 A: 구조 기반 좌표(선호)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A.1: 구조 분석
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A.2: 누락된 요소 확인
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a3-pdf-fieldsjson" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A.3: PDF 좌표를 사용하여 fields.json 만들기
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A.4: 경계 상자 유효성 검사
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#b" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        접근법 B: 시각적 추정(대체)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="접근법 B: 시각적 추정(대체)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#b1-pdf" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        B.1: PDF를 이미지로 변환
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        B.2: 초기 필드 식별
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        B.3: 확대/축소 개선(정확도가 중요)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b4-fieldsjson" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        B.4: 세련된 좌표를 사용하여 fields.json 만들기
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        B.5: 경계 상자 유효성 검사
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        하이브리드 접근 방식: 구조 + 시각적
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2단계: 작성 전 확인
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3단계: 양식 작성
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4단계: 출력 확인
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1737,12 +2363,15 @@
   
 
 
+<h1 id="_1">채울 수 있는 필드<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
 <p><strong>중요: 이 단계를 순서대로 완료해야 합니다. 코드 작성으로 건너뛰지 마십시오.</strong></p>
 <p>PDF 양식을 작성해야 하는 경우 먼저 PDF에 채울 수 있는 양식 필드가 있는지 확인하세요. 이 파일의 디렉터리에서 이 스크립트를 실행하세요.
-<code>python scripts/check_fillable_fields &lt;file.pdf&gt;</code>, 결과에 따라 "채울 수 있는 필드" 또는 "채울 수 없는 필드"로 이동하여 해당 지침을 따르세요.</p>
-<h1 id="_1">채울 수 있는 필드<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
+<code>python scripts/check_fillable_fields &lt;file.pdf&gt;</code>, 결과에 따라 "채울 수 있는 필드" 또는 "채울 수 없는 필드"로 이동하여 해당
+지침을 따르세요.</p>
+<h2 id="_2">채울 수 있는 필드<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <p>PDF에 채울 수 있는 양식 필드가 있는 경우:
-- 이 파일의 디렉터리 <code>python scripts/extract_form_field_info.py &lt;input.pdf&gt; &lt;field_info.json&gt;</code>에서 이 스크립트를 실행합니다. 다음 형식의 필드 목록이 포함된 JSON 파일이 생성됩니다.
+- 이 파일의 디렉터리 <code>python scripts/extract_form_field_info.py &lt;input.pdf&gt; &lt;field_info.json&gt;</code>에서 이 스크립트를
+  실행합니다. 다음 형식의 필드 목록이 포함된 JSON 파일이 생성됩니다.
 <div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>[
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  {
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    &quot;field_id&quot;: (unique ID for the field),
@@ -1809,7 +2438,7 @@
 - 이 파일의 디렉터리에서 <code>fill_fillable_fields.py</code> 스크립트를 실행하여 채워진 PDF를 만듭니다.
 <code>python scripts/fill_fillable_fields.py &lt;input pdf&gt; &lt;field_values.json&gt; &lt;output pdf&gt;</code>
 이 스크립트는 귀하가 제공한 필드 ID와 값이 유효한지 확인합니다. 오류 메시지가 인쇄되면 해당 필드를 수정하고 다시 시도하십시오.</p>
-<h1 id="_2">채울 수 없는 필드<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h1>
+<h2 id="_3">채울 수 없는 필드<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
 <p>PDF에 채울 수 있는 양식 필드가 없으면 텍스트 주석을 추가합니다. 먼저 PDF 구조에서 좌표를 추출해 보십시오(보다 정확함). 필요한 경우 시각적 추정으로 돌아갑니다.</p>
 <h2 id="1">1단계: 먼저 구조 추출 시도<a class="headerlink" href="#1" title="Permanent link">&para;</a></h2>
 <p>정확한 PDF 좌표로 텍스트 레이블, 줄 및 확인란을 추출하려면 이 스크립트를 실행하십시오.
@@ -1819,7 +2448,8 @@
 - <strong>lines</strong>: 행 경계를 정의하는 수평선
 - <strong>체크박스</strong>: 체크박스인 작은 정사각형 직사각형(중심 좌표 포함)
 - <strong>row_boundaries</strong>: 수평선에서 계산된 행 상단/하단 위치</p>
-<p><strong>결과 확인</strong>: <code>form_structure.json</code>에 의미 있는 레이블(양식 필드에 해당하는 텍스트 요소)이 있는 경우 <strong>접근 방식 A: 구조 기반 좌표</strong>를 사용하세요. PDF가 스캔/이미지 기반이고 레이블이 거의 없거나 전혀 없는 경우 <strong>접근 방식 B: 시각적 견적</strong>을 사용하세요.</p>
+<p><strong>결과 확인</strong>: <code>form_structure.json</code>에 의미 있는 레이블(양식 필드에 해당하는 텍스트 요소)이 있는 경우 <strong>접근 방식 A: 구조 기반 좌표</strong>를
+사용하세요. PDF가 스캔/이미지 기반이고 레이블이 거의 없거나 전혀 없는 경우 <strong>접근 방식 B: 시각적 견적</strong>을 사용하세요.</p>
 <hr />
 <h2 id="a">접근법 A: 구조 기반 좌표(선호)<a class="headerlink" href="#a" title="Permanent link">&para;</a></h2>
 <p><code>extract_form_structure.py</code>이 PDF에서 텍스트 레이블을 찾았을 때 사용하세요.</p>
@@ -1837,7 +2467,8 @@
 - <strong>원형 체크박스</strong>: 정사각형 직사각형만 체크박스로 감지됩니다.
 - <strong>복잡한 그래픽</strong>: 장식 요소 또는 비표준 양식 컨트롤
 - <strong>바랜 색상이나 밝은 색상의 요소</strong>: 추출할 수 없습니다.</p>
-<p>form_structure.json에 없는 PDF 이미지의 양식 필드가 표시되면 해당 특정 필드에 대해 <strong>시각적 분석</strong>을 사용해야 합니다(아래 "하이브리드 접근 방식" 참조).</p>
+<p>form_structure.json에 없는 PDF 이미지의 양식 필드가 표시되면 해당 특정 필드에 대해 <strong>시각적 분석</strong>을 사용해야 합니다(아래 "하이브리드 접근 방식"
+참조).</p>
 <h3 id="a3-pdf-fieldsjson">A.3: PDF 좌표를 사용하여 fields.json 만들기<a class="headerlink" href="#a3-pdf-fieldsjson" title="Permanent link">&para;</a></h3>
 <p>각 필드에 대해 추출된 구조에서 항목 좌표를 계산합니다.</p>
 <p><strong>텍스트 필드:</strong>
@@ -1936,13 +2567,14 @@
 <code>python scripts/check_bounding_boxes.py fields.json</code></p>
 <p>글꼴 크기에 비해 너무 작은 경계 상자와 입력 상자가 교차하는지 확인합니다. 채우기 전에 보고된 오류를 수정하세요.</p>
 <hr />
-<h2 id="_3">하이브리드 접근 방식: 구조 + 시각적<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
+<h2 id="_4">하이브리드 접근 방식: 구조 + 시각적<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
 <p>대부분의 필드에서 구조 추출이 작동하지만 일부 요소(예: 원형 체크박스, 특이한 양식 컨트롤)가 누락된 경우 이 기능을 사용하세요.</p>
 <ol>
 <li>form_structure.json에서 감지된 필드에 <strong>접근법 A 사용</strong></li>
 <li>누락된 필드를 시각적으로 분석하기 위해 <strong>PDF를 이미지로 변환</strong></li>
 <li>누락된 필드에 <strong>확대/축소 개선</strong>(접근 방식 B) 사용</li>
-<li><strong>좌표 결합</strong>: 구조 추출의 필드에는 <code>pdf_width</code>/<code>pdf_height</code>을 사용합니다. 시각적으로 추정된 필드의 경우 이미지 좌표를 PDF 좌표로 변환해야 합니다.</li>
+<li><strong>좌표 결합</strong>: 구조 추출의 필드에는 <code>pdf_width</code>/<code>pdf_height</code>을 사용합니다. 시각적으로 추정된 필드의 경우 이미지 좌표를 PDF 좌표로
+   변환해야 합니다.</li>
 <li>pdf_x = image_x * (pdf_width / image_width)</li>
 <li>pdf_y = image_y * (pdf_height / image_height)</li>
 <li>fields.json에서 <strong>단일 좌표계 사용</strong> - <code>pdf_width</code>/<code>pdf_height</code>을 사용하여 모두 PDF 좌표로 변환합니다.</li>
