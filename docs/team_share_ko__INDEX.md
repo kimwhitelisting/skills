@@ -1,12 +1,7 @@
 # 스킬 번역 문서 인덱스
 ## 빠른 안내
 
-- **문서 요약**: 편집 또는 수정(예: 열 추가, 수식 계산, 서식 지정, 차트 작성, 지저분한 데이터 정리), 처음부터 또는 다른 데이터 소스에서 새 스프레드시트
-             생성 또는 표 형식 파일 형식 간 변환을 원하는 모든 작업을 의미합니다. 특히 사용자가 스프레드시트 파일을 다음과 같이 참조할 때 트리거됩니다.
-             이름이나 경로를 아무렇지도 않게(예: \"내 다운로드의 xlsx\") 처리하거나 여기에서 생성하기를 원합니다. 또한 지저분한 표 형식 데이터
-             파일(잘못된 행, 잘못 배치된 헤더, 정크 데이터)을 정리하거나 적절한 스프레드시트로 재구성하기 위해 트리거됩니다. 기본 결과물이 Word 문서,
-             HTML 보고서, 독립 실행형 Python 스크립트, 데이터베이스 파이프라인인 경우에는 트리거하지 마세요. Google 시트 API 통합, 표 형식
-             데이터가 포함된 경우에도 마찬가지입니다.
+- **문서 요약**: 번역된 스킬 목록과 문서 링크를 한눈에 확인할 수 있는 인덱스입니다.
 
 - **핵심 섹션**: 빠른 목록, 스킬별 문서 목록
 
@@ -23,25 +18,25 @@
 
 ## 빠른 목록
 
-| 번호 | 그룹 | 스킬 | 문서 수 | SKILL 문서 | 설명 |
-|---|---|---|---:|---|---|
-| 1 | `examples` | `algorithmic-art` | 2 | [SKILL.md](team_share_ko__skills__examples__algorithmic-art__SKILL.md) |  |
-| 2 | `examples` | `benepass-reimbursement` | 1 | [SKILL.md](team_share_ko__skills__examples__benepass-reimbursement__SKILL.md) |  |
-| 3 | `examples` | `brand-guidelines` | 2 | [SKILL.md](team_share_ko__skills__examples__brand-guidelines__SKILL.md) |  |
-| 4 | `examples` | `canvas-design` | 2 | [SKILL.md](team_share_ko__skills__examples__canvas-design__SKILL.md) |  |
-| 5 | `examples` | `doc-coauthoring` | 1 | [SKILL.md](team_share_ko__skills__examples__doc-coauthoring__SKILL.md) |  |
-| 6 | `examples` | `internal-comms` | 6 | [SKILL.md](team_share_ko__skills__examples__internal-comms__SKILL.md) |  |
-| 7 | `examples` | `mcp-builder` | 6 | [SKILL.md](team_share_ko__skills__examples__mcp-builder__SKILL.md) |  |
-| 8 | `examples` | `skill-creator` | 5 | [SKILL.md](team_share_ko__skills__examples__skill-creator__SKILL.md) |  |
-| 9 | `examples` | `slack-gif-creator` | 2 | [SKILL.md](team_share_ko__skills__examples__slack-gif-creator__SKILL.md) |  |
-| 10 | `examples` | `theme-factory` | 2 | [SKILL.md](team_share_ko__skills__examples__theme-factory__SKILL.md) |  |
-| 11 | `examples` | `web-artifacts-builder` | 2 | [SKILL.md](team_share_ko__skills__examples__web-artifacts-builder__SKILL.md) |  |
-| 12 | `public` | `docx` | 2 | [SKILL.md](team_share_ko__skills__public__docx__SKILL.md) |  |
-| 13 | `public` | `frontend-design` | 2 | [SKILL.md](team_share_ko__skills__public__frontend-design__SKILL.md) |  |
-| 14 | `public` | `pdf` | 4 | [SKILL.md](team_share_ko__skills__public__pdf__SKILL.md) |  |
-| 15 | `public` | `pptx` | 4 | [SKILL.md](team_share_ko__skills__public__pptx__SKILL.md) |  |
-| 16 | `public` | `product-self-knowledge` | 1 | [SKILL.md](team_share_ko__skills__public__product-self-knowledge__SKILL.md) |  |
-| 17 | `public` | `xlsx` | 2 | [SKILL.md](team_share_ko__skills__public__xlsx__SKILL.md) | 스프레드시트 파일이 기본 입력 또는 출력일 때마다 이 기술을 사용하십시오. 이는 사용자가 기존 .xlsx,… |
+| 번호 | 그룹 | 스킬 | 문서 수 | SKILL 문서 |
+| --- | --- | --- | ---: | --- |
+| 1 | `examples` | `algorithmic-art` | 2 | [SKILL.md](team_share_ko__skills__examples__algorithmic-art__SKILL.md) |
+| 2 | `examples` | `benepass-reimbursement` | 1 | [SKILL.md](team_share_ko__skills__examples__benepass-reimbursement__SKILL.md) |
+| 3 | `examples` | `brand-guidelines` | 2 | [SKILL.md](team_share_ko__skills__examples__brand-guidelines__SKILL.md) |
+| 4 | `examples` | `canvas-design` | 2 | [SKILL.md](team_share_ko__skills__examples__canvas-design__SKILL.md) |
+| 5 | `examples` | `doc-coauthoring` | 1 | [SKILL.md](team_share_ko__skills__examples__doc-coauthoring__SKILL.md) |
+| 6 | `examples` | `internal-comms` | 6 | [SKILL.md](team_share_ko__skills__examples__internal-comms__SKILL.md) |
+| 7 | `examples` | `mcp-builder` | 6 | [SKILL.md](team_share_ko__skills__examples__mcp-builder__SKILL.md) |
+| 8 | `examples` | `skill-creator` | 5 | [SKILL.md](team_share_ko__skills__examples__skill-creator__SKILL.md) |
+| 9 | `examples` | `slack-gif-creator` | 2 | [SKILL.md](team_share_ko__skills__examples__slack-gif-creator__SKILL.md) |
+| 10 | `examples` | `theme-factory` | 2 | [SKILL.md](team_share_ko__skills__examples__theme-factory__SKILL.md) |
+| 11 | `examples` | `web-artifacts-builder` | 2 | [SKILL.md](team_share_ko__skills__examples__web-artifacts-builder__SKILL.md) |
+| 12 | `public` | `docx` | 2 | [SKILL.md](team_share_ko__skills__public__docx__SKILL.md) |
+| 13 | `public` | `frontend-design` | 2 | [SKILL.md](team_share_ko__skills__public__frontend-design__SKILL.md) |
+| 14 | `public` | `pdf` | 4 | [SKILL.md](team_share_ko__skills__public__pdf__SKILL.md) |
+| 15 | `public` | `pptx` | 4 | [SKILL.md](team_share_ko__skills__public__pptx__SKILL.md) |
+| 16 | `public` | `product-self-knowledge` | 1 | [SKILL.md](team_share_ko__skills__public__product-self-knowledge__SKILL.md) |
+| 17 | `public` | `xlsx` | 2 | [SKILL.md](team_share_ko__skills__public__xlsx__SKILL.md) |
 
 ## 스킬별 문서 목록
 
@@ -189,12 +184,6 @@
 
 - 폴더: `skills/public/xlsx`
 - 문서 수: `2`
-- 설명: 스프레드시트 파일이 기본 입력 또는 출력일 때마다 이 기술을 사용하십시오. 이는 사용자가 기존 .xlsx, .xlsm, .csv 또는 .tsv 파일 열기, 읽기,
-  편집 또는 수정(예: 열 추가, 수식 계산, 서식 지정, 차트 작성, 지저분한 데이터 정리), 처음부터 또는 다른 데이터 소스에서 새 스프레드시트 생성 또는 표 형식
-  파일 형식 간 변환을 원하는 모든 작업을 의미합니다. 특히 사용자가 스프레드시트 파일을 다음과 같이 참조할 때 트리거됩니다. 이름이나 경로를 아무렇지도 않게(예: \"내
-  다운로드의 xlsx\") 처리하거나 여기에서 생성하기를 원합니다. 또한 지저분한 표 형식 데이터 파일(잘못된 행, 잘못 배치된 헤더, 정크 데이터)을 정리하거나 적절한
-  스프레드시트로 재구성하기 위해 트리거됩니다. 기본 결과물이 Word 문서, HTML 보고서, 독립 실행형 Python 스크립트, 데이터베이스 파이프라인인 경우에는
-  트리거하지 마세요. Google 시트 API 통합, 표 형식 데이터가 포함된 경우에도 마찬가지입니다.
 
 - 문서:
   - `public/xlsx/LICENSE.txt`

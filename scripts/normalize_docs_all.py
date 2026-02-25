@@ -15,6 +15,7 @@ NAME_BULLET_RE = re.compile(r"-\s+\*\*이름\*\*:\s+`([^`]+)`")
 LIST_RE = re.compile(r"^(\s*(?:[-*+]|\d+\.)\s+)(.+)$")
 TXT_LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)]+\.txt)\)", re.IGNORECASE)
 TOP_LIST_RE = re.compile(r"^(?:[-*+]|\d+\.)\s+")
+DESCRIPTION_BULLET_RE = re.compile("^- (?:\\uC124\\uBA85|description)\\s*:", re.IGNORECASE)
 
 
 def _to_virtual_path(flat_name: str) -> str:
@@ -151,12 +152,35 @@ def _compact_index_table(text: str, file_name: str) -> str:
     for line in lines:
         if line.startswith("|") and line.endswith("|") and line.count("|") >= 6:
             cells = [c.strip() for c in line.strip("|").split("|")]
-            if len(cells) >= 6 and cells[0] not in {"---", "번호"}:
-                # Last column is description; keep short in summary table.
-                desc = cells[-1]
-                if len(desc) > 64:
-                    cells[-1] = textwrap.shorten(desc, width=64, placeholder="…")
-                line = "| " + " | ".join(cells) + " |"
+            if len(cells) >= 6:
+                # Drop description column to keep index concise.
+                cells = cells[:5]
+            line = "| " + " | ".join(cells) + " |"
+        out.append(line)
+    return "\n".join(out)
+
+
+def _strip_index_descriptions(text: str, file_name: str) -> str:
+    if file_name != "team_share_ko__INDEX.md":
+        return text
+
+    lines = text.splitlines()
+    out: list[str] = []
+    skipping = False
+    for line in lines:
+        if skipping:
+            if not line.strip():
+                skipping = False
+                out.append(line)
+                continue
+            # Continue skipping wrapped continuation lines.
+            if line.startswith("  ") and not line.lstrip().startswith("- "):
+                continue
+            skipping = False
+
+        if DESCRIPTION_BULLET_RE.match(line):
+            skipping = True
+            continue
         out.append(line)
     return "\n".join(out)
 
@@ -268,6 +292,7 @@ def main() -> None:
         text = _rewrite_markdown_links(text, path.name, existing)
         text = _drop_txt_links(text)
         text = _compact_index_table(text, path.name)
+        text = _strip_index_descriptions(text, path.name)
         text = _patch_known_anchor_issues(text, path.name)
         text = _wrap_prose(text, WRAP_WIDTH)
         text = _ensure_blank_line_before_top_lists(text)
