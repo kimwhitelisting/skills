@@ -2130,15 +2130,17 @@
 </span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="w">  </span><span class="p">]</span>
 </span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a><span class="p">}</span>
 </span></code></pre></div>
-<p><strong>전지:</strong>
-- <code>started_at</code>: 개선이 시작된 시점의 ISO 타임스탬프
-- <code>skill_name</code> : 강화 중인 스킬 이름
-- <code>current_best</code>: 최고 성능의 버전 식별자
-- <code>iterations[].version</code>: 버전 식별자(v0, v1, ...)
-- <code>iterations[].parent</code>: 이 버전이 파생된 상위 버전
-- <code>iterations[].expectation_pass_rate</code> : 채점에 따른 합격률
-- <code>iterations[].grading_result</code>: "기준선", "승리", "패배" 또는 "동점"
-- <code>iterations[].is_current_best</code>: 현재 최고 버전인지 여부</p>
+<p><strong>전지:</strong></p>
+<ul>
+<li><code>started_at</code>: 개선이 시작된 시점의 ISO 타임스탬프</li>
+<li><code>skill_name</code> : 강화 중인 스킬 이름</li>
+<li><code>current_best</code>: 최고 성능의 버전 식별자</li>
+<li><code>iterations[].version</code>: 버전 식별자(v0, v1, ...)</li>
+<li><code>iterations[].parent</code>: 이 버전이 파생된 상위 버전</li>
+<li><code>iterations[].expectation_pass_rate</code> : 채점에 따른 합격률</li>
+<li><code>iterations[].grading_result</code>: "기준선", "승리", "패배" 또는 "동점"</li>
+<li><code>iterations[].is_current_best</code>: 현재 최고 버전인지 여부</li>
+</ul>
 <hr />
 <h2 id="json_2">채점.json<a class="headerlink" href="#json_2" title="Permanent link">&para;</a></h2>
 <p>그레이더 에이전트의 출력입니다. <code>&lt;run-dir&gt;/grading.json</code>에 위치합니다.</p>
@@ -2202,14 +2204,16 @@
 </span><span id="__span-1-58"><a id="__codelineno-1-58" name="__codelineno-1-58" href="#__codelineno-1-58"></a><span class="w">  </span><span class="p">}</span>
 </span><span id="__span-1-59"><a id="__codelineno-1-59" name="__codelineno-1-59" href="#__codelineno-1-59"></a><span class="p">}</span>
 </span></code></pre></div>
-<p><strong>전지:</strong>
-- <code>expectations[]</code>: 증거를 바탕으로 등급화된 기대치
-- <code>summary</code>: 합격/불합격 횟수 집계
-- <code>execution_metrics</code>: 도구 사용 및 출력 크기(실행자의metrics.json에서)
-- <code>timing</code>: 벽시계 타이밍(timing.json에서)
-- <code>claims</code>: 출력물에서 클레임 추출 및 검증
-- <code>user_notes_summary</code>: 실행자가 플래그한 문제
-- <code>eval_feedback</code>: (선택 사항) 평가를 위한 개선 제안, 채점자가 제기할 가치가 있는 문제를 식별한 경우에만 표시됩니다.</p>
+<p><strong>전지:</strong></p>
+<ul>
+<li><code>expectations[]</code>: 증거를 바탕으로 등급화된 기대치</li>
+<li><code>summary</code>: 합격/불합격 횟수 집계</li>
+<li><code>execution_metrics</code>: 도구 사용 및 출력 크기(실행자의metrics.json에서)</li>
+<li><code>timing</code>: 벽시계 타이밍(timing.json에서)</li>
+<li><code>claims</code>: 출력물에서 클레임 추출 및 검증</li>
+<li><code>user_notes_summary</code>: 실행자가 플래그한 문제</li>
+<li><code>eval_feedback</code>: (선택 사항) 평가를 위한 개선 제안, 채점자가 제기할 가치가 있는 문제를 식별한 경우에만 표시됩니다.</li>
+</ul>
 <hr />
 <h2 id="json_3">메트릭.json<a class="headerlink" href="#json_3" title="Permanent link">&para;</a></h2>
 <p>실행자 에이전트의 출력입니다. <code>&lt;run-dir&gt;/outputs/metrics.json</code>에 위치합니다.</p>
@@ -2230,14 +2234,16 @@
 </span><span id="__span-2-15"><a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="w">  </span><span class="nt">&quot;transcript_chars&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">3200</span>
 </span><span id="__span-2-16"><a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="p">}</span>
 </span></code></pre></div>
-<p><strong>전지:</strong>
-- <code>tool_calls</code>: 공구 종류별 개수
-- <code>total_tool_calls</code> : 모든 툴 호출의 합
-- <code>total_steps</code>: 주요 실행 단계 수
-- <code>files_created</code>: 생성된 출력 파일 목록
-- <code>errors_encountered</code>: 실행 중 발생한 오류 개수
-- <code>output_chars</code>: 출력 파일의 총 문자 수
-- <code>transcript_chars</code> : 성적 증명서의 글자 수</p>
+<p><strong>전지:</strong></p>
+<ul>
+<li><code>tool_calls</code>: 공구 종류별 개수</li>
+<li><code>total_tool_calls</code> : 모든 툴 호출의 합</li>
+<li><code>total_steps</code>: 주요 실행 단계 수</li>
+<li><code>files_created</code>: 생성된 출력 파일 목록</li>
+<li><code>errors_encountered</code>: 실행 중 발생한 오류 개수</li>
+<li><code>output_chars</code>: 출력 파일의 총 문자 수</li>
+<li><code>transcript_chars</code> : 성적 증명서의 글자 수</li>
+</ul>
 <hr />
 <h2 id="json_4">타이밍.json<a class="headerlink" href="#json_4" title="Permanent link">&para;</a></h2>
 <p>달리기를 위한 벽시계 타이밍. <code>&lt;run-dir&gt;/timing.json</code>에 위치합니다.</p>
@@ -2321,24 +2327,34 @@
 </span><span id="__span-4-61"><a id="__codelineno-4-61" name="__codelineno-4-61" href="#__codelineno-4-61"></a><span class="w">  </span><span class="p">]</span>
 </span><span id="__span-4-62"><a id="__codelineno-4-62" name="__codelineno-4-62" href="#__codelineno-4-62"></a><span class="p">}</span>
 </span></code></pre></div>
-<p><strong>전지:</strong>
-- <code>metadata</code>: 벤치마크 실행에 대한 정보
-- <code>skill_name</code> : 스킬 이름
-- <code>timestamp</code>: 벤치마크가 실행된 시점
-- <code>evals_run</code>: 평가자 이름 또는 ID 목록
-- <code>runs_per_configuration</code>: 구성당 실행 횟수(예: 3)
-- <code>runs[]</code> : 개별 실행 결과
-- <code>eval_id</code>: 숫자 평가 식별자
-- <code>eval_name</code>: 사람이 읽을 수 있는 평가 이름(뷰어에서 섹션 헤더로 사용됨)
-- <code>configuration</code>: <code>"with_skill"</code> 또는 <code>"without_skill"</code>이어야 합니다(시청자는 그룹화 및 색상 코딩을 위해 이 정확한 문자열을
-  사용합니다).
-- <code>run_number</code>: 정수 실행 번호(1, 2, 3...)
-- <code>result</code>: <code>pass_rate</code>, <code>passed</code>, <code>total</code>, <code>time_seconds</code>, <code>tokens</code>, <code>errors</code>이 포함된 중첩 개체
-- <code>run_summary</code>: 구성별 통계 집계
-- <code>with_skill</code> / <code>without_skill</code>: 각각 <code>mean</code> 및 <code>stddev</code> 필드가 있는 <code>pass_rate</code>, <code>time_seconds</code>,
-  <code>tokens</code> 개체를 포함합니다.
-- <code>delta</code>: <code>"+0.50"</code>, <code>"+13.0"</code>, <code>"+1700"</code>과 같은 차이점 문자열
-- <code>notes</code>: 분석기의 자유형 관찰</p>
+<p><strong>전지:</strong></p>
+<ul>
+<li><code>metadata</code>: 벤치마크 실행에 대한 정보</li>
+<li><code>skill_name</code> : 스킬 이름</li>
+<li><code>timestamp</code>: 벤치마크가 실행된 시점</li>
+<li><code>evals_run</code>: 평가자 이름 또는 ID 목록</li>
+<li><code>runs_per_configuration</code>: 구성당 실행 횟수(예: 3)</li>
+<li><code>runs[]</code> : 개별 실행 결과</li>
+<li><code>eval_id</code>: 숫자 평가 식별자</li>
+<li><code>eval_name</code>: 사람이 읽을 수 있는 평가 이름(뷰어에서 섹션 헤더로 사용됨)</li>
+<li>
+<p><code>configuration</code>: <code>"with_skill"</code> 또는 <code>"without_skill"</code>이어야 합니다(시청자는 그룹화 및 색상 코딩을 위해 이 정확한 문자열을
+  사용합니다).</p>
+</li>
+<li>
+<p><code>run_number</code>: 정수 실행 번호(1, 2, 3...)</p>
+</li>
+<li><code>result</code>: <code>pass_rate</code>, <code>passed</code>, <code>total</code>, <code>time_seconds</code>, <code>tokens</code>, <code>errors</code>이 포함된 중첩 개체</li>
+<li><code>run_summary</code>: 구성별 통계 집계</li>
+<li>
+<p><code>with_skill</code> / <code>without_skill</code>: 각각 <code>mean</code> 및 <code>stddev</code> 필드가 있는 <code>pass_rate</code>, <code>time_seconds</code>,
+  <code>tokens</code> 개체를 포함합니다.</p>
+</li>
+<li>
+<p><code>delta</code>: <code>"+0.50"</code>, <code>"+13.0"</code>, <code>"+1700"</code>과 같은 차이점 문자열</p>
+</li>
+<li><code>notes</code>: 분석기의 자유형 관찰</li>
+</ul>
 <p><strong>중요:</strong> 뷰어는 이러한 필드 이름을 정확하게 읽습니다. <code>configuration</code> 대신 <code>config</code>을 사용하거나 <code>result</code> 아래에 중첩되는 대신 실행의 최상위
 수준에 <code>pass_rate</code>을 배치하면 뷰어에 빈/0 값이 표시됩니다. benchmark.json을 수동으로 생성할 때는 항상 이 스키마를 참조하세요.</p>
 <hr />

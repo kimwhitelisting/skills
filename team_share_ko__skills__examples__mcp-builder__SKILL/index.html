@@ -2613,10 +2613,14 @@
 <h2 id="_1">문서 정보<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>이름</strong>: <code>mcp-builder</code></li>
-<li><strong>설명</strong>: 잘 설계된 도구를 통해 LLM이 외부 서비스와 상호 작용할 수 있도록 하는 고품질 MCP(모델 컨텍스트 프로토콜) 서버를 생성하기 위한 가이드입니다.
+<li>
+<p><strong>설명</strong>: 잘 설계된 도구를 통해 LLM이 외부 서비스와 상호 작용할 수 있도록 하는 고품질 MCP(모델 컨텍스트 프로토콜) 서버를 생성하기 위한 가이드입니다.
           Python(FastMCP) 또는 Node/TypeScript(MCP SDK)에서 외부 API 또는 서비스를 통합하기 위해 MCP 서버를 구축할 때
-          사용합니다.</li>
-<li><strong>라이선스</strong>: -</li>
+          사용합니다.</p>
+</li>
+<li>
+<p><strong>라이선스</strong>: -</p>
+</li>
 </ul>
 <h2 id="_2">개요<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <p>잘 설계된 도구를 통해 LLM이 외부 서비스와 상호 작용할 수 있도록 하는 MCP(모델 컨텍스트 프로토콜) 서버를 만듭니다. MCP 서버의 품질은 LLM이 실제 작업을 얼마나
@@ -2644,34 +2648,54 @@
 <p>관련 페이지를 찾으려면 사이트맵으로 시작하세요: <code>https://modelcontextprotocol.io/sitemap.xml</code></p>
 <p>그런 다음 마크다운 형식을 위해 <code>.md</code> 접미사가 있는 특정 페이지를 가져옵니다(예:
 <code>https://modelcontextprotocol.io/specification/draft.md</code>).</p>
-<p>검토할 주요 페이지:
-- 사양 개요 및 아키텍처
-- 전송 메커니즘(스트리밍 가능한 HTTP, stdio)
-- 도구, 리소스 및 프롬프트 정의</p>
+<p>검토할 주요 페이지:</p>
+<ul>
+<li>사양 개요 및 아키텍처</li>
+<li>전송 메커니즘(스트리밍 가능한 HTTP, stdio)</li>
+<li>도구, 리소스 및 프롬프트 정의</li>
+</ul>
 <h4 id="13">1.3 연구 프레임워크 문서<a class="headerlink" href="#13" title="Permanent link">&para;</a></h4>
-<p><strong>권장 스택:</strong>
-- <strong>언어</strong>: TypeScript(고품질 SDK 지원 및 MCPB와 같은 다양한 실행 환경에서의 우수한 호환성. Plus AI 모델은 TypeScript 코드 생성에
-  능숙하여 광범위한 사용, 정적 타이핑 및 우수한 Linting 도구의 이점을 활용함)
-- <strong>전송</strong>: 상태 비저장 JSON을 사용하여 원격 서버를 위한 스트리밍 가능한 HTTP(상태 저장 세션 및 스트리밍 응답과 달리 확장 및 유지 관리가 더 간단함) 로컬
+<p><strong>권장 스택:</strong></p>
+<ul>
+<li>
+<p><strong>언어</strong>: TypeScript(고품질 SDK 지원 및 MCPB와 같은 다양한 실행 환경에서의 우수한 호환성. Plus AI 모델은 TypeScript 코드 생성에
+  능숙하여 광범위한 사용, 정적 타이핑 및 우수한 Linting 도구의 이점을 활용함)</p>
+</li>
+<li>
+<p><strong>전송</strong>: 상태 비저장 JSON을 사용하여 원격 서버를 위한 스트리밍 가능한 HTTP(상태 저장 세션 및 스트리밍 응답과 달리 확장 및 유지 관리가 더 간단함) 로컬
   서버용 stdio.</p>
+</li>
+</ul>
 <p><strong>프레임워크 문서 로드:</strong></p>
 <ul>
 <li><strong>MCP 모범 사례</strong>: <a href="../team_share_ko__skills__examples__mcp-builder__reference__mcp_best_practices/">📋 View Best
   Practices</a> -
   ​​핵심 지침</li>
 </ul>
-<p><strong>TypeScript의 경우(권장):</strong>
-- <strong>TypeScript SDK</strong>: WebFetch를 사용하여
-  <code>https://raw.githubusercontent.com/modelcontextprotocol/typescript-sdk/main/README.md</code> 로드
-- <a href="../team_share_ko__skills__examples__mcp-builder__reference__node_mcp_server/">⚡ TypeScript
+<p><strong>TypeScript의 경우(권장):</strong></p>
+<ul>
+<li>
+<p><strong>TypeScript SDK</strong>: WebFetch를 사용하여
+  <code>https://raw.githubusercontent.com/modelcontextprotocol/typescript-sdk/main/README.md</code> 로드</p>
+</li>
+<li>
+<p><a href="../team_share_ko__skills__examples__mcp-builder__reference__node_mcp_server/">⚡ TypeScript
   Guide</a> -
   ​​TypeScript 패턴 및 예제</p>
-<p><strong>파이썬의 경우:</strong>
-- <strong>Python SDK</strong>: WebFetch를 사용하여
-  <code>https://raw.githubusercontent.com/modelcontextprotocol/python-sdk/main/README.md</code> 로드
-- <a href="../team_share_ko__skills__examples__mcp-builder__reference__python_mcp_server/">🐍 Python
+</li>
+</ul>
+<p><strong>파이썬의 경우:</strong></p>
+<ul>
+<li>
+<p><strong>Python SDK</strong>: WebFetch를 사용하여
+  <code>https://raw.githubusercontent.com/modelcontextprotocol/python-sdk/main/README.md</code> 로드</p>
+</li>
+<li>
+<p><a href="../team_share_ko__skills__examples__mcp-builder__reference__python_mcp_server/">🐍 Python
   Guide</a> -
   ​​Python 패턴 및 예제</p>
+</li>
+</ul>
 <h4 id="14">1.4 구현 계획<a class="headerlink" href="#14" title="Permanent link">&para;</a></h4>
 <p><strong>API 이해:</strong>
 서비스의 API 문서를 검토하여 주요 엔드포인트, 인증 요구 사항 및 데이터 모델을 식별하세요. 필요에 따라 웹 검색과 WebFetch를 사용하세요.</p>
@@ -2680,58 +2704,82 @@
 <hr />
 <h3 id="2">2단계: 구현<a class="headerlink" href="#2" title="Permanent link">&para;</a></h3>
 <h4 id="21">2.1 프로젝트 구조 설정<a class="headerlink" href="#21" title="Permanent link">&para;</a></h4>
-<p>프로젝트 설정에 대한 언어별 가이드를 참조하세요.
-- <a href="../team_share_ko__skills__examples__mcp-builder__reference__node_mcp_server/">⚡ TypeScript
+<p>프로젝트 설정에 대한 언어별 가이드를 참조하세요.</p>
+<ul>
+<li>
+<p><a href="../team_share_ko__skills__examples__mcp-builder__reference__node_mcp_server/">⚡ TypeScript
   Guide</a> - ​​프로젝트
-  구조, package.json, tsconfig.json
-- <a href="../team_share_ko__skills__examples__mcp-builder__reference__python_mcp_server/">🐍 Python
+  구조, package.json, tsconfig.json</p>
+</li>
+<li>
+<p><a href="../team_share_ko__skills__examples__mcp-builder__reference__python_mcp_server/">🐍 Python
   Guide</a> - ​​모듈
   구성, ​​종속성</p>
+</li>
+</ul>
 <h4 id="22">2.2 핵심 인프라 구현<a class="headerlink" href="#22" title="Permanent link">&para;</a></h4>
-<p>공유 유틸리티 만들기:
-- 인증이 가능한 API 클라이언트
-- 오류 처리 도우미
-- 응답 형식(JSON/Markdown)
-- 페이지 매김 지원</p>
+<p>공유 유틸리티 만들기:</p>
+<ul>
+<li>인증이 가능한 API 클라이언트</li>
+<li>오류 처리 도우미</li>
+<li>응답 형식(JSON/Markdown)</li>
+<li>페이지 매김 지원</li>
+</ul>
 <h4 id="23">2.3 도구 구현<a class="headerlink" href="#23" title="Permanent link">&para;</a></h4>
 <p>각 도구에 대해 다음을 수행합니다.</p>
-<p><strong>입력 스키마:</strong>
-- Zod(TypeScript) 또는 Pydantic(Python)을 사용하세요.
-- 제약 조건과 명확한 설명을 포함합니다.
-- 필드 설명에 예시 추가</p>
-<p><strong>출력 스키마:</strong>
-- 구조화된 데이터의 경우 가능한 경우 <code>outputSchema</code>을 정의합니다.
-- 도구 응답에 <code>structuredContent</code> 사용(TypeScript SDK 기능)
-- 고객이 도구 출력을 이해하고 처리하도록 돕습니다.</p>
-<p><strong>도구 설명:</strong>
-- 기능에 대한 간결한 요약
-- 매개변수 설명
-- 반환 유형 스키마</p>
-<p><strong>구현:</strong>
-- I/O 작업 비동기/대기
-- 조치 가능한 메시지를 통한 적절한 오류 처리
-- 해당되는 경우 페이지 매김 지원
-- 최신 SDK를 사용할 때 텍스트 콘텐츠와 구조화된 데이터를 모두 반환합니다.</p>
-<p><strong>주석:</strong>
-- <code>readOnlyHint</code>: 참/거짓
-- <code>destructiveHint</code>: 참/거짓
-- <code>idempotentHint</code>: 참/거짓
-- <code>openWorldHint</code>: 참/거짓</p>
+<p><strong>입력 스키마:</strong></p>
+<ul>
+<li>Zod(TypeScript) 또는 Pydantic(Python)을 사용하세요.</li>
+<li>제약 조건과 명확한 설명을 포함합니다.</li>
+<li>필드 설명에 예시 추가</li>
+</ul>
+<p><strong>출력 스키마:</strong></p>
+<ul>
+<li>구조화된 데이터의 경우 가능한 경우 <code>outputSchema</code>을 정의합니다.</li>
+<li>도구 응답에 <code>structuredContent</code> 사용(TypeScript SDK 기능)</li>
+<li>고객이 도구 출력을 이해하고 처리하도록 돕습니다.</li>
+</ul>
+<p><strong>도구 설명:</strong></p>
+<ul>
+<li>기능에 대한 간결한 요약</li>
+<li>매개변수 설명</li>
+<li>반환 유형 스키마</li>
+</ul>
+<p><strong>구현:</strong></p>
+<ul>
+<li>I/O 작업 비동기/대기</li>
+<li>조치 가능한 메시지를 통한 적절한 오류 처리</li>
+<li>해당되는 경우 페이지 매김 지원</li>
+<li>최신 SDK를 사용할 때 텍스트 콘텐츠와 구조화된 데이터를 모두 반환합니다.</li>
+</ul>
+<p><strong>주석:</strong></p>
+<ul>
+<li><code>readOnlyHint</code>: 참/거짓</li>
+<li><code>destructiveHint</code>: 참/거짓</li>
+<li><code>idempotentHint</code>: 참/거짓</li>
+<li><code>openWorldHint</code>: 참/거짓</li>
+</ul>
 <hr />
 <h3 id="3">3단계: 검토 및 테스트<a class="headerlink" href="#3" title="Permanent link">&para;</a></h3>
 <h4 id="31">3.1 코드 품질<a class="headerlink" href="#31" title="Permanent link">&para;</a></h4>
-<p>후기 상품:
-- 중복코드 없음(DRY 원칙)
-- 일관된 오류 처리
-- 전체 유형 범위
-- 명확한 도구 설명</p>
+<p>후기 상품:</p>
+<ul>
+<li>중복코드 없음(DRY 원칙)</li>
+<li>일관된 오류 처리</li>
+<li>전체 유형 범위</li>
+<li>명확한 도구 설명</li>
+</ul>
 <h4 id="32">3.2 빌드 및 테스트<a class="headerlink" href="#32" title="Permanent link">&para;</a></h4>
-<p><strong>타입스크립트:</strong>
-- <code>npm run build</code>을 실행하여 컴파일을 확인합니다.
-- MCP Inspector로 테스트: <code>npx @modelcontextprotocol/inspector</code></p>
-<p><strong>파이썬:</strong>
-- 구문 확인: <code>python -m py_compile your_server.py</code>
-- MCP Inspector로 테스트</p>
+<p><strong>타입스크립트:</strong></p>
+<ul>
+<li><code>npm run build</code>을 실행하여 컴파일을 확인합니다.</li>
+<li>MCP Inspector로 테스트: <code>npx @modelcontextprotocol/inspector</code></li>
+</ul>
+<p><strong>파이썬:</strong></p>
+<ul>
+<li>구문 확인: <code>python -m py_compile your_server.py</code></li>
+<li>MCP Inspector로 테스트</li>
+</ul>
 <p>자세한 테스트 접근 방식과 품질 체크리스트는 언어별 가이드를 참조하세요.</p>
 <hr />
 <h3 id="4">4단계: 평가 생성<a class="headerlink" href="#4" title="Permanent link">&para;</a></h3>
@@ -2749,13 +2797,15 @@ Guide</a>을 로드하세요.</strong></p>
 <li><strong>답변 확인</strong>: 각 질문을 직접 풀어 답변을 확인하세요.</li>
 </ol>
 <h4 id="43">4.3 평가 요구 사항<a class="headerlink" href="#43" title="Permanent link">&para;</a></h4>
-<p>각 질문이 다음과 같은지 확인하세요.
-- <strong>독립적</strong>: 다른 질문에 종속되지 않음
-- <strong>읽기 전용</strong>: 비파괴 작업만 필요
-- <strong>복잡함</strong>: 여러 도구 호출 및 심층 탐색 필요
-- <strong>현실적</strong>: 인간이 관심을 가질 만한 실제 사용 사례를 기반으로 함
-- <strong>검증 가능</strong>: 문자열 비교를 통해 검증할 수 있는 단일하고 명확한 답변
-- <strong>안정적</strong>: 시간이 지나도 답변이 변경되지 않습니다.</p>
+<p>각 질문이 다음과 같은지 확인하세요.</p>
+<ul>
+<li><strong>독립적</strong>: 다른 질문에 종속되지 않음</li>
+<li><strong>읽기 전용</strong>: 비파괴 작업만 필요</li>
+<li><strong>복잡함</strong>: 여러 도구 호출 및 심층 탐색 필요</li>
+<li><strong>현실적</strong>: 인간이 관심을 가질 만한 실제 사용 사례를 기반으로 함</li>
+<li><strong>검증 가능</strong>: 문자열 비교를 통해 검증할 수 있는 단일하고 명확한 답변</li>
+<li><strong>안정적</strong>: 시간이 지나도 답변이 변경되지 않습니다.</li>
+</ul>
 <h4 id="44">4.4 출력 형식<a class="headerlink" href="#44" title="Permanent link">&para;</a></h4>
 <p>다음 구조로 XML 파일을 만듭니다.</p>
 <div class="language-xml highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">&lt;evaluation&gt;</span>
@@ -2772,12 +2822,18 @@ Guide</a>을 로드하세요.</strong></p>
 <p>개발 중에 필요에 따라 다음 리소스를 로드합니다.</p>
 <h3 id="mcp">핵심 MCP 문서(먼저 로드)<a class="headerlink" href="#mcp" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>MCP 프로토콜</strong>: <code>https://modelcontextprotocol.io/sitemap.xml</code>의 사이트맵으로 시작한 다음 <code>.md</code> 접미사가 있는 특정
-  페이지를 가져옵니다.</li>
-<li><a href="../team_share_ko__skills__examples__mcp-builder__reference__mcp_best_practices/">📋 MCP Best
+<li>
+<p><strong>MCP 프로토콜</strong>: <code>https://modelcontextprotocol.io/sitemap.xml</code>의 사이트맵으로 시작한 다음 <code>.md</code> 접미사가 있는 특정
+  페이지를 가져옵니다.</p>
+</li>
+<li>
+<p><a href="../team_share_ko__skills__examples__mcp-builder__reference__mcp_best_practices/">📋 MCP Best
   Practices</a> -
-  ​​다음을 포함한 범용 MCP 지침:</li>
-<li>서버 및 도구 명명 규칙</li>
+  ​​다음을 포함한 범용 MCP 지침:</p>
+</li>
+<li>
+<p>서버 및 도구 명명 규칙</p>
+</li>
 <li>응답 형식 지침(JSON vs Markdown)</li>
 <li>페이지 매김 모범 사례</li>
 <li>전송 선택(스트리밍 가능한 HTTP 대 stdio)</li>
@@ -2785,17 +2841,25 @@ Guide</a>을 로드하세요.</strong></p>
 </ul>
 <h3 id="sdk-12">SDK 설명서(1/2단계 중 로드)<a class="headerlink" href="#sdk-12" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Python SDK</strong>:
-  <code>https://raw.githubusercontent.com/modelcontextprotocol/python-sdk/main/README.md</code>에서 가져오기</li>
-<li><strong>TypeScript SDK</strong>:
-  <code>https://raw.githubusercontent.com/modelcontextprotocol/typescript-sdk/main/README.md</code>에서 가져오기</li>
+<li>
+<p><strong>Python SDK</strong>:
+  <code>https://raw.githubusercontent.com/modelcontextprotocol/python-sdk/main/README.md</code>에서 가져오기</p>
+</li>
+<li>
+<p><strong>TypeScript SDK</strong>:
+  <code>https://raw.githubusercontent.com/modelcontextprotocol/typescript-sdk/main/README.md</code>에서 가져오기</p>
+</li>
 </ul>
 <h3 id="2_1">언어별 구현 가이드(2단계 중 로드)<a class="headerlink" href="#2_1" title="Permanent link">&para;</a></h3>
 <ul>
-<li><a href="../team_share_ko__skills__examples__mcp-builder__reference__python_mcp_server/">🐍 Python Implementation
+<li>
+<p><a href="../team_share_ko__skills__examples__mcp-builder__reference__python_mcp_server/">🐍 Python Implementation
   Guide</a> - ​​다음을
-  포함하는 완전한 Python/FastMCP 가이드:</li>
-<li>서버 초기화 패턴</li>
+  포함하는 완전한 Python/FastMCP 가이드:</p>
+</li>
+<li>
+<p>서버 초기화 패턴</p>
+</li>
 <li>Pydantic 모델 예</li>
 <li><code>@mcp.tool</code>으로 도구 등록</li>
 <li>완전한 작업 예제</li>
@@ -2807,7 +2871,9 @@ Guide</a>을 로드하세요.</strong></p>
   Guide</a> - ​​다음을
   포함하는 완전한 TypeScript 가이드:</p>
 </li>
-<li>프로젝트 구조</li>
+<li>
+<p>프로젝트 구조</p>
+</li>
 <li>Zod 스키마 패턴</li>
 <li><code>server.registerTool</code>으로 도구 등록</li>
 <li>완전한 작업 예제</li>
@@ -2815,9 +2881,13 @@ Guide</a>을 로드하세요.</strong></p>
 </ul>
 <h3 id="4_1">평가 가이드(4단계 중 로드)<a class="headerlink" href="#4_1" title="Permanent link">&para;</a></h3>
 <ul>
-<li><a href="../team_share_ko__skills__examples__mcp-builder__reference__evaluation/">✅ Evaluation Guide</a> -
-  ​​다음을 포함하는 완전한 평가 생성 가이드:</li>
-<li>질문 작성 지침</li>
+<li>
+<p><a href="../team_share_ko__skills__examples__mcp-builder__reference__evaluation/">✅ Evaluation Guide</a> -
+  ​​다음을 포함하는 완전한 평가 생성 가이드:</p>
+</li>
+<li>
+<p>질문 작성 지침</p>
+</li>
 <li>답변 검증 전략</li>
 <li>XML ​​형식 사양</li>
 <li>예시 질문과 답변</li>

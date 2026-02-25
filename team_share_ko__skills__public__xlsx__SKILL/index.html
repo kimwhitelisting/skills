@@ -2879,13 +2879,17 @@
 <h2 id="_1">문서 정보<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>이름</strong>: <code>xlsx</code></li>
-<li><strong>설명</strong>: 스프레드시트 파일이 기본 입력 또는 출력일 때마다 이 기술을 사용하십시오. 이는 사용자가 기존 .xlsx, .xlsm, .csv 또는 .tsv 파일 열기,
+<li>
+<p><strong>설명</strong>: 스프레드시트 파일이 기본 입력 또는 출력일 때마다 이 기술을 사용하십시오. 이는 사용자가 기존 .xlsx, .xlsm, .csv 또는 .tsv 파일 열기,
           읽기, 편집 또는 수정(예: 열 추가, 수식 계산, 서식 지정, 차트 작성, 지저분한 데이터 정리), 처음부터 또는 다른 데이터 소스에서 새 스프레드시트 생성
           또는 표 형식 파일 형식 간 변환을 원하는 모든 작업을 의미합니다. 특히 사용자가 스프레드시트 파일을 다음과 같이 참조할 때 트리거됩니다. 이름이나 경로를
           아무렇지도 않게(예: "내 다운로드의 xlsx") 처리하거나 여기에서 생성하기를 원합니다. 또한 지저분한 표 형식 데이터 파일(잘못된 행, 잘못 배치된 헤더,
           정크 데이터)을 정리하거나 적절한 스프레드시트로 재구성하기 위해 트리거됩니다. 기본 결과물이 Word 문서, HTML 보고서, 독립 실행형 Python
-          스크립트, 데이터베이스 파이프라인인 경우에는 트리거하지 마세요. Google 시트 API 통합, 표 형식 데이터가 포함된 경우에도 마찬가지입니다.</li>
-<li><strong>라이선스</strong>: 소유권. LICENSE.txt에 전체 약관이 있습니다.</li>
+          스크립트, 데이터베이스 파이프라인인 경우에는 트리거하지 마세요. Google 시트 API 통합, 표 형식 데이터가 포함된 경우에도 마찬가지입니다.</p>
+</li>
+<li>
+<p><strong>라이선스</strong>: 소유권. LICENSE.txt에 전체 약관이 있습니다.</p>
+</li>
 </ul>
 <h2 id="excel">모든 Excel 파일<a class="headerlink" href="#excel" title="Permanent link">&para;</a></h2>
 <h3 id="_2">전문가용 글꼴<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
@@ -3004,10 +3008,14 @@
 <li><strong>만들기/로드</strong>: 새 통합 문서를 만들거나 기존 파일을 로드합니다.</li>
 <li><strong>수정</strong>: 데이터, 수식, 서식을 추가/편집합니다.</li>
 <li><strong>저장</strong>: 파일에 쓰기</li>
-<li><strong>수식 다시 계산(수식을 사용하는 경우 필수)</strong>: scripts/recalc.py 스크립트를 사용하세요.
+<li>
+<p><strong>수식 다시 계산(수식을 사용하는 경우 필수)</strong>: scripts/recalc.py 스크립트를 사용하세요.
    <div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>python<span class="w"> </span>scripts/recalc.py<span class="w"> </span>output.xlsx
-</span></code></pre></div></li>
-<li><strong>오류 확인 및 수정</strong>:</li>
+</span></code></pre></div></p>
+</li>
+<li>
+<p><strong>오류 확인 및 수정</strong>:</p>
+</li>
 <li>스크립트는 오류 세부정보와 함께 JSON을 반환합니다.</li>
 <li><code>status</code>이 <code>errors_found</code>인 경우 <code>error_summary</code>에서 특정 오류 유형 및 위치를 확인하세요.</li>
 <li>식별된 오류를 수정하고 다시 계산합니다.</li>
@@ -3075,12 +3083,14 @@
 <p>예:
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>python<span class="w"> </span>scripts/recalc.py<span class="w"> </span>output.xlsx<span class="w"> </span><span class="m">30</span>
 </span></code></pre></div></p>
-<p>스크립트:
-- 첫 실행 시 자동으로 LibreOffice 매크로 설정
-- 모든 시트의 모든 수식을 다시 계산합니다.
-- 모든 셀에서 Excel 오류(#REF!, #DIV/0! 등)를 검색합니다.
-- 자세한 오류 위치 및 횟수와 함께 JSON을 반환합니다.
-- Linux와 macOS 모두에서 작동</p>
+<p>스크립트:</p>
+<ul>
+<li>첫 실행 시 자동으로 LibreOffice 매크로 설정</li>
+<li>모든 시트의 모든 수식을 다시 계산합니다.</li>
+<li>모든 셀에서 Excel 오류(#REF!, #DIV/0! 등)를 검색합니다.</li>
+<li>자세한 오류 위치 및 횟수와 함께 JSON을 반환합니다.</li>
+<li>Linux와 macOS 모두에서 작동</li>
+</ul>
 <h2 id="_21">공식 확인 체크리스트<a class="headerlink" href="#_21" title="Permanent link">&para;</a></h2>
 <p>수식이 올바르게 작동하는지 확인하는 빠른 검사:</p>
 <h3 id="_22">필수 확인<a class="headerlink" href="#_22" title="Permanent link">&para;</a></h3>
@@ -3139,14 +3149,18 @@
 <li>날짜를 적절하게 처리하세요: <code>pd.read_excel('file.xlsx', parse_dates=['date_column'])</code></li>
 </ul>
 <h2 id="_28">코드 스타일 지침<a class="headerlink" href="#_28" title="Permanent link">&para;</a></h2>
-<p><strong>중요</strong>: Excel 작업에 대한 Python 코드를 생성하는 경우:
-- 불필요한 주석 없이 최소한의 간결한 Python 코드를 작성하세요.
-- 장황한 변수 이름과 중복 작업을 피하세요.
-- 불필요한 인쇄문을 피하세요.</p>
-<p><strong>Excel 파일 자체의 경우</strong>:
-- 복잡한 수식이나 중요한 가정이 포함된 셀에 설명 추가
-- 하드코딩된 값에 대한 문서 데이터 소스
-- 주요 계산 및 모델 섹션에 대한 메모를 포함합니다.</p>
+<p><strong>중요</strong>: Excel 작업에 대한 Python 코드를 생성하는 경우:</p>
+<ul>
+<li>불필요한 주석 없이 최소한의 간결한 Python 코드를 작성하세요.</li>
+<li>장황한 변수 이름과 중복 작업을 피하세요.</li>
+<li>불필요한 인쇄문을 피하세요.</li>
+</ul>
+<p><strong>Excel 파일 자체의 경우</strong>:</p>
+<ul>
+<li>복잡한 수식이나 중요한 가정이 포함된 셀에 설명 추가</li>
+<li>하드코딩된 값에 대한 문서 데이터 소스</li>
+<li>주요 계산 및 모델 섹션에 대한 메모를 포함합니다.</li>
+</ul>
 
 
 
