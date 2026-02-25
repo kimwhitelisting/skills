@@ -45,7 +45,6 @@
 ### 0) 도구 버전 고정(권장)
 
 ```powershell
-cd C:\dev\my-docs
 pip install -r requirements-docs.txt
 ```
 
@@ -54,20 +53,18 @@ pip install -r requirements-docs.txt
 ### 1) 원본 동기화 + 정규화
 
 ```powershell
-cd C:\dev\my-docs
 python scripts/sync_team_share_docs.py
 ```
 
 실행 내용:
 
-1. `one_a_day/docs/skills/team_share_ko` 원본을 평탄 복사
+1. 소스 문서 폴더를 평탄 복사
 2. 스킬 메타(frontmatter) -> `문서 정보` 블록 변환
 3. H1/링크/개행/BOM 일괄 정규화
 
 ### 2) 품질 검증
 
 ```powershell
-cd C:\dev\my-docs
 python scripts/validate_docs_quality.py
 ```
 
@@ -80,7 +77,6 @@ OK: all markdown quality checks passed
 ### 3) 사이트 빌드 검증
 
 ```powershell
-cd C:\dev\my-docs
 mkdocs build
 ```
 
