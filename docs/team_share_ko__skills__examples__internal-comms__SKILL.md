@@ -2,6 +2,7 @@
 
 ## 이 스킬을 언제 사용해야 할까요?
 내부 커뮤니케이션을 작성하려면 다음 용도로 이 기술을 사용하세요.
+
 - 3P 업데이트(진행상황, 계획, 문제점)
 - 회사 뉴스레터
 - FAQ 답변
@@ -20,6 +21,7 @@
     - `examples/company-newsletter.md` - For company-wide newsletters
     - `examples/faq-answers.md` - For answering frequently asked questions
     - `examples/general-comms.md` - For anything else that doesn't explicitly match one of the above
+
 3. 형식 지정, 어조 및 콘텐츠 수집에 대한 **특정 지침**을 따르세요.
 
 커뮤니케이션 유형이 기존 지침과 일치하지 않는 경우 원하는 형식에 대한 설명이나 추가 맥락을 요청하세요.

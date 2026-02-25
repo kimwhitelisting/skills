@@ -19,6 +19,7 @@ pres.writeFile({ fileName: "Presentation.pptx" });
 ## 레이아웃 크기
 
 슬라이드 크기(좌표(인치)):
+
 - `LAYOUT_16x9`: 10" × 5.625"(기본값)
 - `LAYOUT_16x10`: 10" × 6.25"
 - `LAYOUT_4x3`: 10" × 7.5"
@@ -240,6 +241,7 @@ slide.addImage({
 설치: `npm install -g react-icons react react-dom sharp`
 
 반응 아이콘의 인기 있는 아이콘 세트:
+
 - `react-icons/fa` - ​​글꼴이 훌륭합니다.
 - `react-icons/md` - ​​머티리얼 디자인
 - `react-icons/hi` - ​​히어로아이콘
@@ -341,6 +343,7 @@ slide.addChart(pres.charts.BAR, chartData, {
 ```
 
 **주요 스타일 옵션:**
+
 - `chartColors: [...]` - ​​시리즈/세그먼트의 16진수 색상
 - `chartArea: { fill, border, roundedCorners }` - ​​차트 배경
 - `catGridLine/valGridLine: { color, style, size }` - ​​그리드 선(숨기려면 `style: "none"`)

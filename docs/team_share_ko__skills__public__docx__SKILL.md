@@ -8,6 +8,7 @@
           콘텐츠를 추출 또는 재구성할 때, 문서에 이미지를 삽입하거나 바꿀 때, Word 파일에서 찾기 및 바꾸기를 수행할 때, 추적된 작업을 수행할 때 사용합니다.
           변경 또는 의견을 작성하거나 콘텐츠를 세련된 Word 문서로 변환합니다. 사용자가 '보고서', '메모', '편지', '템플릿' 또는 Word 또는 .docx
           파일과 유사한 결과물을 요청하는 경우 PDF, 스프레드시트, Google Docs 또는 문서 생성과 관련 없는 일반 코딩 작업에는 이 기술을 사용하지 마세요.
+
 - **라이선스**: -
 
 
@@ -220,6 +221,7 @@ columnWidths: [7000, 2360]  // Must sum to table width
 ```
 
 **너비 규칙:**
+
 - **항상 `WidthType.DXA`** 사용 — 절대 `WidthType.PERCENTAGE` 사용 안 함(Google Docs와 호환되지 않음)
 - 테이블 너비는 `columnWidths`의 합과 같아야 합니다.
 - `width` 셀은 해당 `columnWidth`과 일치해야 합니다.
@@ -386,6 +388,7 @@ sections: [{
 - **페이지 크기를 명시적으로 설정** - docx-js의 기본값은 A4입니다. 미국 문서에는 US Letter(12240 x 15840 DXA)를 사용합니다.
 - **가로: 세로 크기 전달** - docx-js는 내부적으로 너비/높이를 바꿉니다. 짧은 가장자리를 `width`으로, 긴 가장자리를 `height`로 전달하고
   `orientation: PageOrientation.LANDSCAPE`을 설정합니다.
+
 - **`\n`을 사용하지 마세요** - 별도의 단락 요소를 사용하세요.
 - **유니코드 글머리 기호를 사용하지 마세요** - 번호 매기기 구성에 `LevelFormat.BULLET`을 사용하세요.
 - **PageBreak는 단락에 있어야 합니다** - 독립 실행형은 잘못된 XML을 생성합니다.
@@ -395,10 +398,12 @@ sections: [{
 - **테이블 너비 = 열 너비의 합계** - DXA의 경우 정확하게 합산되었는지 확인하세요.
 - **항상 셀 여백을 추가하세요** - 읽을 수 있는 패딩에는 `margins: { top: 80, bottom: 80, left: 120, right: 120 }`을
   사용하세요.
+
 - **`ShadingType.CLEAR`** 사용 - 테이블 음영에는 절대로 SOLID를 사용하지 마세요.
 - **테이블을 구분선/규칙으로 사용하지 마세요** - 셀은 최소 높이를 가지며 빈 상자(머리글/바닥글 포함)로 렌더링됩니다. 대신 단락에 `border: { bottom:
   { style: BorderStyle.SINGLE, size: 6, color: "2E75B6", space: 1 } }`을 사용하세요. 2열 바닥글의 경우 테이블이
   아닌 탭 정지(탭 정지 섹션 참조)를 사용하세요.
+
 - **TOC에는 HeadingLevel만 필요합니다** - 제목 단락에는 사용자 정의 스타일이 없습니다.
 - **기본 제공 스타일 재정의** - 정확한 ID 사용: "제목1", "제목2" 등
 - **`outlineLevel`** 포함 - TOC에 필수(H1의 경우 0, H2의 경우 1 등)
@@ -452,16 +457,19 @@ python scripts/office/pack.py unpacked/ output.docx --original document.docx
 자동 복구로 유효성을 검사하고, XML을 압축하고, DOCX를 생성합니다. 건너뛰려면 `--validate false`을 사용하세요.
 
 **자동 복구로 해결되는 문제:**
+
 - `durableId` >= 0x7FFFFFFF (유효한 ID를 재생성함)
 - 공백이 있는 `<w:t>`에 `xml:space="preserve"`이 누락되었습니다.
 
 **자동 복구로 문제가 해결되지 않음:**
+
 - 잘못된 XML, 잘못된 요소 중첩, 관계 누락, 스키마 위반
 
 ### 일반적인 함정
 
 - **전체 `<w:r>` 요소 교체**: 추적된 변경 사항을 추가할 때 전체 `<w:r>...</w:r>` 블록을 형제인 `<w:del>...<w:ins>...`으로
   교체합니다. 실행 내에 추적된 변경 태그를 삽입하지 마세요.
+
 - **`<w:rPr>` 형식 유지**: 원본 실행의 `<w:rPr>` 블록을 추적된 변경 실행에 복사하여 굵게, 글꼴 크기 등을 유지합니다.
 
 ---
@@ -472,6 +480,7 @@ python scripts/office/pack.py unpacked/ output.docx --original document.docx
 
 - **`<w:pPr>`**의 요소 순서: `<w:pStyle>`, `<w:numPr>`, `<w:spacing>`, `<w:ind>`, `<w:jc>`, `<w:rPr>`
   마지막
+
 - **공백**: 선행/후행 공백을 사용하여 `xml:space="preserve"`을 `<w:t>`에 추가합니다.
 - **RSID**: 8자리 16진수여야 합니다(예: `00AB1234`).
 
@@ -575,10 +584,12 @@ python scripts/office/pack.py unpacked/ output.docx --original document.docx
 ```xml
 <Relationship Id="rId5" Type=".../image" Target="media/image1.png"/>
 ```
+
 3. `[Content_Types].xml`에 콘텐츠 유형을 추가합니다.
 ```xml
 <Default Extension="png" ContentType="image/png"/>
 ```
+
 4. document.xml의 참조:
 ```xml
 <w:drawing>

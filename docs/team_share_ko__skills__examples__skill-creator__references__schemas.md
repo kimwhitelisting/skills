@@ -39,6 +39,7 @@
 ```
 
 **전지:**
+
 - `started_at`: 개선이 시작된 시점의 ISO 타임스탬프
 - `skill_name` : 강화 중인 스킬 이름
 - `current_best`: 최고 성능의 버전 식별자
@@ -117,6 +118,7 @@
 ```
 
 **전지:**
+
 - `expectations[]`: 증거를 바탕으로 등급화된 기대치
 - `summary`: 합격/불합격 횟수 집계
 - `execution_metrics`: 도구 사용 및 출력 크기(실행자의metrics.json에서)
@@ -151,6 +153,7 @@
 ```
 
 **전지:**
+
 - `tool_calls`: 공구 종류별 개수
 - `total_tool_calls` : 모든 툴 호출의 합
 - `total_steps`: 주요 실행 단계 수
@@ -254,6 +257,7 @@
 ```
 
 **전지:**
+
 - `metadata`: 벤치마크 실행에 대한 정보
 - `skill_name` : 스킬 이름
 - `timestamp`: 벤치마크가 실행된 시점
@@ -264,11 +268,13 @@
 - `eval_name`: 사람이 읽을 수 있는 평가 이름(뷰어에서 섹션 헤더로 사용됨)
 - `configuration`: `"with_skill"` 또는 `"without_skill"`이어야 합니다(시청자는 그룹화 및 색상 코딩을 위해 이 정확한 문자열을
   사용합니다).
+
 - `run_number`: 정수 실행 번호(1, 2, 3...)
 - `result`: `pass_rate`, `passed`, `total`, `time_seconds`, `tokens`, `errors`이 포함된 중첩 개체
 - `run_summary`: 구성별 통계 집계
 - `with_skill` / `without_skill`: 각각 `mean` 및 `stddev` 필드가 있는 `pass_rate`, `time_seconds`,
   `tokens` 개체를 포함합니다.
+
 - `delta`: `"+0.50"`, `"+13.0"`, `"+1700"`과 같은 차이점 문자열
 - `notes`: 분석기의 자유형 관찰
 

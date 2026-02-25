@@ -180,6 +180,7 @@
   다운로드의 xlsx\") 처리하거나 여기에서 생성하기를 원합니다. 또한 지저분한 표 형식 데이터 파일(잘못된 행, 잘못 배치된 헤더, 정크 데이터)을 정리하거나 적절한
   스프레드시트로 재구성하기 위해 트리거됩니다. 기본 결과물이 Word 문서, HTML 보고서, 독립 실행형 Python 스크립트, 데이터베이스 파이프라인인 경우에는
   트리거하지 마세요. Google 시트 API 통합, 표 형식 데이터가 포함된 경우에도 마찬가지입니다.
+
 - 문서:
   - `public/xlsx/LICENSE.txt`
   - [public/xlsx/SKILL.md](team_share_ko__skills__public__xlsx__SKILL.md)

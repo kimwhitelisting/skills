@@ -16,15 +16,18 @@
 ## MCP 타입스크립트 SDK
 
 공식 MCP TypeScript SDK는 다음을 제공합니다.
+
 - 서버 초기화를 위한 `McpServer` 클래스
 - 도구 등록을 위한 `registerTool` 방법
 - 런타임 입력 검증을 위한 Zod 스키마 통합
 - 유형이 안전한 도구 핸들러 구현
 
 **중요 - 최신 API만 사용하세요:**
+
 - **사용하세요**: `server.registerTool()`, `server.registerResource()`, `server.registerPrompt()`
 - **사용하지 마세요**: `server.tool()`, `server.setRequestHandler(ListToolsRequestSchema, ...)` 또는 수동
   핸들러 등록과 같이 더 이상 사용되지 않는 오래된 API
+
 - `register*` 메서드는 더 나은 유형 안전성과 자동 스키마 처리를 제공하며 권장되는 접근 방식입니다.
 
 자세한 내용은 참조의 MCP SDK 설명서를 참조하세요.
@@ -32,10 +35,12 @@
 ## 서버 명명 규칙
 
 Node/TypeScript MCP 서버는 다음 이름 지정 패턴을 따라야 합니다.
+
 - **형식**: `{service}-mcp-server`(하이픈 포함 소문자)
 - **예**: `github-mcp-server`, `jira-mcp-server`, `stripe-mcp-server`
 
 이름은 다음과 같아야 합니다.
+
 - 일반(특정 기능과 관련 없음)
 - 통합되는 서비스/API에 대한 설명
 - 업무 설명을 통해 쉽게 추론 가능
@@ -68,6 +73,7 @@ Node/TypeScript MCP 서버에 대해 다음 구조를 만듭니다.
 사용합니다.
 
 **명칭 충돌 방지**: 중복을 방지하기 위해 서비스 컨텍스트를 포함합니다.
+
 - "send_message" 대신 "slack_send_message"를 사용하세요.
 - "create_issue" 대신 "github_create_issue"를 사용하세요.
 - 그냥 "list_tasks" 대신 "asana_list_tasks"를 사용하세요.
@@ -75,6 +81,7 @@ Node/TypeScript MCP 서버에 대해 다음 구조를 만듭니다.
 ### 도구 구조
 
 도구는 다음 요구 사항에 따라 `registerTool` 메서드를 사용하여 등록됩니다.
+
 - 런타임 입력 검증 및 유형 안전성을 위해 Zod 스키마 사용
 - `description` 필드는 명시적으로 제공되어야 합니다. - JSDoc 주석은 자동으로 추출되지 않습니다.
 - `title`, `description`, `inputSchema`, `annotations`을 명시적으로 제공합니다.
@@ -308,6 +315,7 @@ const inputSchema = z.object({
 ```
 
 **마크다운 형식**:
+
 - 명확성을 위해 헤더, 목록, 서식을 사용하세요.
 - 타임스탬프를 사람이 읽을 수 있는 형식으로 변환
 - 괄호 안에 ID가 포함된 표시 이름 표시
@@ -315,6 +323,7 @@ const inputSchema = z.object({
 - 관련 정보를 논리적으로 그룹화
 
 **JSON 형식**:
+
 - 프로그래밍 방식 처리에 적합한 완전하고 구조화된 데이터를 반환합니다.
 - 사용 가능한 모든 필드와 메타데이터를 포함합니다.
 - 일관된 필드 이름과 유형을 사용하세요.
@@ -777,6 +786,7 @@ server.registerResourceList(async () => {
 ```
 
 **리소스와 도구를 사용하는 경우:**
+
 - **리소스**: 간단한 URI 기반 매개변수를 사용한 데이터 액세스용
 - **도구**: 검증 및 비즈니스 로직이 필요한 복잡한 작업용
 - **리소스**: 데이터가 상대적으로 정적이거나 템플릿 기반인 경우
@@ -821,6 +831,7 @@ await server.connect(transport);
 ```
 
 **교통수단 선택:**
+
 - **스트리밍 가능한 HTTP**: 웹 서비스, 원격 액세스, 다중 클라이언트
 - **stdio**: 명령줄 도구, 로컬 개발, 하위 프로세스 통합
 

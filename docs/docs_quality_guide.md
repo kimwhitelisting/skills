@@ -75,10 +75,13 @@ mkdocs build
 
 - `scripts/sync_team_share_docs.py`
   - 원본 복사 + 정규화 파이프라인 실행
+
 - `scripts/reformat_skill_meta_for_readability.py`
   - frontmatter 기반 메타 블록 생성
+
 - `scripts/normalize_docs_all.py`
   - H1 상단 고정, H1 1개 규칙, 링크/개행/BOM 정리
+
 - `scripts/validate_docs_quality.py`
   - 정적 품질 체크
 

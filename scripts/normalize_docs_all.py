@@ -14,6 +14,7 @@ MD_LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
 NAME_BULLET_RE = re.compile(r"-\s+\*\*이름\*\*:\s+`([^`]+)`")
 LIST_RE = re.compile(r"^(\s*(?:[-*+]|\d+\.)\s+)(.+)$")
 TXT_LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)]+\.txt)\)", re.IGNORECASE)
+TOP_LIST_RE = re.compile(r"^(?:[-*+]|\d+\.)\s+")
 
 
 def _to_virtual_path(flat_name: str) -> str:
@@ -220,6 +221,37 @@ def _wrap_prose(text: str, width: int = WRAP_WIDTH) -> str:
     return "\n".join(out)
 
 
+def _ensure_blank_line_before_top_lists(text: str) -> str:
+    lines = text.splitlines()
+    out: list[str] = []
+    in_fence = False
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("```"):
+            in_fence = not in_fence
+            out.append(line)
+            continue
+        if in_fence:
+            out.append(line)
+            continue
+
+        is_top_list = bool(TOP_LIST_RE.match(line))
+        if is_top_list and out:
+            prev = out[-1]
+            prev_stripped = prev.strip()
+            if (
+                prev_stripped
+                and not TOP_LIST_RE.match(prev)
+                and not prev_stripped.startswith("#")
+                and not prev_stripped.startswith(">")
+                and not prev_stripped.startswith("|")
+                and prev != "---"
+            ):
+                out.append("")
+        out.append(line)
+    return "\n".join(out)
+
+
 def main() -> None:
     files = sorted(DOCS_ROOT.glob("*.md"))
     existing = {p.name for p in files}
@@ -238,6 +270,7 @@ def main() -> None:
         text = _compact_index_table(text, path.name)
         text = _patch_known_anchor_issues(text, path.name)
         text = _wrap_prose(text, WRAP_WIDTH)
+        text = _ensure_blank_line_before_top_lists(text)
         text = "\n".join(line.rstrip() for line in text.splitlines())
         if not text.endswith("\n"):
             text += "\n"

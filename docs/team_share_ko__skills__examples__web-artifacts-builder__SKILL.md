@@ -6,10 +6,12 @@
 - **설명**: 최신 프런트엔드 웹 기술(React, Tailwind CSS, shadcn/ui)을 사용하여 정교한 다중 구성 요소 clude.ai HTML 아티팩트를
           생성하기 위한 도구 모음입니다. 단순한 단일 파일 HTML/JSX 아티팩트가 아닌 상태 관리, 라우팅 또는 shadcn/ui 구성 요소가 필요한 복잡한
           아티팩트에 사용합니다.
+
 - **라이선스**: -
 
 
 강력한 프런트엔드 clude.ai 아티팩트를 구축하려면 다음 단계를 따르세요.
+
 1. `scripts/init-artifact.sh`을 사용하여 프런트엔드 저장소를 초기화합니다.
 2. 생성된 코드를 편집하여 아티팩트 개발
 3. `scripts/bundle-artifact.sh`을 사용하여 모든 코드를 단일 HTML 파일로 묶습니다.
@@ -33,6 +35,7 @@ cd <project-name>
 ```
 
 그러면 다음을 사용하여 완전히 구성된 프로젝트가 생성됩니다.
+
 - ✅ React + TypeScript(Vite를 통해)
 - ✅ shadcn/ui 테마 시스템을 갖춘 Tailwind CSS 3.4.1
 - ✅ 경로 별칭(`@/`) 구성됨
@@ -58,6 +61,7 @@ bash scripts/bundle-artifact.sh
 **요구사항**: 프로젝트의 루트 디렉터리에 `index.html`이 있어야 합니다.
 
 **스크립트의 기능**:
+
 - 번들 종속성 설치(parcel, @parcel/config-default, parcel-resolver-tspaths, html-inline)
 - 경로 별칭 지원을 통해 `.parcelrc` 구성 생성
 - Parcel로 빌드(소스 맵 없음)
