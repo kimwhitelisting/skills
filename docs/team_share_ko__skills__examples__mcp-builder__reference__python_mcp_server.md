@@ -1,4 +1,19 @@
 # Python MCP 서버 구현 가이드
+## 빠른 안내
+
+- **문서 요약**: 이 문서에서는 MCP Python SDK를 사용하여 MCP 서버를 구현하기 위한 Python 관련 모범 사례와 예제를 제공합니다. 서버 설정, 도구
+             등록 패턴, Pydantic을 통한 입력 검증, 오류 처리 및 전체 작업 예제를 다룹니다.
+- **핵심 섹션**: 개요, MCP Python SDK 및 FastMCP, 서버 명명 규칙, 도구 구현, Initialize the MCP server, Define
+             Pydantic model for input validation
+
+### 권장 읽기 순서
+1. 개요
+2. MCP Python SDK 및 FastMCP
+3. 서버 명명 규칙
+4. 도구 구현
+5. Initialize the MCP server
+
+
 
 ## 개요
 

@@ -11,6 +11,20 @@
 
 Slack에 최적화된 애니메이션 GIF를 생성하기 위한 유틸리티와 지식을 제공하는 툴킷입니다.
 
+## 빠른 안내
+
+- **문서 요약**: **치수:**
+- **핵심 섹션**: 슬랙 요구 사항, 핵심 작업 흐름, 1. Create builder, 2. Generate frames, 3. Save with
+             optimization, 그래픽 그리기
+
+### 권장 읽기 순서
+1. 슬랙 요구 사항
+2. 핵심 작업 흐름
+3. 1. Create builder
+4. 2. Generate frames
+5. 3. Save with optimization
+
+
 ## 슬랙 요구 사항
 
 **치수:**

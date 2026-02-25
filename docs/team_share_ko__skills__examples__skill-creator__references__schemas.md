@@ -1,4 +1,17 @@
 # JSON 스키마
+## 빠른 안내
+
+- **문서 요약**: 이 문서는 Skill-creator에서 사용하는 JSON 스키마를 정의합니다.
+- **핵심 섹션**: 역사.json, 채점.json, 메트릭.json, 타이밍.json, 벤치마크.json, 비교.json
+
+### 권장 읽기 순서
+1. 역사.json
+2. 채점.json
+3. 메트릭.json
+4. 타이밍.json
+5. 벤치마크.json
+
+
 
 이 문서는 Skill-creator에서 사용하는 JSON 스키마를 정의합니다.
 

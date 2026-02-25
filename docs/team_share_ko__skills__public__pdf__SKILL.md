@@ -10,6 +10,20 @@
 - **라이선스**: -
 
 
+## 빠른 안내
+
+- **문서 요약**: 이 가이드에서는 Python 라이브러리와 명령줄 도구를 사용한 필수 PDF 처리 작업을 다룹니다. 고급 기능, JavaScript 라이브러리 및
+             자세한 예는 REFERENCE.md를 참조하세요. PDF 양식을 작성해야 하는 경우 FORMS.md를 읽고 해당 지침을 따르세요.
+- **핵심 섹션**: 개요, 빠른 시작, Read a PDF, Extract text, Python 라이브러리, Combine all tables
+
+### 권장 읽기 순서
+1. 개요
+2. 빠른 시작
+3. Read a PDF
+4. Extract text
+5. Python 라이브러리
+
+
 ## 개요
 
 이 가이드에서는 Python 라이브러리와 명령줄 도구를 사용한 필수 PDF 처리 작업을 다룹니다. 고급 기능, JavaScript 라이브러리 및 자세한 예는

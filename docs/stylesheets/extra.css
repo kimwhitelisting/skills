@@ -17,36 +17,58 @@ body,
 }
 
 .md-content__inner {
-  max-width: 920px;
+  max-width: 820px;
   margin-inline: auto;
 }
 
 .md-typeset h1 {
   font-weight: 800;
   letter-spacing: -0.01em;
-  margin-bottom: 0.8rem;
+  margin-bottom: 1rem;
+  line-height: 1.25;
 }
 
 .md-typeset h2,
 .md-typeset h3 {
   font-weight: 700;
   letter-spacing: -0.005em;
+  line-height: 1.35;
+}
+
+.md-typeset h2 {
+  margin-top: 2rem;
+  margin-bottom: 0.8rem;
+}
+
+.md-typeset h3 {
+  margin-top: 1.35rem;
+  margin-bottom: 0.55rem;
 }
 
 .md-typeset p,
 .md-typeset li {
-  line-height: 1.75;
+  line-height: 1.78;
   word-break: keep-all;
   overflow-wrap: anywhere;
 }
 
 .md-typeset p {
-  margin: 0.65em 0;
+  margin: 0.75em 0;
 }
 
 .md-typeset ul li,
 .md-typeset ol li {
-  margin-bottom: 0.22em;
+  margin-bottom: 0.3em;
+}
+
+.md-typeset ul,
+.md-typeset ol {
+  margin-top: 0.65em;
+  margin-bottom: 1em;
+}
+
+.md-typeset li > p {
+  margin: 0.35em 0;
 }
 
 .md-typeset blockquote {
@@ -83,10 +105,16 @@ body,
 .md-typeset .admonition,
 .md-typeset details {
   border-radius: 10px;
+  margin: 1.1em 0;
 }
 
 .md-header {
   backdrop-filter: saturate(150%) blur(4px);
+}
+
+.md-typeset hr {
+  margin: 1.4rem 0;
+  border-bottom: .05rem solid var(--md-default-fg-color--lightest);
 }
 
 /* 카드형 링크 표현을 위해 index에서 사용하는 클래스 */

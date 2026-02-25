@@ -1,4 +1,18 @@
 # PDF 처리 고급 참조
+## 빠른 안내
+
+- **문서 요약**: 이 문서에는 주요 기술 지침에서 다루지 않는 고급 PDF 처리 기능, 자세한 예제 및 추가 라이브러리가 포함되어 있습니다.
+- **핵심 섹션**: pypdfium2 라이브러리(Apache/BSD 라이센스), Load PDF, Render page to image, Convert to PIL
+             Image, Process multiple pages, 자바스크립트 라이브러리
+
+### 권장 읽기 순서
+1. pypdfium2 라이브러리(Apache/BSD 라이센스)
+2. Load PDF
+3. Render page to image
+4. Convert to PIL Image
+5. Process multiple pages
+
+
 
 이 문서에는 주요 기술 지침에서 다루지 않는 고급 PDF 처리 기능, 자세한 예제 및 추가 라이브러리가 포함되어 있습니다.
 

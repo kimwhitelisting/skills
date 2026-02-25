@@ -12,6 +12,19 @@
 - **라이선스**: -
 
 
+## 빠른 안내
+
+- **문서 요약**: .docx 파일은 XML 파일이 포함된 ZIP 아카이브입니다.
+- **핵심 섹션**: 개요, 빠른 참조, Text extraction with tracked changes, Raw XML access, 새 문서 만들기, 기존 문서 편집
+
+### 권장 읽기 순서
+1. 개요
+2. 빠른 참조
+3. Text extraction with tracked changes
+4. Raw XML access
+5. 새 문서 만들기
+
+
 ## 개요
 
 .docx 파일은 XML 파일이 포함된 ZIP 아카이브입니다.

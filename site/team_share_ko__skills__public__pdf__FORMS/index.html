@@ -635,6 +635,34 @@
   <a href="#_2" class="md-nav__link">
     <span class="md-ellipsis">
       
+        빠른 안내
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="빠른 안내">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        권장 읽기 순서
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
         채울 수 있는 필드
       
     </span>
@@ -643,7 +671,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_3" class="md-nav__link">
+  <a href="#_5" class="md-nav__link">
     <span class="md-ellipsis">
       
         채울 수 없는 필드
@@ -798,7 +826,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_4" class="md-nav__link">
+  <a href="#_6" class="md-nav__link">
     <span class="md-ellipsis">
       
         하이브리드 접근 방식: 구조 + 시각적
@@ -2137,6 +2165,34 @@
   <a href="#_2" class="md-nav__link">
     <span class="md-ellipsis">
       
+        빠른 안내
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="빠른 안내">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        권장 읽기 순서
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
         채울 수 있는 필드
       
     </span>
@@ -2145,7 +2201,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_3" class="md-nav__link">
+  <a href="#_5" class="md-nav__link">
     <span class="md-ellipsis">
       
         채울 수 없는 필드
@@ -2300,7 +2356,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_4" class="md-nav__link">
+  <a href="#_6" class="md-nav__link">
     <span class="md-ellipsis">
       
         하이브리드 접근 방식: 구조 + 시각적
@@ -2364,13 +2420,29 @@
 
 
 <h1 id="_1">채울 수 있는 필드<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
+<h2 id="_2">빠른 안내<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>문서 요약</strong>: <strong>중요: 이 단계를 순서대로 완료해야 합니다. 코드 작성으로 건너뛰지 마십시오.</strong></li>
+<li><strong>핵심 섹션</strong>: 채울 수 있는 필드, 채울 수 없는 필드, 1단계: 먼저 구조 추출 시도, 접근법 A: 구조 기반 좌표(선호), 접근법 B: 시각적 추정(대체),
+             하이브리드 접근 방식: 구조 + 시각적</li>
+</ul>
+<h3 id="_3">권장 읽기 순서<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
+<ol>
+<li>채울 수 있는 필드</li>
+<li>채울 수 없는 필드</li>
+<li>1단계: 먼저 구조 추출 시도</li>
+<li>접근법 A: 구조 기반 좌표(선호)</li>
+<li>접근법 B: 시각적 추정(대체)</li>
+</ol>
 <p><strong>중요: 이 단계를 순서대로 완료해야 합니다. 코드 작성으로 건너뛰지 마십시오.</strong></p>
 <p>PDF 양식을 작성해야 하는 경우 먼저 PDF에 채울 수 있는 양식 필드가 있는지 확인하세요. 이 파일의 디렉터리에서 이 스크립트를 실행하세요.
 <code>python scripts/check_fillable_fields &lt;file.pdf&gt;</code>, 결과에 따라 "채울 수 있는 필드" 또는 "채울 수 없는 필드"로 이동하여 해당
 지침을 따르세요.</p>
-<h2 id="_2">채울 수 있는 필드<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
-<p>PDF에 채울 수 있는 양식 필드가 있는 경우:
-- 이 파일의 디렉터리 <code>python scripts/extract_form_field_info.py &lt;input.pdf&gt; &lt;field_info.json&gt;</code>에서 이 스크립트를
+<h2 id="_4">채울 수 있는 필드<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
+<p>PDF에 채울 수 있는 양식 필드가 있는 경우:</p>
+<ul>
+<li>
+<p>이 파일의 디렉터리 <code>python scripts/extract_form_field_info.py &lt;input.pdf&gt; &lt;field_info.json&gt;</code>에서 이 스크립트를
   실행합니다. 다음 형식의 필드 목록이 포함된 JSON 파일이 생성됩니다.
 <div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>[
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  {
@@ -2414,11 +2486,15 @@
 </span><span id="__span-0-40"><a id="__codelineno-0-40" name="__codelineno-0-40" href="#__codelineno-0-40"></a>    ],
 </span><span id="__span-0-41"><a id="__codelineno-0-41" name="__codelineno-0-41" href="#__codelineno-0-41"></a>  }
 </span><span id="__span-0-42"><a id="__codelineno-0-42" name="__codelineno-0-42" href="#__codelineno-0-42"></a>]
-</span></code></pre></div>
-- 이 스크립트를 사용하여 PDF를 PNG로 변환합니다(페이지당 하나의 이미지)(이 파일 디렉터리에서 실행).
+</span></code></pre></div></p>
+</li>
+<li>
+<p>이 스크립트를 사용하여 PDF를 PNG로 변환합니다(페이지당 하나의 이미지)(이 파일 디렉터리에서 실행).
 <code>python scripts/convert_pdf_to_images.py &lt;file.pdf&gt; &lt;output_directory&gt;</code>
-그런 다음 이미지를 분석하여 각 양식 필드의 목적을 결정합니다(경계 상자 PDF 좌표를 이미지 좌표로 변환해야 함).
-- 각 필드에 입력할 값을 사용하여 다음 형식으로 <code>field_values.json</code> 파일을 만듭니다.
+그런 다음 이미지를 분석하여 각 양식 필드의 목적을 결정합니다(경계 상자 PDF 좌표를 이미지 좌표로 변환해야 함).</p>
+</li>
+<li>
+<p>각 필드에 입력할 값을 사용하여 다음 형식으로 <code>field_values.json</code> 파일을 만듭니다.
 <div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>[
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  {
 </span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    &quot;field_id&quot;: &quot;last_name&quot;, // Must match the field_id from `extract_form_field_info.py`
@@ -2434,20 +2510,26 @@
 </span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>  },
 </span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>  // more fields
 </span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>]
-</span></code></pre></div>
-- 이 파일의 디렉터리에서 <code>fill_fillable_fields.py</code> 스크립트를 실행하여 채워진 PDF를 만듭니다.
+</span></code></pre></div></p>
+</li>
+<li>
+<p>이 파일의 디렉터리에서 <code>fill_fillable_fields.py</code> 스크립트를 실행하여 채워진 PDF를 만듭니다.
 <code>python scripts/fill_fillable_fields.py &lt;input pdf&gt; &lt;field_values.json&gt; &lt;output pdf&gt;</code>
 이 스크립트는 귀하가 제공한 필드 ID와 값이 유효한지 확인합니다. 오류 메시지가 인쇄되면 해당 필드를 수정하고 다시 시도하십시오.</p>
-<h2 id="_3">채울 수 없는 필드<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
+</li>
+</ul>
+<h2 id="_5">채울 수 없는 필드<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
 <p>PDF에 채울 수 있는 양식 필드가 없으면 텍스트 주석을 추가합니다. 먼저 PDF 구조에서 좌표를 추출해 보십시오(보다 정확함). 필요한 경우 시각적 추정으로 돌아갑니다.</p>
 <h2 id="1">1단계: 먼저 구조 추출 시도<a class="headerlink" href="#1" title="Permanent link">&para;</a></h2>
 <p>정확한 PDF 좌표로 텍스트 레이블, 줄 및 확인란을 추출하려면 이 스크립트를 실행하십시오.
 <code>python scripts/extract_form_structure.py &lt;input.pdf&gt; form_structure.json</code></p>
-<p>그러면 다음이 포함된 JSON 파일이 생성됩니다.
-- <strong>레이블</strong>: 정확한 좌표가 있는 모든 텍스트 요소(PDF 포인트의 x0, 상단, x1, 하단)
-- <strong>lines</strong>: 행 경계를 정의하는 수평선
-- <strong>체크박스</strong>: 체크박스인 작은 정사각형 직사각형(중심 좌표 포함)
-- <strong>row_boundaries</strong>: 수평선에서 계산된 행 상단/하단 위치</p>
+<p>그러면 다음이 포함된 JSON 파일이 생성됩니다.</p>
+<ul>
+<li><strong>레이블</strong>: 정확한 좌표가 있는 모든 텍스트 요소(PDF 포인트의 x0, 상단, x1, 하단)</li>
+<li><strong>lines</strong>: 행 경계를 정의하는 수평선</li>
+<li><strong>체크박스</strong>: 체크박스인 작은 정사각형 직사각형(중심 좌표 포함)</li>
+<li><strong>row_boundaries</strong>: 수평선에서 계산된 행 상단/하단 위치</li>
+</ul>
 <p><strong>결과 확인</strong>: <code>form_structure.json</code>에 의미 있는 레이블(양식 필드에 해당하는 텍스트 요소)이 있는 경우 <strong>접근 방식 A: 구조 기반 좌표</strong>를
 사용하세요. PDF가 스캔/이미지 기반이고 레이블이 거의 없거나 전혀 없는 경우 <strong>접근 방식 B: 시각적 견적</strong>을 사용하세요.</p>
 <hr />
@@ -2463,22 +2545,28 @@
 </ol>
 <p><strong>좌표계</strong>: y=0이 페이지 상단에 있고 y가 아래쪽으로 증가하는 PDF 좌표입니다.</p>
 <h3 id="a2">A.2: 누락된 요소 확인<a class="headerlink" href="#a2" title="Permanent link">&para;</a></h3>
-<p>구조 추출은 모든 양식 요소를 감지하지 못할 수도 있습니다. 일반적인 경우:
-- <strong>원형 체크박스</strong>: 정사각형 직사각형만 체크박스로 감지됩니다.
-- <strong>복잡한 그래픽</strong>: 장식 요소 또는 비표준 양식 컨트롤
-- <strong>바랜 색상이나 밝은 색상의 요소</strong>: 추출할 수 없습니다.</p>
+<p>구조 추출은 모든 양식 요소를 감지하지 못할 수도 있습니다. 일반적인 경우:</p>
+<ul>
+<li><strong>원형 체크박스</strong>: 정사각형 직사각형만 체크박스로 감지됩니다.</li>
+<li><strong>복잡한 그래픽</strong>: 장식 요소 또는 비표준 양식 컨트롤</li>
+<li><strong>바랜 색상이나 밝은 색상의 요소</strong>: 추출할 수 없습니다.</li>
+</ul>
 <p>form_structure.json에 없는 PDF 이미지의 양식 필드가 표시되면 해당 특정 필드에 대해 <strong>시각적 분석</strong>을 사용해야 합니다(아래 "하이브리드 접근 방식"
 참조).</p>
 <h3 id="a3-pdf-fieldsjson">A.3: PDF 좌표를 사용하여 fields.json 만들기<a class="headerlink" href="#a3-pdf-fieldsjson" title="Permanent link">&para;</a></h3>
 <p>각 필드에 대해 추출된 구조에서 항목 좌표를 계산합니다.</p>
-<p><strong>텍스트 필드:</strong>
-- 항목 x0 = 라벨 x1 + 5(라벨 뒤 작은 간격)
-- 항목 x1 = 다음 레이블의 x0 또는 행 경계
-- 항목 상단 = 라벨 상단과 동일
-- 항목 하단 = 아래 행 경계선 또는 라벨 하단 + row_height</p>
-<p><strong>체크박스:</strong>
-- form_structure.json에서 직접 확인란 직사각형 좌표를 사용합니다.
-- Entry_bounding_box = [checkbox.x0, checkbox.top, checkbox.x1, checkbox.bottom]</p>
+<p><strong>텍스트 필드:</strong></p>
+<ul>
+<li>항목 x0 = 라벨 x1 + 5(라벨 뒤 작은 간격)</li>
+<li>항목 x1 = 다음 레이블의 x0 또는 행 경계</li>
+<li>항목 상단 = 라벨 상단과 동일</li>
+<li>항목 하단 = 아래 행 경계선 또는 라벨 하단 + row_height</li>
+</ul>
+<p><strong>체크박스:</strong></p>
+<ul>
+<li>form_structure.json에서 직접 확인란 직사각형 좌표를 사용합니다.</li>
+<li>Entry_bounding_box = [checkbox.x0, checkbox.top, checkbox.x1, checkbox.bottom]</li>
+</ul>
 <p><code>pdf_width</code> 및 <code>pdf_height</code>을 사용하여 fields.json을 만듭니다(PDF 좌표 신호 표시).
 <div class="language-json highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">{</span>
 </span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">&quot;pages&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
@@ -2515,33 +2603,43 @@
 <h3 id="b1-pdf">B.1: PDF를 이미지로 변환<a class="headerlink" href="#b1-pdf" title="Permanent link">&para;</a></h3>
 <p><code>python scripts/convert_pdf_to_images.py &lt;input.pdf&gt; &lt;images_dir/&gt;</code></p>
 <h3 id="b2">B.2: 초기 필드 식별<a class="headerlink" href="#b2" title="Permanent link">&para;</a></h3>
-<p>각 페이지 이미지를 검사하여 양식 섹션을 식별하고 필드 위치에 대한 <strong>대략적인 추정</strong>을 얻습니다.
-- 양식 필드 레이블 및 대략적인 위치
-- 입력 영역(텍스트 입력을 위한 줄, 상자 또는 공백)
-- 체크박스와 대략적인 위치</p>
+<p>각 페이지 이미지를 검사하여 양식 섹션을 식별하고 필드 위치에 대한 <strong>대략적인 추정</strong>을 얻습니다.</p>
+<ul>
+<li>양식 필드 레이블 및 대략적인 위치</li>
+<li>입력 영역(텍스트 입력을 위한 줄, 상자 또는 공백)</li>
+<li>체크박스와 대략적인 위치</li>
+</ul>
 <p>각 필드에 대해 대략적인 픽셀 좌표를 기록해 두세요(아직 정확할 필요는 없음).</p>
 <h3 id="b3">B.3: 확대/축소 개선(정확도가 중요)<a class="headerlink" href="#b3" title="Permanent link">&para;</a></h3>
 <p>각 필드에 대해 추정 위치 주변의 영역을 잘라 좌표를 정확하게 세분화합니다.</p>
 <p><strong>ImageMagick을 사용하여 확대된 자르기 만들기:</strong>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>magick<span class="w"> </span>&lt;page_image&gt;<span class="w"> </span>-crop<span class="w"> </span>&lt;width&gt;x&lt;height&gt;+&lt;x&gt;+&lt;y&gt;<span class="w"> </span>+repage<span class="w"> </span>&lt;crop_output.png&gt;
 </span></code></pre></div></p>
-<p>어디:
-- <code>&lt;x&gt;, &lt;y&gt;</code> = 자르기 영역의 왼쪽 상단(대략적인 추정치에서 패딩을 뺀 값 사용)
-- <code>&lt;width&gt;, &lt;height&gt;</code> = 자르기 영역 크기(필드 영역 + 각 측면의 패딩 ~50px)</p>
+<p>어디:</p>
+<ul>
+<li><code>&lt;x&gt;, &lt;y&gt;</code> = 자르기 영역의 왼쪽 상단(대략적인 추정치에서 패딩을 뺀 값 사용)</li>
+<li><code>&lt;width&gt;, &lt;height&gt;</code> = 자르기 영역 크기(필드 영역 + 각 측면의 패딩 ~50px)</li>
+</ul>
 <p><strong>예:</strong> 약 (100, 150)으로 추정되는 '이름' 필드를 세분화하려면 다음을 수행하세요.
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>magick<span class="w"> </span>images_dir/page_1.png<span class="w"> </span>-crop<span class="w"> </span>300x80+50+120<span class="w"> </span>+repage<span class="w"> </span>crops/name_field.png
 </span></code></pre></div></p>
 <p>(참고: <code>magick</code> 명령을 사용할 수 없는 경우 동일한 인수로 <code>convert</code>을 시도하십시오.)</p>
-<p><strong>잘린 이미지를 검사</strong>하여 정확한 좌표를 확인하세요.
-1. 입력 영역이 시작되는 정확한 픽셀을 식별합니다(라벨 뒤).
-2. 입력 영역이 끝나는 위치를 식별합니다(다음 필드 또는 가장자리 전)
-3. 입력란/상자의 상단과 하단을 식별합니다.</p>
-<p><strong>자르기 좌표를 다시 전체 이미지 좌표로 변환:</strong>
-- 전체_x = 자르기_x + 자르기_오프셋_x
-- full_y = 자르기_y + 자르기_오프셋_y</p>
-<p>예: 자르기가 (50, 120)에서 시작되고 입력 상자가 자르기 내에서 (52, 18)에서 시작하는 경우:
-- Entry_x0 = 52 + 50 = 102
-- Entry_top = 18 + 120 = 138</p>
+<p><strong>잘린 이미지를 검사</strong>하여 정확한 좌표를 확인하세요.</p>
+<ol>
+<li>입력 영역이 시작되는 정확한 픽셀을 식별합니다(라벨 뒤).</li>
+<li>입력 영역이 끝나는 위치를 식별합니다(다음 필드 또는 가장자리 전)</li>
+<li>입력란/상자의 상단과 하단을 식별합니다.</li>
+</ol>
+<p><strong>자르기 좌표를 다시 전체 이미지 좌표로 변환:</strong></p>
+<ul>
+<li>전체_x = 자르기_x + 자르기_오프셋_x</li>
+<li>full_y = 자르기_y + 자르기_오프셋_y</li>
+</ul>
+<p>예: 자르기가 (50, 120)에서 시작되고 입력 상자가 자르기 내에서 (52, 18)에서 시작하는 경우:</p>
+<ul>
+<li>Entry_x0 = 52 + 50 = 102</li>
+<li>Entry_top = 18 + 120 = 138</li>
+</ul>
 <p><strong>각 밭에 대해 반복</strong>, 가능하면 인근 밭을 단일 작물로 그룹화합니다.</p>
 <h3 id="b4-fieldsjson">B.4: 세련된 좌표를 사용하여 fields.json 만들기<a class="headerlink" href="#b4-fieldsjson" title="Permanent link">&para;</a></h3>
 <p><code>image_width</code> 및 <code>image_height</code>을 사용하여 fields.json을 만듭니다(신호 이미지 좌표).
@@ -2567,15 +2665,19 @@
 <code>python scripts/check_bounding_boxes.py fields.json</code></p>
 <p>글꼴 크기에 비해 너무 작은 경계 상자와 입력 상자가 교차하는지 확인합니다. 채우기 전에 보고된 오류를 수정하세요.</p>
 <hr />
-<h2 id="_4">하이브리드 접근 방식: 구조 + 시각적<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
+<h2 id="_6">하이브리드 접근 방식: 구조 + 시각적<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
 <p>대부분의 필드에서 구조 추출이 작동하지만 일부 요소(예: 원형 체크박스, 특이한 양식 컨트롤)가 누락된 경우 이 기능을 사용하세요.</p>
 <ol>
 <li>form_structure.json에서 감지된 필드에 <strong>접근법 A 사용</strong></li>
 <li>누락된 필드를 시각적으로 분석하기 위해 <strong>PDF를 이미지로 변환</strong></li>
 <li>누락된 필드에 <strong>확대/축소 개선</strong>(접근 방식 B) 사용</li>
-<li><strong>좌표 결합</strong>: 구조 추출의 필드에는 <code>pdf_width</code>/<code>pdf_height</code>을 사용합니다. 시각적으로 추정된 필드의 경우 이미지 좌표를 PDF 좌표로
-   변환해야 합니다.</li>
-<li>pdf_x = image_x * (pdf_width / image_width)</li>
+<li>
+<p><strong>좌표 결합</strong>: 구조 추출의 필드에는 <code>pdf_width</code>/<code>pdf_height</code>을 사용합니다. 시각적으로 추정된 필드의 경우 이미지 좌표를 PDF 좌표로
+   변환해야 합니다.</p>
+</li>
+<li>
+<p>pdf_x = image_x * (pdf_width / image_width)</p>
+</li>
 <li>pdf_y = image_y * (pdf_height / image_height)</li>
 <li>fields.json에서 <strong>단일 좌표계 사용</strong> - <code>pdf_width</code>/<code>pdf_height</code>을 사용하여 모두 PDF 좌표로 변환합니다.</li>
 </ol>
@@ -2583,9 +2685,11 @@
 <h2 id="2">2단계: 작성 전 확인<a class="headerlink" href="#2" title="Permanent link">&para;</a></h2>
 <p><strong>채우기 전에 항상 경계 상자의 유효성을 검사하세요.</strong>
 <code>python scripts/check_bounding_boxes.py fields.json</code></p>
-<p>이는 다음 사항을 확인합니다.
-- 교차하는 경계 상자(텍스트가 겹칠 수 있음)
-- 지정된 글꼴 크기에 비해 너무 작은 입력 상자</p>
+<p>이는 다음 사항을 확인합니다.</p>
+<ul>
+<li>교차하는 경계 상자(텍스트가 겹칠 수 있음)</li>
+<li>지정된 글꼴 크기에 비해 너무 작은 입력 상자</li>
+</ul>
 <p>계속하기 전에 fields.json에서 보고된 오류를 수정하세요.</p>
 <h2 id="3">3단계: 양식 작성<a class="headerlink" href="#3" title="Permanent link">&para;</a></h2>
 <p>채우기 스크립트는 좌표계를 자동 감지하고 변환을 처리합니다.
@@ -2593,10 +2697,12 @@
 <h2 id="4">4단계: 출력 확인<a class="headerlink" href="#4" title="Permanent link">&para;</a></h2>
 <p>채워진 PDF를 이미지로 변환하고 텍스트 배치를 확인합니다.
 <code>python scripts/convert_pdf_to_images.py &lt;output.pdf&gt; &lt;verify_images/&gt;</code></p>
-<p>텍스트 위치가 잘못된 경우:
-- <strong>접근 방식 A</strong>: <code>pdf_width</code>/<code>pdf_height</code>과 함께 form_structure.json의 PDF 좌표를 사용하고 있는지 확인하세요.
-- <strong>접근 방식 B</strong>: 이미지 크기가 일치하고 좌표가 정확한 픽셀인지 확인합니다.
-- <strong>하이브리드</strong>: 시각적으로 추정된 필드에 대한 좌표 변환이 올바른지 확인합니다.</p>
+<p>텍스트 위치가 잘못된 경우:</p>
+<ul>
+<li><strong>접근 방식 A</strong>: <code>pdf_width</code>/<code>pdf_height</code>과 함께 form_structure.json의 PDF 좌표를 사용하고 있는지 확인하세요.</li>
+<li><strong>접근 방식 B</strong>: 이미지 크기가 일치하고 좌표가 정확한 픽셀인지 확인합니다.</li>
+<li><strong>하이브리드</strong>: 시각적으로 추정된 필드에 대한 좌표 변환이 올바른지 확인합니다.</li>
+</ul>
 
 
 

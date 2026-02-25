@@ -11,6 +11,19 @@
 - **라이선스**: -
 
 
+## 빠른 안내
+
+- **문서 요약**: ---
+- **핵심 섹션**: 빠른 참조, 콘텐츠 읽기, Text extraction, Visual overview, Raw XML, 작업 흐름 편집
+
+### 권장 읽기 순서
+1. 빠른 참조
+2. 콘텐츠 읽기
+3. Text extraction
+4. Visual overview
+5. Raw XML
+
+
 ## 빠른 참조
 
 | 작업 | 가이드 |
