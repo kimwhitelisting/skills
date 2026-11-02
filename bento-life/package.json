@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite --host",
     "build": "tsc && vite build",
+    "build:preview": "vite build --mode preview-page && node --experimental-strip-types scripts/make-preview.ts",
     "preview": "vite preview --host",
     "test": "vitest run tests/game.test.ts",
     "balance": "vitest run tests/balance.report.test.ts",

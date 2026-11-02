@@ -1,5 +1,3 @@
-import '@fontsource/gowun-dodum/400.css';
-import '@fontsource/gaegu/700.css';
 import './style.css';
 import { art, characterArt, endingArt, eventArt, idleExpression, ingredientArt, type Expression } from './art.ts';
 import { INGREDIENTS, ing } from './data/ingredients.ts';
