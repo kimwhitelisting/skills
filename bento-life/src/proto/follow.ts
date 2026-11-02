@@ -370,6 +370,7 @@ function introCard(): string {
         <li>⚡ 두 번 톡 치면 다음 숨을 곳까지 후다닥 (뛰다 걸리면 큰일)</li>
         <li>💗 들키지 않고 <b>가까이</b> 있을수록 빨리 쌓여요</li>
       </ul>
+      <div class="pick-row"><span>누구를 따라갈까?</span><div class="age-pick">${([6, 10, 15] as Age[]).map((a) => `<button class="${a === age ? 'on' : ''}" data-age="${a}">${TUNE[a].label}</button>`).join('')}</div></div>
       <p class="sub center">누적 💗 ${saved.total}${next ? ` · 다음 변장 도구 ${next.emoji}까지 ${next.need - saved.total}` : ' · 변장 도구 모두 해금!'}</p>
       <button class="btn primary wide" data-act="start">출발!</button>
     </article>

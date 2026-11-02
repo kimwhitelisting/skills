@@ -79,3 +79,4 @@
 .score-line { text-align: center; font-size: 1.1rem; margin-bottom: 4px; }
 .overlay-card { overflow-y: auto; align-items: start; }
 .overlay-card .diary { margin-block: auto; }
+.pick-row { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 6px 0 4px; font-weight: 700; }
