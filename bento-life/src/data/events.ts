@@ -3,7 +3,8 @@ import { getMenu } from '../game/bento.ts';
 import { rand } from '../game/rng.ts';
 import type { GameEvent, GameState } from '../game/types.ts';
 
-const lunchMenu = (s: GameState) => (s.lastMeals.lunch ? getMenu(s.lastMeals.lunch) : undefined);
+/** 최근 도시락 (끼니 수 설정에 따라 점심이 없을 수 있으니 가장 최근 메뉴로 대신) */
+const lunchMenu = (s: GameState) => { const k = s.lastMeals.lunch ?? s.lastMenu; return k ? getMenu(k) : undefined; };
 const revealTalent = (s: GameState) => { s.child.known.talent = true; };
 /** 재능이 예술/요리면 엔딩용 플래그를 쌓는다 */
 const talentFlags = (s: GameState, n: number): Record<string, number> =>
@@ -196,8 +197,9 @@ const MILESTONES: GameEvent[] = [
   {
     id: 'exam', kind: 'milestone', age: 18, emoji: '📝', title: '수능 D-day',
     text: (s) => {
-      const m = s.lastMeals.breakfast ? getMenu(s.lastMeals.breakfast) : undefined;
-      return `새벽 5시. 마지막 아침은 「${m?.name ?? '???'}」였다.\n이제 도시락만 남았다.`;
+      const k = s.lastMeals.breakfast ?? s.lastMenu;
+      const m = k ? getMenu(k) : undefined;
+      return `새벽 5시. 최근 도시락은 「${m?.name ?? '???'}」였다.\n이제 시험만 남았다.`;
     },
     choices: (s) => {
       const brain = (s.flags.brain ?? 0) > 0;

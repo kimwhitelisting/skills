@@ -111,6 +111,18 @@ describe('simulation', () => {
     console.log('ending distribution', Object.fromEntries(ENDINGS.map((e) => [e.id, counts[e.id] ?? 0])));
     expect(Object.keys(counts).length).toBeGreaterThanOrEqual(5);
   });
+  it('every meals-per-year setting finishes and stays in a sane money range', () => {
+    for (const mealsPerYear of [1, 2, 3] as const) {
+      let money = 0;
+      for (let seed = 1; seed <= 200; seed++) {
+        const s = playthrough(seed, 'random', { mealsPerYear });
+        expect(s.step).toBe('ending');
+        expect(s.runMenus.length).toBeLessThanOrEqual(20 * mealsPerYear);
+        money += s.money / 200;
+      }
+      console.log(`mealsPerYear=${mealsPerYear} avg end money=${money.toFixed(0)}`);
+    }
+  });
   it('always following leads to the kangaroo ending most of the time', () => {
     let k = 0;
     for (let seed = 1; seed <= 200; seed++) if (playthrough(seed, 'helicopter').endingId === 'kangaroo') k++;

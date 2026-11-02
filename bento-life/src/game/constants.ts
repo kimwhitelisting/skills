@@ -15,7 +15,6 @@ export const STAT_KEYS = Object.keys(STAT_INFO) as StatKey[];
 
 export const START_STATS: Stats = { health: 50, smarts: 20, happy: 60, fitness: 25, social: 20, indep: 5, bond: 50 };
 export const START_MONEY = 30;
-export const YEARLY_INCOME = 24;
 
 export const TALENT_INFO: Record<Talent, { label: string; stat: StatKey }> = {
   sport: { label: '운동', stat: 'fitness' },

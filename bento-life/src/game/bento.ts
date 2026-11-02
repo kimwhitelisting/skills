@@ -1,13 +1,14 @@
 import { INGREDIENTS, ing } from '../data/ingredients.ts';
 import MENU_TABLE from '../data/menus.generated.json';
 import { addDelta, applyDelta } from './apply.ts';
+import { tuningOf } from './config.ts';
 import { josa } from './korean.ts';
 import { menuKey } from './menus.ts';
 import { fmt } from './text.ts';
 import type { Delta, GameState, Ingredient, MealTime, Menu, Slot, Tag } from './types.ts';
 
-/** 한 끼의 긍정 효과 배율 (1년 3끼 × 20년 = 60끼 기준 밸런스) */
-const MEAL_SCALE = 0.6;
+/** 한 끼의 긍정 효과 배율 (1년 3끼 × 20년 = 60끼 기준). 끼니 수가 줄면 그만큼 커진다 */
+const mealScale = (s: GameState) => (0.6 * 3) / tuningOf(s).mealsPerYear;
 
 const MENUS = new Map<string, Menu>((MENU_TABLE as Menu[]).map((m) => [m.key, m]));
 export const ALL_MENUS = MENU_TABLE as Menu[];
@@ -18,10 +19,11 @@ export interface Selection { base: string; main: string; side: string }
 export const available = (s: GameState, slot: Slot): Ingredient[] =>
   INGREDIENTS.filter((i) => i.slot === slot && s.age >= i.minAge && s.age <= i.maxAge);
 
-export const selectionCost = (sel: Selection) => ing(sel.base).cost + ing(sel.main).cost + ing(sel.side).cost;
+export const ingredientCost = (s: GameState, id: string) => Math.max(1, Math.round(ing(id).cost * tuningOf(s).priceMult));
+export const selectionCost = (s: GameState, sel: Selection) => ingredientCost(s, sel.base) + ingredientCost(s, sel.main) + ingredientCost(s, sel.side);
 
 export function cheapestCost(s: GameState): number {
-  return (['base', 'main', 'side'] as const).reduce((sum, slot) => sum + Math.min(...available(s, slot).map((i) => i.cost)), 0);
+  return (['base', 'main', 'side'] as const).reduce((sum, slot) => sum + Math.min(...available(s, slot).map((i) => ingredientCost(s, i.id))), 0);
 }
 
 export function randomSelection(s: GameState, rnd: () => number = Math.random): Selection {
@@ -51,7 +53,7 @@ const TAG_WORD: Partial<Record<Tag, string>> = {
  */
 export function packBento(s: GameState, time: MealTime, sel: Selection, everSeen: ReadonlySet<string> = new Set()): MealResult {
   if (!isValidSelection(s, sel)) throw new Error('invalid selection for age');
-  const cost = selectionCost(sel);
+  const cost = selectionCost(s, sel);
   if (cost > s.money) throw new Error('not enough money');
   const key = menuKey(sel.base, sel.main, sel.side);
   const menu = MENUS.get(key);
@@ -133,7 +135,8 @@ export function packBento(s: GameState, time: MealTime, sel: Selection, everSeen
 
   s.recentMenus = [key, ...s.recentMenus].slice(0, 3);
   s.lastMeals[time] = key;
-  for (const k of Object.keys(d) as (keyof Delta)[]) if (d[k]! > 0) d[k]! *= MEAL_SCALE;
+  s.lastMenu = key;
+  for (const k of Object.keys(d) as (keyof Delta)[]) if (d[k]! > 0) d[k]! *= mealScale(s);
   const delta = applyDelta(s, d);
   if (!lines.length) say('냠냠, 깨끗하게 비웠다.');
   const pickedOut = items.some((i) => s.child.dislikes.includes(i.id));

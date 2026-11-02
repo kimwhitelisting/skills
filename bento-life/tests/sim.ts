@@ -2,6 +2,7 @@ import { available, cheapestCost, packBento, selectionCost, type Selection } fro
 import { advanceYear, chooseEventOption, chooseFollow, continueAfterEvent, continueAfterMeal, eatMeal, isMealStep, startGame } from '../src/game/engine.ts';
 import { rand } from '../src/game/rng.ts';
 import { newGame } from '../src/game/state.ts';
+import type { Tuning } from '../src/game/config.ts';
 import type { FollowLevel, GameState, MealTime, StatKey } from '../src/game/types.ts';
 
 export type Policy = 'random' | 'helicopter' | 'balanced' | `focus:${StatKey}`;
@@ -13,10 +14,10 @@ function greedySel(s: GameState, target: StatKey): Selection {
   let best: Selection | undefined, bestScore = -Infinity;
   for (const b of available(s, 'base')) for (const m of available(s, 'main')) for (const sd of available(s, 'side')) {
     const sel = { base: b.id, main: m.id, side: sd.id };
-    if (selectionCost(sel) > s.money) continue;
+    if (selectionCost(s, sel) > s.money) continue;
     const c = structuredClone(s);
     packBento(c, s.step as MealTime, sel);
-    const score = c.stats[target] * 3 + c.stats.health + c.stats.happy * 0.5 - selectionCost(sel) * 0.3;
+    const score = c.stats[target] * 3 + c.stats.health + c.stats.happy * 0.5 - selectionCost(s, sel) * 0.3;
     if (score > bestScore) { bestScore = score; best = sel; }
   }
   return best!;
@@ -29,7 +30,7 @@ function pickSel(s: GameState, r: { rng: number }, policy: Policy): Selection {
       return l[Math.floor(rand(r) * l.length)].id;
     };
     const sel = { base: p('base'), main: p('main'), side: p('side') };
-    if (selectionCost(sel) <= s.money) return sel;
+    if (selectionCost(s, sel) <= s.money) return sel;
     void policy;
   }
   // 가장 싼 조합
@@ -38,8 +39,8 @@ function pickSel(s: GameState, r: { rng: number }, policy: Policy): Selection {
 }
 
 /** 한 판을 끝까지 자동 진행 */
-export function playthrough(seed: number, policy: Policy = 'random'): GameState {
-  const s = startGame(newGame(seed));
+export function playthrough(seed: number, policy: Policy = 'random', tuning?: Partial<Tuning>): GameState {
+  const s = startGame(newGame(seed, tuning));
   const r = { rng: seed ^ 0x5bd1e995 };
   for (let guard = 0; guard < 2000; guard++) {
     if (s.step === 'ending') return s;

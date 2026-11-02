@@ -72,8 +72,12 @@ export interface GameState {
   recentMenus: string[];
   runMenus: string[];
   lastMeals: Partial<Record<MealTime, string>>;
+  /** 가장 최근에 먹인 메뉴 (끼니 수와 무관) */
+  lastMenu?: string;
   yearStart: Stats;
   log: LogEntry[];
+  /** 이 판의 실험 조정값 (없으면 기본값) */
+  tuning?: Partial<import('./config.ts').Tuning>;
   active?: ActiveEvent;
   endingId?: string;
 }

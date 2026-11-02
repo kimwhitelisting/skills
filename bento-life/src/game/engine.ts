@@ -1,7 +1,8 @@
 import { EVENTS, EVENT_BY_ID } from '../data/events.ts';
 import { applyDelta, applyOutcome } from './apply.ts';
 import { cheapestCost, packBento, type MealResult, type Selection } from './bento.ts';
-import { FINAL_AGE, MEAL_TIMES, YEARLY_INCOME } from './constants.ts';
+import { MEAL_PRIORITY, TIME_ORDER, tuningOf, yearlyIncome } from './config.ts';
+import { FINAL_AGE, MEAL_TIMES, stageOf } from './constants.ts';
 import { decideEnding } from './endings.ts';
 import { chance, pickWeighted } from './rng.ts';
 import { fmt } from './text.ts';
@@ -61,11 +62,19 @@ function enterStep(s: GameState, step: Step): void {
     s.eventQueue = e ? [e.id] : [];
     if (!activateNext(s)) return next(s);
   } else if (isMealStep(step)) {
+    if (!mealsThisYear(s).includes(step)) return next(s);
     if (s.money < cheapestCost(s)) {
       s.money += 15;
       s.log.push({ age: s.age, text: '반찬값이 바닥났다. 할머니가 15를 보내 주셨다.' });
     }
   }
+}
+
+/** 올해 싸는 끼니 (설정된 끼니 수만큼, 시기별 중요도 순으로 고른 뒤 시간 순 정렬) */
+export function mealsThisYear(s: GameState): MealTime[] {
+  const n = tuningOf(s).mealsPerYear;
+  const picked = MEAL_PRIORITY[stageOf(s.age).id].slice(0, n);
+  return TIME_ORDER.filter((t) => picked.includes(t));
 }
 
 function next(s: GameState): void {
@@ -141,7 +150,7 @@ export function advanceYear(s: GameState): void {
     return;
   }
   s.age += 1;
-  s.money += YEARLY_INCOME;
+  s.money += yearlyIncome(s);
   if (s.age >= 7) applyDelta(s, { indep: 1 });
   yearlyDrift(s);
   s.yearStart = { ...s.stats };

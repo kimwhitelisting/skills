@@ -2,8 +2,10 @@
 
 > 도시락 싸들고 졸졸 따라다니면 아이를 얼마나 잘 키울 수 있을까?
 
+⚙️ 설정 > 🧪 실험 설정에서 1년에 싸는 도시락 수, 반찬값, 재료 가격을 바꿔 가며 해 볼 수 있다 (새 게임부터 적용).
+
 모바일 세로 화면용 2D 인생 시뮬레이터. 0살부터 19살까지 매년
-**① 나이별 이벤트 → ② 올해 얼마나 따라다닐지 → ③ 아침·점심·저녁 도시락 → ④ 랜덤 이벤트 → ⑤ 한 해 결산**
+**① 나이별 이벤트 → ② 올해 얼마나 따라다닐지 → ③ 도시락 (기본 아침·점심·저녁) → ④ 랜덤 이벤트 → ⑤ 한 해 결산**
 을 반복하고, 스무 살에 엔딩을 맞는다.
 
 기획 문서: [`docs/GDD.md`](docs/GDD.md) · 아트 가이드: [`docs/ART.md`](docs/ART.md) · 그림 목록: [`docs/art-assets.csv`](docs/art-assets.csv) · AI 그림 지시문: [`docs/ai-prompts.md`](docs/ai-prompts.md) · 전체 메뉴표: [`docs/menus.csv`](docs/menus.csv)
@@ -36,6 +38,8 @@ src/
     menus.ts              메뉴 조합 생성 규칙
     state.ts / save.ts    새 게임 생성, 저장/불러오기
   main.ts, style.css    ← 화면 (DOM 기반, 프레임워크 없음)
+  ui/                   ← 효과음·진동, 기기 설정
+  game/config.ts        ← 실험 설정값 (끼니 수, 수입, 가격)
   art.ts                ← 일러스트 연결 (파일 있으면 그림, 없으면 이모지)
   assets/art/           ← 일러스트 넣는 곳
 scripts/generate-menus.ts  메뉴표 생성기
