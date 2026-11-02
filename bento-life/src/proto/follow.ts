@@ -50,8 +50,8 @@ const CRISES: Record<Age, Crisis[]> = {
 const SAVE_KEY = 'bento-life:proto-follow:v1';
 interface Saved { total: number; best: number; runs: number }
 const TOOLS = [
-  { id: 'news', emoji: '📰', name: '신문지', need: 150, desc: '한 판에 한 번, 어디서든 2초 숨기' },
-  { id: 'pot', emoji: '🪴', name: '화분 모자', need: 400, desc: '멈춰 있으면 의심이 절반만 찬다' },
+  { id: 'news', emoji: '📰', name: '신문지', need: 600, desc: '한 판에 한 번, 어디서든 2초 숨기' },
+  { id: 'pot', emoji: '🪴', name: '화분 모자', need: 1500, desc: '멈춰 있으면 의심이 절반만 찬다' },
 ];
 function loadSaved(): Saved { try { return { total: 0, best: 0, runs: 0, ...JSON.parse(localStorage.getItem(SAVE_KEY) ?? '{}') }; } catch { return { total: 0, best: 0, runs: 0 }; } }
 function save(s: Saved) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(s)); } catch { /* 저장 불가 */ } }
@@ -83,7 +83,7 @@ function newRun(showIntro = true): void {
   const covers: { x: number; e: string }[] = [];
   for (let x = 200; x < ROUTE - 120; x += rnd(160, 270)) covers.push({ x, e: COVERS[Math.floor(Math.random() * COVERS.length)] });
   CRISES[age].forEach((c) => (c.done = false));
-  const kinds = shuffle<'neighbor' | 'dog' | 'friend'>(age === 15 ? ['friend', 'neighbor', 'dog'] : ['neighbor', 'dog', 'friend']);
+  const kinds = shuffle<'neighbor' | 'dog' | 'friend'>(['neighbor', 'dog', 'friend']);
   st = {
     phase: showIntro ? 'intro' : 'run', t: 0, px: 70, kx: 250, walking: false, lastMoveT: -9, slow: 0,
     kidState: 'walk', kidTimer: 0, nextLook: rnd(...TUNE[age].look), fakeOut: false,
@@ -112,7 +112,7 @@ function watchedBy(): number {
   if (hidden()) return 0;
   let eyes = 0;
   if (st.kidState === 'look' && st.kx - st.px < T.sight) eyes += 1;
-  if (st.friend?.state === 'look' && st.friend.x - st.px < T.sight) eyes += 0.8;
+  if (st.friend?.state === 'look' && st.friend.x - st.px < T.sight) eyes += 0.5; // 친구는 곁눈질
   return eyes;
 }
 
@@ -153,7 +153,7 @@ function tick(dt: number, real: number): void {
   }
 
   // ── 아이 ──
-  const lookMult = st.dog ? 0.6 : 1;
+  const lookMult = st.dog ? 0.75 : 1;
   st.kidTimer += dt;
   if (st.kidState === 'walk') {
     st.kx += T.speed * dt;
@@ -177,8 +177,8 @@ function tick(dt: number, real: number): void {
     const f = st.friend;
     f.left -= dt; f.x = st.kx + 34; f.timer += dt;
     if (f.state === 'walk' && f.timer > f.next) { f.state = 'tele'; f.timer = 0; }
-    else if (f.state === 'tele' && f.timer > T.tele * 1.2) { f.state = 'look'; f.timer = 0; }
-    else if (f.state === 'look' && f.timer > T.lookDur * 0.8) { f.state = 'walk'; f.timer = 0; f.next = rnd(2.5, 4.5); }
+    else if (f.state === 'tele' && f.timer > T.tele * 1.8) { f.state = 'look'; f.timer = 0; }
+    else if (f.state === 'look' && f.timer > T.lookDur * 0.7) { f.state = 'walk'; f.timer = 0; f.next = rnd(3.5, 6); }
     if (f.left <= 0 && f.state !== 'look') { st.friend = undefined; float('👋 친구는 다른 길로', 'info'); }
   }
   // ── 강아지 ──
@@ -194,7 +194,7 @@ function tick(dt: number, real: number): void {
       st.neighbor = undefined;
       // 큰 소리로 아는 척 → 아이가 예고 없이 바로 돌아본다
       float('"어머~ 이게 누구야!!"', 'shout'); sfx('ding'); haptic(40);
-      if (st.kx - st.px < T.sight * 1.2) { startLook(true); st.sus += 25; }
+      if (st.kx - st.px < T.sight * 1.2) { startLook(true); st.sus += 15; }
       remember(3, 'neighbor-fail', '이웃의 우렁찬 인사에 얼어붙은 순간');
       render();
     }
@@ -226,7 +226,7 @@ function tick(dt: number, real: number): void {
     ev.done = true;
     if (ev.kind === 'neighbor') { st.neighbor = { x: st.px + 70, left: 1.8 }; sfx('tap'); haptic(20); }
     if (ev.kind === 'dog') { st.dog = { left: 9, bark: 1.2 }; remember(2, 'dog', '모르는 강아지가 졸졸 따라온 날'); }
-    if (ev.kind === 'friend') { st.friend = { x: st.kx + 34, state: 'walk', timer: 0, next: rnd(1.5, 3), left: 11 }; float('🧑‍🤝‍🧑 친구가 합류했다!', 'info'); }
+    if (ev.kind === 'friend') { st.friend = { x: st.kx + 34, state: 'walk', timer: 0, next: rnd(2.5, 4), left: 10 }; float('🧑‍🤝‍🧑 친구가 합류했다!', 'info'); }
     render();
   }
   // ── 위기 ──
