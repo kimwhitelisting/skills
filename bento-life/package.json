@@ -11,7 +11,8 @@
     "balance": "vitest run tests/balance.report.test.ts",
     "typecheck": "tsc",
     "gen:menus": "node --experimental-strip-types scripts/generate-menus.ts",
-    "gen:art": "vite-node scripts/generate-art-list.ts"
+    "gen:art": "vite-node scripts/generate-art-list.ts",
+    "draw:ingredients": "node --experimental-strip-types scripts/draw-ingredients.ts"
   },
   "devDependencies": {
     "@types/node": "^22.20.5",
