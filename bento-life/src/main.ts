@@ -1,4 +1,7 @@
+import '@fontsource/gowun-dodum/400.css';
+import '@fontsource/gaegu/700.css';
 import './style.css';
+import { art, characterArt, endingArt, eventArt, idleExpression, ingredientArt, type Expression } from './art.ts';
 import { INGREDIENTS, ing } from './data/ingredients.ts';
 import { displayDelta } from './game/apply.ts';
 import { ALL_MENUS, available, getMenu, isValidSelection, randomSelection, selectionCost, type MealResult, type Selection } from './game/bento.ts';
@@ -37,6 +40,27 @@ function deltaChips(d: Delta, money = 0): string {
   return chips.length ? `<div class="chips">${chips.join('')}</div>` : '';
 }
 
+/** 그림이 있으면 그림, 없으면 이모지 */
+const pic = (url: string | undefined, emoji: string, cls = '') =>
+  url ? `<img class="pic ${cls}" src="${url}" alt="" draggable="false">` : `<span class="emo ${cls}">${emoji}</span>`;
+
+/** 이벤트/엔딩용 그림 액자 (그림책 한 장면) */
+const illust = (url: string | undefined, emoji: string) =>
+  `<figure class="illust ${url ? 'has-art' : ''}">${pic(url, emoji)}</figure>`;
+
+const MOOD_EMOJI: Record<Expression, string> = { neutral: '🙂', happy: '😋', sad: '😢', yuck: '🤢' };
+
+function avatarOf(s: GameState, expr: Expression): string {
+  const stage = stageOf(s.age);
+  return pic(characterArt(s, expr), stage.avatar[s.child.gender === 'boy' ? 0 : 1]);
+}
+
+/** 도시락통: 왼쪽 큰 칸 = 주식, 오른쪽 위/아래 = 메인/반찬 */
+function bentoBox(sel: Selection, small = false): string {
+  const cell = (id: string, slot: string) => `<div class="cell ${slot}">${pic(ingredientArt(id), ing(id).emoji)}</div>`;
+  return `<div class="bento ${small ? 'small' : ''}">${cell(sel.base, 'base')}${cell(sel.main, 'main')}${cell(sel.side, 'side')}</div>`;
+}
+
 const effectIcons = (i: Ingredient) =>
   STAT_KEYS.filter((k) => i.stats[k]).map((k) => `${STAT_INFO[k].emoji}${i.stats[k]! > 0 ? '+' : ''}${i.stats[k]}`).join(' ');
 
@@ -45,7 +69,7 @@ function renderTitle(): string {
   const canContinue = game && game.step !== 'ending';
   return `
   <main class="title">
-    <div class="logo">🍱</div>
+    <div class="logo">${pic(art('ui/logo'), '🍱')}</div>
     <h1>도시락 육아</h1>
     <p class="sub">도시락 싸들고 졸졸 따라다니면<br>아이를 얼마나 잘 키울 수 있을까?</p>
     <div class="stack">
@@ -58,7 +82,6 @@ function renderTitle(): string {
 
 function renderHeader(s: GameState): string {
   const stage = stageOf(s.age);
-  const avatar = stage.avatar[s.child.gender === 'boy' ? 0 : 1];
   const bars = STAT_KEYS.map((k) => {
     const v = Math.round(s.stats[k]);
     return `<div class="stat"><span>${STAT_INFO[k].emoji}</span><div class="bar"><i style="width:${v}%" class="${v < 25 ? 'low' : v >= 75 ? 'high' : ''}"></i></div><b>${v}</b></div>`;
@@ -66,7 +89,7 @@ function renderHeader(s: GameState): string {
   return `
   <header class="hud">
     <div class="who">
-      <div class="avatar">${avatar}</div>
+      <div class="avatar">${avatarOf(s, idleExpression(s))}</div>
       <div><div class="name">${esc(s.child.name)} <small>${s.age}살 · ${stage.name}</small></div>
       <div class="money">💰 ${s.money} · ${s.age}/${FINAL_AGE}년</div></div>
       <button class="icon" data-act="notebook" aria-label="육아 수첩">📒</button>
@@ -76,12 +99,16 @@ function renderHeader(s: GameState): string {
   </header>`;
 }
 
-function renderResult(r: Result): string {
+function renderResult(r: Result, s: GameState): string {
   if (r.kind === 'meal') {
     const m = r.r.menu;
     return `
     <section class="card result">
       <div class="kicker">${esc(r.title)}</div>
+      <div class="reaction">
+        ${bentoBox(m, true)}
+        <div class="face mood-${r.r.mood}">${characterArt(s, r.r.mood) ? avatarOf(s, r.r.mood) : `<span class="emo">${MOOD_EMOJI[r.r.mood]}</span>`}</div>
+      </div>
       <h2>${m.signature ? '✨ ' : ''}${esc(m.name)}</h2>
       ${r.r.firstEver ? '<div class="badge">📖 도감 신규 등록!</div>' : ''}
       <ul class="lines">${r.r.lines.map((l) => `<li>${nl(l)}</li>`).join('')}</ul>
@@ -92,7 +119,7 @@ function renderResult(r: Result): string {
   if (r.kind === 'follow') {
     return `
     <section class="card result">
-      <div class="big">${r.emoji}</div>
+      ${illust(undefined, r.emoji)}
       <h2>${esc(r.title)}</h2>
       ${deltaChips(r.delta)}
       <button class="btn primary" data-act="next">도시락 싸러 가기</button>
@@ -100,7 +127,6 @@ function renderResult(r: Result): string {
   }
   return `
   <section class="card result">
-    <div class="big">${r.emoji}</div>
     <div class="kicker">${esc(r.title)}</div>
     <p class="story">${nl(r.r.text)}</p>
     ${deltaChips(r.r.delta, r.r.money)}
@@ -112,7 +138,7 @@ function renderEvent(s: GameState): string {
   const a = s.active!;
   return `
   <section class="card event">
-    <div class="big">${a.emoji}</div>
+    ${illust(eventArt(a.id, s), a.emoji)}
     <h2>${esc(a.title)}</h2>
     <p class="story">${nl(a.text)}</p>
     <div class="stack">
@@ -156,7 +182,7 @@ function renderMeal(s: GameState): string {
           const disliked = s.child.known.dislikes.includes(i.id);
           const liked = i.tags.some((t) => s.child.known.likes.includes(t));
           return `<button class="ing ${sel![slot] === i.id ? 'on' : ''}" data-act="ing" data-slot="${slot}" data-id="${i.id}">
-            <span class="e">${i.emoji}</span><span class="n">${esc(i.name)}${disliked ? ' 🙅' : liked ? ' 💗' : ''}</span>
+            <span class="e">${pic(ingredientArt(i.id), i.emoji)}</span><span class="n">${esc(i.name)}${disliked ? ' 🙅' : liked ? ' 💗' : ''}</span>
             <span class="fx">${effectIcons(i)}</span><span class="c">💰${i.cost}</span></button>`;
         }).join('')}
       </div>
@@ -165,7 +191,7 @@ function renderMeal(s: GameState): string {
   <section class="card meal">
     <div class="kicker">${MEAL_EMOJI[time]} ${esc(stageOf(s.age).meals[time])}</div>
     <div class="preview">
-      <div class="box">${ing(sel.base).emoji}${ing(sel.main).emoji}${ing(sel.side).emoji}</div>
+      ${bentoBox(sel)}
       <div class="pname">${known ? (menu.signature ? '✨ ' : '') + esc(menu.name) : `<span class="q">${esc(menu.name)}</span> <span class="new">NEW</span>`}</div>
     </div>
     ${rows}
@@ -196,7 +222,7 @@ function renderEnding(s: GameState): string {
   return `
   <section class="card ending">
     <div class="kicker">${esc(s.child.name)}의 스무 살</div>
-    <div class="big">${e.emoji}</div>
+    ${illust(endingArt(e.id, s), e.emoji)}
     <h2>${esc(e.title)}</h2>
     <p class="story">${esc(e.text)}</p>
     <div class="final">
@@ -255,7 +281,7 @@ function renderDex(): string {
 function renderGame(s: GameState): string {
   let body: string;
   if (screen === 'notebook') body = renderNotebook(s);
-  else if (result) body = renderResult(result);
+  else if (result) body = renderResult(result, s);
   else if (s.step === 'ending') body = renderEnding(s);
   else if (s.active) body = renderEvent(s);
   else if (s.step === 'follow') body = renderFollow(s);

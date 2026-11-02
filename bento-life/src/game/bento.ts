@@ -36,7 +36,10 @@ export function isValidSelection(s: GameState, sel: Selection): boolean {
   return (['base', 'main', 'side'] as const).every((slot) => available(s, slot).some((i) => i.id === sel[slot]));
 }
 
-export interface MealResult { menu: Menu; isNew: boolean; firstEver: boolean; lines: string[]; delta: Delta }
+/** 아이 반응 표정 (일러스트 선택용) */
+export type MealMood = 'happy' | 'neutral' | 'sad' | 'yuck';
+
+export interface MealResult { menu: Menu; isNew: boolean; firstEver: boolean; lines: string[]; delta: Delta; mood: MealMood }
 
 const TAG_WORD: Partial<Record<Tag, string>> = {
   달콤: '달콤한', 고기: '고기', 생선: '생선', 채소: '채소', 과일: '과일', 면: '면', 매운: '매운', 튀김: '튀긴',
@@ -133,5 +136,8 @@ export function packBento(s: GameState, time: MealTime, sel: Selection, everSeen
   for (const k of Object.keys(d) as (keyof Delta)[]) if (d[k]! > 0) d[k]! *= MEAL_SCALE;
   const delta = applyDelta(s, d);
   if (!lines.length) say('냠냠, 깨끗하게 비웠다.');
-  return { menu, isNew, firstEver, lines, delta };
+  const pickedOut = items.some((i) => s.child.dislikes.includes(i.id));
+  const h = d.happy ?? 0;
+  const mood: MealMood = pickedOut && h <= 0 ? 'yuck' : h >= 2 ? 'happy' : h <= -2 ? 'sad' : 'neutral';
+  return { menu, isNew, firstEver, lines, delta, mood };
 }

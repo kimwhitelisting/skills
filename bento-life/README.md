@@ -6,7 +6,7 @@
 **① 나이별 이벤트 → ② 올해 얼마나 따라다닐지 → ③ 아침·점심·저녁 도시락 → ④ 랜덤 이벤트 → ⑤ 한 해 결산**
 을 반복하고, 스무 살에 엔딩을 맞는다.
 
-기획 문서: [`docs/GDD.md`](docs/GDD.md) · 전체 메뉴표: [`docs/menus.csv`](docs/menus.csv) (엑셀로 열기)
+기획 문서: [`docs/GDD.md`](docs/GDD.md) · 아트 가이드: [`docs/ART.md`](docs/ART.md) · 그림 목록: [`docs/art-assets.csv`](docs/art-assets.csv) · 전체 메뉴표: [`docs/menus.csv`](docs/menus.csv)
 
 ## 실행
 
@@ -36,6 +36,8 @@ src/
     menus.ts              메뉴 조합 생성 규칙
     state.ts / save.ts    새 게임 생성, 저장/불러오기
   main.ts, style.css    ← 화면 (DOM 기반, 프레임워크 없음)
+  art.ts                ← 일러스트 연결 (파일 있으면 그림, 없으면 이모지)
+  assets/art/           ← 일러스트 넣는 곳
 scripts/generate-menus.ts  메뉴표 생성기
 tests/                     테스트 + 자동 플레이 시뮬레이터
 ```
@@ -46,6 +48,7 @@ tests/                     테스트 + 자동 플레이 시뮬레이터
 - **특별 메뉴 추가**: `signatures.ts`에 `combo: [주식, 메인, 반찬]` 추가 → `npm run gen:menus`
   (조합이 슬롯 순서와 안 맞거나, 나이 범위상 만들 수 없으면 생성기가 에러를 냄)
 - **이벤트 추가**: `events.ts`에 객체 추가. 텍스트에서 `{c}`(민준이/서아), `{v}`(민준아/서아야), `{kind}`(아들/딸) 사용
+- **그림 추가**: `docs/art-assets.csv`의 경로대로 `src/assets/art/`에 넣으면 자동 반영 (없으면 이모지). `npm run gen:art`로 목록·완료 현황 갱신
 - 수정 후 `npm test` — 메뉴표가 최신이 아니거나, 어떤 판이 진행 불가 상태에 빠지면 실패한다
 
 ## 스토어 출시 경로
