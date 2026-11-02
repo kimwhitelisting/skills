@@ -1,0 +1,21 @@
+{
+  "name": "bento-life",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "tsc && vite build",
+    "preview": "vite preview --host",
+    "test": "vitest run tests/game.test.ts",
+    "balance": "vitest run tests/balance.report.test.ts",
+    "typecheck": "tsc",
+    "gen:menus": "node --experimental-strip-types scripts/generate-menus.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "typescript": "^5.9.3",
+    "vite": "^6.4.5",
+    "vitest": "^3.2.7"
+  }
+}
