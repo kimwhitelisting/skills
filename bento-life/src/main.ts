@@ -9,6 +9,7 @@ import { DEFAULT_TUNING, tuningOf, yearlyIncome, type Tuning } from './game/conf
 import { FINAL_AGE, FOLLOW_OPTIONS, MEAL_EMOJI, STAT_INFO, STAT_KEYS, TALENT_INFO, stageOf } from './game/constants.ts';
 import { advanceYear, chooseEventOption, chooseFollow, continueAfterEvent, continueAfterMeal, eatMeal, isMealStep, mealsThisYear, startGame } from './game/engine.ts';
 import { ENDINGS, ENDING_BY_ID, decideEnding } from './game/endings.ts';
+import { josa } from './game/korean.ts';
 import { menuKey } from './game/menus.ts';
 import { clearRun, loadDex, loadRun, saveDex, saveRun, type Dex } from './game/save.ts';
 import { newGame } from './game/state.ts';
@@ -37,6 +38,9 @@ let flash: Flash | undefined;
 let sel: Selection | undefined;
 let tab: Slot = 'base';
 let justPlaced: Slot | undefined;
+/** 이번 도시락에서 마지막으로 고른 재료 (아이 말풍선 반응용) */
+let lastPick: string | undefined;
+let closing = false;
 let introPage = 0;
 
 const SLOTS: Slot[] = ['base', 'main', 'side'];
@@ -85,7 +89,7 @@ function bentoBox(sel: Selection, opts: { small?: boolean; interactive?: boolean
     const cls = [slot, opts.interactive && tab === slot ? 'active' : '', justPlaced === slot ? 'plop' : ''].join(' ');
     return `<div class="cell ${cls}" ${attrs}>${pic(ingredientArt(id), ing(id).emoji)}</div>`;
   };
-  return `<div class="bento ${opts.small ? 'small' : ''} ${opts.interactive ? 'drop' : ''}">${SLOTS.map(cell).join('')}</div>`;
+  return `<div class="bento ${opts.small ? 'small' : ''} ${opts.interactive ? 'drop' : ''}">${SLOTS.map(cell).join('')}${opts.interactive ? '<div class="lid"><span>🎀</span></div>' : ''}</div>`;
 }
 
 const topEffects = (i: Ingredient) =>
@@ -203,36 +207,66 @@ function ensureSelection(s: GameState, time: MealTime): Selection {
   return sel;
 }
 
+/** 아이가 조리대 너머에서 하는 말 — 이미 알아낸 취향에만 반응한다 (모르는 건 먹여 봐야 앎) */
+function kidSays(s: GameState, cur: Selection): { text: string; expr: Expression } {
+  const stage = stageOf(s.age).id;
+  const baby = stage === 'infant';
+  const teen = stage === 'teen' || stage === 'high';
+  if (!lastPick) {
+    if (!prefs.seenDragHint && !baby) return { text: '재료를 도시락통에 끌어다 넣어 줘!', expr: 'neutral' };
+    const hello: Record<string, string> = {
+      infant: '아부부… 맘마?', toddler: '오늘 도시락 뭐야?', child: '친구들이 부러워할 걸로 싸 줘!',
+      teen: '…아무거나.', high: '야자 버틸 수 있게 든든하게…', adult: '이게 마지막 도시락이야?',
+    };
+    return { text: hello[stage], expr: 'neutral' };
+  }
+  const it = ing(lastPick);
+  const menu = getMenu(menuKey(cur.base, cur.main, cur.side))!;
+  if (s.child.known.dislikes.includes(it.id))
+    return { text: baby ? '으앙…' : teen ? `${josa(it.name, '은/는')} 넣지 말라니까…` : `으… ${josa(it.name, '은/는')} 싫어!`, expr: 'yuck' };
+  if (it.tags.some((t) => s.child.known.likes.includes(t)))
+    return { text: baby ? '꺄르르!' : teen ? `오, ${it.name}. 나쁘지 않네.` : `${it.name}! 최고야!`, expr: 'happy' };
+  if (menu.signature && dex.menus.includes(menu.key)) return { text: baby ? '꺄아!' : `이거 「${menu.name}」 맞지?!`, expr: 'happy' };
+  if (!dex.menus.includes(menu.key)) return { text: baby ? '옹알옹알?' : '처음 보는 조합인데?', expr: 'neutral' };
+  const idle = baby ? ['옹알옹알', '아부!'] : teen ? ['음.', '그래, 뭐.', '배고파…'] : ['음~ 뭐가 될까?', '오늘은 그걸로?', '배고파!'];
+  return { text: idle[(it.id.length + s.age) % idle.length], expr: 'neutral' };
+}
+
+/** 도시락 싸기 = 부엌 장면: 조리대 너머 아이 · 도시락통 · 조리대 위 재료 */
 function renderMeal(s: GameState): string {
   const time = s.step as MealTime;
   const cur = ensureSelection(s, time);
   const menu = getMenu(menuKey(cur.base, cur.main, cur.side))!;
   const known = dex.menus.includes(menu.key);
   const meals = mealsThisYear(s);
-  const chips = available(s, tab).map((i) => {
+  const say = kidSays(s, cur);
+  const items = available(s, tab).map((i, n) => {
     const disliked = s.child.known.dislikes.includes(i.id);
     const liked = i.tags.some((t) => s.child.known.likes.includes(t));
-    return `<button class="ing ${cur[tab] === i.id ? 'on' : ''}" data-act="ing" data-slot="${tab}" data-id="${i.id}">
-      <span class="e">${pic(ingredientArt(i.id), i.emoji)}</span>
+    return `<button class="ing ${cur[tab] === i.id ? 'on' : ''}" data-act="ing" data-slot="${tab}" data-id="${i.id}" style="--tilt:${((n * 37) % 7) - 3}deg">
+      <span class="e">${pic(ingredientArt(i.id), i.emoji)}<span class="price">${ingredientCost(s, i.id)}</span>${disliked ? '<span class="mark">🙅</span>' : liked ? '<span class="mark">💗</span>' : ''}</span>
       <span class="n">${esc(i.name)}</span>
-      <span class="c">💰${ingredientCost(s, i.id)}${disliked ? ' 🙅' : liked ? ' 💗' : ''}</span>
     </button>`;
   }).join('');
   return `
-  <section class="card meal">
-    <div class="meal-head">
-      <span class="kicker">${MEAL_EMOJI[time]} ${esc(stageOf(s.age).meals[time])}</span>
-      ${meals.length > 1 ? `<span class="count">${meals.indexOf(time) + 1}/${meals.length}</span>` : ''}
+  <div class="kitchen">
+    <div class="kid-zone">
+      <span class="meal-tag">${MEAL_EMOJI[time]} ${esc(stageOf(s.age).meals[time])}${meals.length > 1 ? ` · ${meals.indexOf(time) + 1}/${meals.length}` : ''}</span>
+      <div class="bubble mood-${say.expr}" ${lastPick ? 'data-pop' : ''}>${esc(say.text)}</div>
+      <div class="kid mood-${say.expr}">${faceOf(s, say.expr === 'neutral' ? idleExpression(s) : say.expr)}</div>
     </div>
-    ${bentoBox(cur, { interactive: true })}
-    <div class="pname">${known ? (menu.signature ? '✨ ' : '') + esc(menu.name) : `${esc(menu.name)} <span class="new">NEW</span>`}</div>
-    <div class="sel-info">${ing(cur[tab]).emoji} ${esc(ing(cur[tab]).name)} <span class="fx">${topEffects(ing(cur[tab]))}</span></div>
-    ${prefs.seenDragHint ? '' : '<p class="hint">👆 재료를 끌어서 도시락통에 담거나, 눌러서 골라요</p>'}
-  </section>
-  <nav class="tabs" role="tablist">
-    ${SLOTS.map((sl) => `<button class="tab ${tab === sl ? 'on' : ''}" data-act="tab" data-slot="${sl}" role="tab">${SLOT_LABEL[sl]} <span>${ing(cur[sl]).emoji}</span></button>`).join('')}
-  </nav>
-  <div class="tray">${chips}</div>`;
+    <div class="counter">
+      <div class="board">
+        ${bentoBox(cur, { interactive: true })}
+        <div class="menu-label">${known ? (menu.signature ? '✨ ' : '') + esc(menu.name) : `${esc(menu.name)} <span class="new">NEW</span>`}</div>
+        <div class="sel-info">${esc(ing(cur[tab]).name)} <span class="fx">${topEffects(ing(cur[tab]))}</span></div>
+      </div>
+      <nav class="labels" role="tablist">
+        ${SLOTS.map((sl) => `<button class="label ${sl} ${tab === sl ? 'on' : ''}" data-act="tab" data-slot="${sl}" role="tab">${SLOT_LABEL[sl]}</button>`).join('')}
+      </nav>
+      <div class="spread">${items}</div>
+    </div>
+  </div>`;
 }
 
 function renderSummary(s: GameState): string {
@@ -288,8 +322,8 @@ function renderBottomBar(): string {
     const cost = selectionCost(s, sel);
     const short = cost > s.money;
     return `<footer class="bottombar">
-      <button class="btn square" data-act="random" aria-label="아무거나">🎲</button>
-      <button class="btn primary grow" data-act="pack" ${short ? 'disabled' : ''}>도시락 싸기 · 💰${cost}${short ? ' (부족)' : ''}</button>
+      <button class="btn square round" data-act="random" aria-label="아무거나">🎲</button>
+      <button class="btn primary grow lid-btn" data-act="pack" ${short ? 'disabled' : ''}>${short ? `반찬값이 모자라요 · 💰${cost}` : `🍱 뚜껑 닫기 · 💰${cost}`}</button>
     </footer>`;
   }
   if (s.step === 'summary' && !s.active)
@@ -412,7 +446,8 @@ function render(): void {
   }
   else main = renderTitle();
   const bar = renderBottomBar();
-  app.className = bar ? 'has-bar' : '';
+  const kitchen = screen === 'game' && !!game && isMealStep(game.step) && !game.active;
+  app.className = [bar ? 'has-bar' : '', kitchen ? 'in-kitchen' : ''].join(' ');
   app.innerHTML = main + bar + renderOverlay();
   justPlaced = undefined;
 }
@@ -449,6 +484,7 @@ function place(slot: Slot, id: string): void {
   if (!sel) return;
   sel = { ...sel, [slot]: id };
   justPlaced = slot;
+  lastPick = id;
   flash = undefined;
   const i = SLOTS.indexOf(slot);
   if (i < SLOTS.length - 1) tab = SLOTS[i + 1]; // 다음 칸으로 자동 이동
@@ -508,8 +544,18 @@ function onAct(act: string, el: HTMLElement): void {
     }
     case 'tab': tab = el.dataset.slot as Slot; scrollTop = false; sfx('tap'); break;
     case 'ing': place(el.dataset.slot as Slot, el.dataset.id!); scrollTop = false; break;
-    case 'random': if (s) { sel = randomSelection(s); flash = undefined; sfx('pop'); haptic(8); } scrollTop = false; break;
+    case 'random': if (s) { sel = randomSelection(s); lastPick = sel.main; flash = undefined; sfx('pop'); haptic(8); } scrollTop = false; break;
     case 'pack': {
+      if (!s || !sel || closing) return;
+      // 뚜껑이 닫히는 연출 뒤에 실제로 싼다
+      closing = true;
+      app.classList.add('busy');
+      app.querySelector('.bento.drop')?.classList.add('closing');
+      sfx('tap');
+      setTimeout(() => { closing = false; app.classList.remove('busy'); onAct('pack-now', el); }, 620);
+      return;
+    }
+    case 'pack-now': {
       if (!s || !sel) return;
       const time = s.step as MealTime;
       const r = eatMeal(s, sel, new Set(dex.menus));
@@ -518,6 +564,7 @@ function onAct(act: string, el: HTMLElement): void {
       flash = { kind: 'meal', r, title: `${MEAL_EMOJI[time]} ${stageOf(s.age).meals[time]}` };
       prefs.seenDragHint = true;
       sel = undefined;
+      lastPick = undefined;
       sfx(r.firstEver && r.menu.signature ? 'chime' : r.lines.some((l) => l.includes('발견')) ? 'ding' : 'pack');
       haptic(r.mood === 'yuck' || r.mood === 'sad' ? 30 : 15);
       break;

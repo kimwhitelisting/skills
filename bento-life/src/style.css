@@ -20,6 +20,7 @@
   --bar: #ebdfcb;
   --shadow: 0 3px 0 rgba(74, 59, 48, .12), 0 8px 18px rgba(74, 59, 48, .08);
   --grain-opacity: .35;
+  --wall: #f6ead6; --wall-line: #ecdcc1; --wood: #e3bd85; --wood-dark: #c99a5e; --wood-grain: rgba(150, 100, 50, .12); --sky-window: #cfe3f1;
   --font-body: 'Gowun Dodum', -apple-system, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
   --font-hand: 'Gaegu', 'Gowun Dodum', sans-serif;
   /* 손으로 자른 듯한 불규칙 모서리 */
@@ -37,6 +38,7 @@
     --bar: #3d3f5c;
     --shadow: 0 3px 0 rgba(0, 0, 0, .25), 0 8px 18px rgba(0, 0, 0, .25);
     --grain-opacity: .25;
+    --wall: #2b2d45; --wall-line: #35385a; --wood: #6e4d33; --wood-dark: #523825; --wood-grain: rgba(0, 0, 0, .18); --sky-window: #1d2f4f;
   }
 }
 
@@ -278,3 +280,135 @@ summary { cursor: pointer; font-weight: 700; min-height: 32px; }
   .ing .n { font-size: .75rem; }
   .hud { padding-block: 6px; } .avatar { width: 42px; height: 42px; }
 }
+
+/* ═════════ 부엌 장면 (도시락 싸기) — 박스 대신 사물이 놓인 무대 ═════════ */
+#app.in-kitchen { padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
+.in-kitchen .hud { background: var(--wall); margin: 0 -16px; padding-inline: 16px; }
+.in-kitchen .page { margin: 0 -16px; }
+.kitchen { position: relative; }
+
+/* 벽 + 창문 + 조리대 너머 아이 */
+.kid-zone {
+  position: relative; height: 150px; overflow: hidden; display: flex; align-items: flex-end; justify-content: center;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 47px, var(--wall-line) 47px 49px),
+    repeating-linear-gradient(0deg, transparent 0 47px, var(--wall-line) 47px 49px),
+    var(--wall);
+}
+.kid-zone::before { /* 창문 */
+  content: ''; position: absolute; left: 18px; top: 26px; width: 74px; height: 64px; border-radius: 6px;
+  background: linear-gradient(var(--sky-window), color-mix(in srgb, var(--sky-window) 60%, #fff));
+  box-shadow: 0 0 0 5px var(--wood-dark), inset 37px 0 0 -35px var(--wood-dark), inset 0 32px 0 -30px var(--wood-dark);
+}
+.meal-tag { position: absolute; right: 14px; top: 10px; font-family: var(--font-hand); font-size: 1.25rem; font-weight: 700; color: var(--ink); background: color-mix(in srgb, var(--sheet) 80%, transparent); padding: 2px 10px; border-radius: var(--wobbly-sm); transform: rotate(2deg); }
+.kid {
+  width: 116px; height: 116px; margin-bottom: -26px; display: grid; place-items: center; font-size: 78px; overflow: hidden;
+  border-radius: 48% 52% 46% 54% / 56% 50% 50% 44%; background: color-mix(in srgb, var(--rose) 22%, var(--wall));
+}
+.kid .pic { width: 100%; height: 100%; object-fit: cover; }
+.kid.mood-happy { animation: hop .6s ease-out; } .kid.mood-yuck { animation: shake .45s ease-out; }
+.bubble {
+  position: absolute; left: calc(50% + 44px); top: 44px; max-width: min(150px, 38vw); z-index: 2;
+  background: var(--sheet); color: var(--ink); padding: 7px 11px; font-size: .9rem; font-weight: 700; line-height: 1.35;
+  border: 2px solid var(--line); border-radius: 16px 18px 16px 4px;
+}
+.bubble::after { content: ''; position: absolute; left: -9px; bottom: 6px; width: 12px; height: 12px; background: var(--sheet); border-left: 2px solid var(--line); border-bottom: 2px solid var(--line); transform: rotate(45deg) skew(10deg, 10deg); }
+.bubble[data-pop] { animation: bubble .3s ease-out; }
+.bubble.mood-yuck { border-color: var(--rose); } .bubble.mood-happy { border-color: var(--sage); }
+@keyframes bubble { from { transform: scale(.7) translateY(6px); opacity: 0; } }
+
+/* 나무 조리대 */
+.counter {
+  position: relative; z-index: 1; padding: 14px 16px 10px;
+  background: repeating-linear-gradient(178deg, transparent 0 9px, var(--wood-grain) 9px 10px, transparent 10px 23px), var(--wood);
+  border-top: 9px solid var(--wood-dark); box-shadow: 0 -3px 0 rgba(0, 0, 0, .08);
+  min-height: calc(100dvh - 150px - 64px - 84px);
+}
+.board { text-align: center; }
+.counter .bento { width: min(190px, 54vw); box-shadow: inset 0 -5px 0 rgba(0, 0, 0, .12), 0 8px 0 rgba(0, 0, 0, .12), 0 14px 18px rgba(0, 0, 0, .12); }
+.menu-label {
+  display: inline-block; margin-top: 10px; padding: 2px 12px; background: var(--sheet); transform: rotate(-1.5deg);
+  font-family: var(--font-hand); font-weight: 700; font-size: 1.35rem; letter-spacing: -.04em; line-height: 1.2;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, .1);
+}
+.counter .sel-info { color: color-mix(in srgb, var(--ink) 75%, transparent); margin-top: 4px; }
+
+/* 뚜껑 + 보자기 매듭 */
+.bento { position: relative; overflow: visible; }
+.lid {
+  position: absolute; inset: -4px; border-radius: 20px 24px 18px 26px / 24px 18px 26px 20px; pointer-events: none;
+  background: repeating-linear-gradient(45deg, transparent 0 10px, rgba(255, 255, 255, .18) 10px 12px), var(--tomato);
+  box-shadow: inset 0 -6px 0 rgba(0, 0, 0, .15); display: grid; place-items: center;
+  transform: translateY(-140%) rotate(-8deg); opacity: 0;
+}
+.lid span { font-size: 40px; transform: scale(0); }
+.bento.closing .lid { animation: lid .38s cubic-bezier(.3, 1.4, .6, 1) forwards; }
+.bento.closing .lid span { animation: knot .25s .36s ease-out forwards; }
+@keyframes lid { to { transform: none; opacity: 1; } }
+@keyframes knot { to { transform: scale(1) rotate(-10deg); } }
+#app.busy { pointer-events: none; }
+
+/* 마스킹테이프 이름표 = 주식/메인/반찬 고르기 */
+.labels { display: flex; justify-content: center; gap: 10px; margin: 14px 0 6px; }
+.label {
+  border: 0; font: inherit; font-family: var(--font-hand); font-size: 1.3rem; font-weight: 700; letter-spacing: -.03em; color: var(--ink);
+  padding: 2px 16px; cursor: pointer; opacity: .6; transform: rotate(-2deg);
+  clip-path: polygon(3% 0, 97% 4%, 100% 50%, 96% 100%, 2% 96%, 0 50%);
+}
+.label.base { background: color-mix(in srgb, var(--mustard) 70%, #fff); } .label.main { background: color-mix(in srgb, var(--rose) 75%, #fff); transform: rotate(1.5deg); } .label.side { background: color-mix(in srgb, var(--sage) 70%, #fff); }
+.label.on { opacity: 1; transform: scale(1.12) rotate(-1deg); }
+
+/* 조리대 위에 놓인 재료 (박스 없음: 접시 그림자 + 가격 스티커) */
+.spread { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px 4px; }
+.in-kitchen .ing {
+  border: 0; background: none; box-shadow: none; padding: 4px 0 2px; transform: rotate(var(--tilt, 0deg)); border-radius: 0;
+}
+.in-kitchen .ing .e { position: relative; width: 50px; height: 50px; }
+.in-kitchen .ing .e::before { /* 접시 */
+  content: ''; position: absolute; left: -4px; right: -4px; bottom: -3px; height: 18px; border-radius: 50%;
+  background: color-mix(in srgb, var(--sheet) 85%, transparent); box-shadow: 0 3px 0 rgba(0, 0, 0, .1); z-index: -1;
+}
+.in-kitchen .ing { isolation: isolate; }
+.in-kitchen .ing.on { transform: translateY(-6px) rotate(0deg) scale(1.08); background: none; }
+.in-kitchen .ing.on .e::before { background: color-mix(in srgb, var(--mustard) 70%, #fff); }
+.in-kitchen .ing .n { font-size: .75rem; color: var(--ink); margin-top: 2px; }
+.price {
+  position: absolute; right: -8px; top: -4px; min-width: 20px; height: 20px; padding: 0 4px; border-radius: 10px;
+  background: var(--sheet); border: 1.5px solid var(--line); font-size: .75rem; font-weight: 700; line-height: 17px; color: var(--ink);
+}
+.price::before { content: '💰'; font-size: .6rem; margin-right: 1px; display: none; }
+.mark { position: absolute; left: -8px; top: -4px; font-size: .9rem; }
+
+.btn.round { border-radius: 50%; }
+.lid-btn { letter-spacing: -.03em; }
+
+@media (max-height: 700px) {
+  .kid-zone { height: 118px; } .kid { width: 92px; height: 92px; font-size: 60px; margin-bottom: -22px; }
+  .kid-zone::before { display: none; }
+  .bubble { top: 30px; }
+  .counter .bento { width: min(150px, 44vw); }
+  .labels { margin: 8px 0 2px; }
+  .in-kitchen .ing .e { width: 42px; height: 42px; }
+}
+
+/* ═════════ 이벤트 = 그림책 한 페이지 ═════════ */
+.card.event { padding: 0 0 8px; margin: 0 -16px; animation: page .35s ease-out; }
+.card.event::before { display: none; }
+.event .illust { margin: 0 0 6px; border-radius: 0 0 46% 54% / 0 0 12px 18px; aspect-ratio: 4 / 3; }
+.event h2, .event .story { padding: 0 20px; }
+.event .story { font-size: 1.02rem; }
+.event .stack { padding: 0 20px; gap: 12px; }
+@keyframes page { from { opacity: 0; transform: perspective(900px) rotateY(-12deg); transform-origin: left; } }
+/* 선택지 = 메모지 */
+.event .btn.choice {
+  border: 0; border-radius: 2px 3px 2px 4px; box-shadow: 0 3px 6px rgba(74, 59, 48, .15); position: relative; padding: 14px 16px 12px;
+  background: color-mix(in srgb, var(--mustard) 35%, var(--sheet)); transform: rotate(-.6deg);
+}
+.event .btn.choice:nth-child(2) { background: color-mix(in srgb, var(--sky) 30%, var(--sheet)); transform: rotate(.5deg); }
+.event .btn.choice:nth-child(3) { background: color-mix(in srgb, var(--rose) 32%, var(--sheet)); transform: rotate(-.3deg); }
+.event .btn.choice:nth-child(4) { background: color-mix(in srgb, var(--sage) 32%, var(--sheet)); transform: rotate(.7deg); }
+.event .btn.choice::before { /* 테이프 */
+  content: ''; position: absolute; top: -7px; left: 50%; width: 46px; height: 14px; transform: translateX(-50%) rotate(-3deg);
+  background: color-mix(in srgb, var(--sheet) 70%, transparent); box-shadow: 0 1px 2px rgba(0, 0, 0, .08);
+}
+.event .btn.choice:active:not(:disabled) { transform: scale(.98); box-shadow: 0 1px 3px rgba(74, 59, 48, .15); }
