@@ -20,7 +20,7 @@
   --bar: #ebdfcb;
   --shadow: 0 3px 0 rgba(74, 59, 48, .12), 0 8px 18px rgba(74, 59, 48, .08);
   --grain-opacity: .35;
-  --wall: #f6ead6; --wall-line: #ecdcc1; --wood: #e3bd85; --wood-dark: #c99a5e; --wood-grain: rgba(150, 100, 50, .12); --sky-window: #cfe3f1;
+  --wall: #f6ead6; --wall-line: #ecdcc1; --wallpaper: #eef0e2; --wallpaper-line: #e2e6cf; --door: #b9855a; --door-dark: #94653f; --wood: #e3bd85; --wood-dark: #c99a5e; --wood-grain: rgba(150, 100, 50, .12); --sky-window: #cfe3f1;
   --font-body: 'Gowun Dodum', -apple-system, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
   --font-hand: 'Gaegu', 'Gowun Dodum', sans-serif;
   /* 손으로 자른 듯한 불규칙 모서리 */
@@ -38,7 +38,7 @@
     --bar: #3d3f5c;
     --shadow: 0 3px 0 rgba(0, 0, 0, .25), 0 8px 18px rgba(0, 0, 0, .25);
     --grain-opacity: .25;
-    --wall: #2b2d45; --wall-line: #35385a; --wood: #6e4d33; --wood-dark: #523825; --wood-grain: rgba(0, 0, 0, .18); --sky-window: #1d2f4f;
+    --wall: #2b2d45; --wall-line: #35385a; --wallpaper: #2a3340; --wallpaper-line: #323d4c; --door: #6b4a32; --door-dark: #4f3524; --wood: #6e4d33; --wood-dark: #523825; --wood-grain: rgba(0, 0, 0, .18); --sky-window: #1d2f4f;
   }
 }
 
@@ -146,8 +146,9 @@ small { color: var(--muted); }
 .new { background: var(--mustard); color: #4a3b30; border-radius: 6px 8px 5px 7px; padding: 0 6px; font-family: var(--font-body); font-size: .75rem; vertical-align: middle; letter-spacing: 0; }
 
 /* 직전 결과 카드 ("다음" 버튼 대신) */
-.flash { padding: 14px 16px 10px; }
-.flash::before { background: var(--sheet-2); border-style: dashed; }
+.flash { padding: 16px 16px 10px; }
+.flash::before { background: color-mix(in srgb, var(--mustard) 18%, var(--sheet)); border: 0; border-radius: 3px 4px 3px 5px; box-shadow: 0 4px 10px rgba(74, 59, 48, .14); filter: none; }
+.flash::after { content: ''; position: absolute; top: -8px; left: 50%; width: 64px; height: 16px; transform: translateX(-50%) rotate(-2deg); background: color-mix(in srgb, var(--sky) 45%, transparent); }
 .flash-title { font-weight: 700; padding-right: 28px; }
 .flash .story { margin: 4px 0 6px; font-size: .95rem; }
 .flash-row { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 8px; }
@@ -283,8 +284,9 @@ summary { cursor: pointer; font-weight: 700; min-height: 32px; }
 
 /* ═════════ 부엌 장면 (도시락 싸기) — 박스 대신 사물이 놓인 무대 ═════════ */
 #app.in-kitchen { padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
-.in-kitchen .hud { background: var(--wall); margin: 0 -16px; padding-inline: 16px; }
-.in-kitchen .page { margin: 0 -16px; }
+.in-scene .hud { background: var(--wall); margin: 0 -16px; padding-inline: 16px; }
+.in-scene .page { margin: 0 -16px; }
+.in-scene .page > .flash { margin: 10px 14px 0; }
 .kitchen { position: relative; }
 
 /* 벽 + 창문 + 조리대 너머 아이 */
@@ -412,3 +414,94 @@ summary { cursor: pointer; font-weight: 700; min-height: 32px; }
   background: color-mix(in srgb, var(--sheet) 70%, transparent); box-shadow: 0 1px 2px rgba(0, 0, 0, .08);
 }
 .event .btn.choice:active:not(:disabled) { transform: scale(.98); box-shadow: 0 1px 3px rgba(74, 59, 48, .15); }
+
+/* ═════════ 공통: 종이 버튼 / 그림책 페이지 / 일기장 ═════════ */
+.btn.paper { background: var(--sheet); border: 0; border-radius: 3px 5px 4px 6px; box-shadow: 0 3px 8px rgba(74, 59, 48, .15); }
+.book-page { margin: 0 -16px; padding-bottom: 12px; animation: page .35s ease-out; }
+.book-page .illust { margin: 0 0 8px; border-radius: 0 0 46% 54% / 0 0 12px 18px; }
+.book-page h2, .book-page .story, .book-page .kicker, .book-page .dots, .book-page .link { padding: 0 20px; }
+.book-page > .btn, .book-page > .diary { margin-left: 16px; margin-right: 16px; width: auto; }
+.intro.book-page { padding-top: 0; }
+.intro .dots { margin: 6px 0 12px; }
+.diary {
+  position: relative; margin: 14px 14px 0; padding: 18px 18px 12px; transform: rotate(-.6deg);
+  background: repeating-linear-gradient(transparent 0 27px, color-mix(in srgb, var(--sky) 35%, transparent) 27px 28px), var(--sheet);
+  box-shadow: 0 5px 14px rgba(74, 59, 48, .16); border-radius: 2px 4px 3px 5px;
+}
+.diary::before { content: ''; position: absolute; top: -9px; left: 50%; width: 70px; height: 18px; transform: translateX(-50%) rotate(2deg); background: color-mix(in srgb, var(--rose) 50%, transparent); }
+.diary-date { font-family: var(--font-hand); font-size: 1.2rem; font-weight: 700; color: var(--accent); }
+.diary h2 { text-align: left; font-size: 1.9rem; }
+.diary .chips { justify-content: flex-start; }
+.report { margin-top: 6px; }
+
+/* ═════════ 타이틀: 벽에 붙은 간판 + 조리대 위 보자기 도시락 ═════════ */
+#app.on-title { padding: 0; }
+.title-scene { min-height: 100dvh; display: flex; flex-direction: column; }
+.wall-zone {
+  flex: 1; min-height: 42dvh; display: grid; place-items: center; position: relative; padding: calc(40px + env(safe-area-inset-top)) 20px 20px;
+  background: repeating-linear-gradient(90deg, transparent 0 47px, var(--wall-line) 47px 49px), repeating-linear-gradient(0deg, transparent 0 47px, var(--wall-line) 47px 49px), var(--wall);
+}
+.sign { background: var(--sheet); padding: 18px 22px 14px; text-align: center; transform: rotate(-2deg); box-shadow: 0 6px 16px rgba(74, 59, 48, .18); border-radius: 3px 5px 4px 6px; position: relative; }
+.sign::before { content: ''; position: absolute; top: -10px; left: 50%; width: 80px; height: 20px; transform: translateX(-50%) rotate(-3deg); background: color-mix(in srgb, var(--mustard) 55%, transparent); }
+.sign h1 { margin: 0; }
+.sign p { margin: 6px 0 0; color: var(--muted); font-size: .95rem; }
+.title-counter { min-height: 0; padding: 0 20px calc(28px + env(safe-area-inset-bottom)); }
+.title-bento { display: flex; justify-content: center; margin: -34px 0 22px; }
+.title-bento .pic { width: 150px; height: 150px; object-fit: contain; }
+.bento.wrapped { width: 170px; animation: bob 3s ease-in-out infinite; }
+.lid.shut { transform: none; opacity: 1; }
+.lid.shut span { transform: scale(1) rotate(-10deg); }
+
+/* ═════════ 따라다니기: 현관 ═════════ */
+.entry-zone {
+  position: relative; height: 210px; overflow: hidden; display: flex; justify-content: center; align-items: flex-end;
+  background: repeating-linear-gradient(90deg, var(--wallpaper) 0 18px, var(--wallpaper-line) 18px 22px);
+}
+.door {
+  width: 128px; height: 176px; border: 10px solid var(--door-dark); border-bottom: 0; border-radius: 8px 8px 0 0;
+  background: linear-gradient(var(--sky-window), color-mix(in srgb, var(--sage) 50%, var(--sky-window)) 75%, color-mix(in srgb, var(--sage) 80%, #6b8f52));
+  display: flex; align-items: flex-end; justify-content: center; position: relative;
+}
+.door::after { /* 열린 문짝 */
+  content: ''; position: absolute; right: -52px; top: -10px; bottom: 0; width: 44px; background: var(--door);
+  transform: skewY(-12deg); transform-origin: left; box-shadow: inset -4px 0 0 var(--door-dark);
+}
+.kid.in-door { width: 84px; height: 84px; font-size: 56px; margin: 0 0 6px; background: transparent; }
+.entry-zone .bubble { left: 12px; top: 12px; max-width: 54vw; border-radius: 16px 18px 4px 16px; }
+.entry-zone .bubble::after { left: auto; right: -9px; bottom: 4px; transform: rotate(-135deg) skew(10deg, 10deg); }
+.mat { position: absolute; bottom: 0; left: 50%; width: 170px; height: 14px; transform: translateX(-50%); background: repeating-linear-gradient(90deg, var(--tomato) 0 8px, var(--mustard) 8px 16px); border-radius: 4px 4px 0 0; }
+.hook-rail {
+  position: relative; padding: 18px 16px 16px; min-height: calc(100dvh - 210px - 64px);
+  background: repeating-linear-gradient(178deg, transparent 0 9px, var(--wood-grain) 9px 10px, transparent 10px 23px), var(--wood);
+  border-top: 9px solid var(--wood-dark);
+}
+.scene-q { font-size: 1.9rem; text-align: center; margin-bottom: 16px; }
+.hang-tag {
+  position: relative; display: flex; gap: 12px; align-items: center; width: 100%; text-align: left; margin: 0 0 18px; padding: 12px 14px;
+  border: 0; font: inherit; color: var(--ink); cursor: pointer; background: var(--sheet); border-radius: 4px 14px 14px 4px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, .14); transform: rotate(-1deg); transition: transform .12s;
+}
+.hang-tag.t1 { transform: rotate(.8deg); } .hang-tag.t2 { transform: rotate(-.5deg); }
+.hang-tag::before { /* 고리에 건 끈 */ content: ''; position: absolute; left: 22px; top: -12px; width: 2px; height: 14px; background: var(--door-dark); }
+.hang-tag::after { /* 구멍 */ content: ''; position: absolute; left: 17px; top: 4px; width: 10px; height: 10px; border-radius: 50%; background: var(--wood); box-shadow: inset 0 1px 2px rgba(0, 0, 0, .3); }
+.hang-tag:active { transform: scale(.98); }
+.tool { font-size: 36px; margin-left: 12px; }
+.tag-body b { display: block; font-family: var(--font-hand); font-size: 1.45rem; letter-spacing: -.03em; line-height: 1.1; }
+.tag-body small { display: block; font-size: .85rem; margin-top: 2px; }
+.stamp { position: absolute; right: 10px; top: 8px; font-size: .75rem; font-weight: 700; color: var(--accent); border: 2px solid var(--accent); border-radius: 6px; padding: 0 5px; transform: rotate(8deg); opacity: .8; }
+
+/* ═════════ 한 해 결산: 키 재기 기둥 + 일기 ═════════ */
+.growth-zone {
+  position: relative; height: 176px; display: flex; align-items: flex-end; justify-content: center; gap: 18px; overflow: hidden;
+  background: repeating-linear-gradient(90deg, var(--wallpaper) 0 18px, var(--wallpaper-line) 18px 22px);
+  border-bottom: 9px solid var(--wood-dark);
+}
+.post { position: relative; width: 34px; height: 100%; background: var(--door); box-shadow: inset -5px 0 0 var(--door-dark); }
+.post i { position: absolute; left: 0; width: 22px; height: 2px; background: var(--ink); opacity: .55; }
+.post i.now { width: 34px; height: 3px; background: var(--tomato); opacity: 1; animation: mark .5s ease-out; }
+.post i b { position: absolute; left: 38px; top: -9px; font-family: var(--font-hand); font-size: 1rem; color: var(--ink); white-space: nowrap; }
+.post i.now b { color: var(--accent); font-size: 1.2rem; }
+@keyframes mark { from { width: 0; } }
+.kid.standing { margin: 0 0 0; border-radius: 48% 52% 46% 54% / 56% 50% 50% 44%; background: color-mix(in srgb, var(--rose) 22%, var(--wallpaper)); animation: hop .7s ease-out; }
+.growth .diary { margin-top: 16px; padding-top: 14px; }
+.growth .diary h2 { font-size: 1.7rem; }

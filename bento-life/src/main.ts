@@ -100,14 +100,17 @@ const topEffects = (i: Ingredient) =>
 function renderTitle(): string {
   const canContinue = game && game.step !== 'ending';
   return `
-  <main class="title">
-    <div class="logo">${pic(art('ui/logo'), '🍱')}</div>
-    <h1>도시락 육아</h1>
-    <p class="sub">도시락 싸들고 졸졸 따라다니면<br>아이를 얼마나 잘 키울 수 있을까?</p>
-    <div class="stack">
-      ${canContinue ? `<button class="btn primary" data-act="continue">이어하기 · ${esc(game!.child.name)} ${game!.age}살</button>` : ''}
-      <button class="btn ${canContinue ? '' : 'primary'}" data-act="new">새로 키우기</button>
-      <button class="btn ghost" data-act="dex">📖 도감 ${dex.menus.length}/${ALL_MENUS.length} · 엔딩 ${dex.endings.length}/${ENDINGS.length}</button>
+  <main class="title-scene">
+    <div class="wall-zone">
+      <div class="sign"><h1>도시락 육아</h1><p>도시락 싸들고 졸졸 따라다니면<br>아이를 얼마나 잘 키울 수 있을까?</p></div>
+    </div>
+    <div class="counter title-counter">
+      <div class="title-bento">${art('ui/logo') ? pic(art('ui/logo'), '🍱') : '<div class="bento wrapped"><div class="lid shut"><span>🎀</span></div></div>'}</div>
+      <div class="stack">
+        ${canContinue ? `<button class="btn primary" data-act="continue">이어하기 · ${esc(game!.child.name)} ${game!.age}살</button>` : ''}
+        <button class="btn ${canContinue ? 'paper' : 'primary'}" data-act="new">새로 키우기</button>
+        <button class="btn paper" data-act="dex">📖 도감 ${dex.menus.length}/${ALL_MENUS.length} · 엔딩 ${dex.endings.length}/${ENDINGS.length}</button>
+      </div>
     </div>
     <button class="icon corner" data-act="settings" aria-label="설정">⚙️</button>
   </main>`;
@@ -121,9 +124,9 @@ const INTRO = [
 function renderIntro(): string {
   const p = INTRO[introPage];
   return `
-  <main class="intro">
-    <div class="dots">${INTRO.map((_, i) => `<i class="${i === introPage ? 'on' : ''}"></i>`).join('')}</div>
+  <main class="intro book-page">
     ${illust(undefined, p.emoji)}
+    <div class="dots">${INTRO.map((_, i) => `<i class="${i === introPage ? 'on' : ''}"></i>`).join('')}</div>
     <h2>${p.title}</h2>
     <p class="story center">${nl(p.text)}</p>
     <button class="link" data-act="intro-skip">건너뛰기</button>
@@ -183,19 +186,32 @@ function renderEvent(s: GameState): string {
   </section>`;
 }
 
+/** 따라다니기 = 현관 장면: 문 앞의 아이 + 벽걸이 고리에 걸린 선택지 */
 function renderFollow(s: GameState): string {
+  const stage = stageOf(s.age).id;
+  const line: Record<string, string> = {
+    infant: '(아장아장… 문 앞까지 기어 왔다)', toddler: '같이 가?', child: '다녀오겠습니다!',
+    teen: '…설마 오늘도 따라와?', high: '늦을 거야. 기다리지 마.', adult: '이제 혼자 갈게.',
+  };
+  const tools = ['👋', '🔭', '🍱'];
   return `
-  <section class="card">
-    <div class="kicker">${s.age}살의 한 해</div>
-    <h2>올해는 얼마나 따라다닐까?</h2>
-    <div class="stack">
-      ${FOLLOW_OPTIONS.map((o) => `
-        <button class="btn option ${s.follow === o.level ? 'prev' : ''}" data-act="follow" data-level="${o.level}">
-          <span class="opt-emoji">${o.emoji}</span>
-          <span><b>${o.title}</b>${s.follow === o.level ? ' <span class="tag">작년</span>' : ''}<small>${esc(o.desc(s.age))}</small></span>
+  <div class="scene entry">
+    <div class="entry-zone">
+      <span class="meal-tag">${s.age}살의 한 해</span>
+      <div class="door"><div class="kid in-door">${avatarOf(s, idleExpression(s))}</div></div>
+      <div class="bubble">${esc(line[stage])}</div>
+      <div class="mat"></div>
+    </div>
+    <div class="hook-rail">
+      <h2 class="scene-q">올해는 얼마나 따라다닐까?</h2>
+      ${FOLLOW_OPTIONS.map((o, i) => `
+        <button class="hang-tag t${i}" data-act="follow" data-level="${o.level}">
+          <span class="tool">${tools[i]}</span>
+          <span class="tag-body"><b>${o.title}</b><small>${esc(o.desc(s.age))}</small></span>
+          ${s.follow === o.level ? '<span class="stamp">작년</span>' : ''}
         </button>`).join('')}
     </div>
-  </section>`;
+  </div>`;
 }
 
 function ensureSelection(s: GameState, time: MealTime): Selection {
@@ -269,36 +285,48 @@ function renderMeal(s: GameState): string {
   </div>`;
 }
 
+/** 한 해 결산 = 키 재기 문기둥 + 성장 일기 */
 function renderSummary(s: GameState): string {
   const d: Delta = {};
   for (const k of STAT_KEYS) d[k] = s.stats[k] - s.yearStart[k];
-  const lines = s.log.filter((l) => l.age === s.age).slice(-5);
+  const lines = s.log.filter((l) => l.age === s.age).slice(-4);
   const hint = s.age >= 6 ? fmt(decideEnding(s).hint, s) : '';
+  const marks = Array.from({ length: s.age + 1 }, (_, a) =>
+    `<i class="${a === s.age ? 'now' : ''}" style="bottom:${8 + a * 4.4}%">${a === s.age || a % 5 === 0 ? `<b>${a}</b>` : ''}</i>`).join('');
+  const size = 54 + s.age * 3.4;
   return `
-  <section class="card summary">
-    <div class="kicker">한 해 결산</div>
-    <div class="summary-face"><div class="face big">${faceOf(s, idleExpression(s))}</div></div>
-    <h2>${esc(s.child.name)}, ${s.age}살의 기록</h2>
-    ${deltaChips(d)}
-    ${hint ? `<p class="omen">🔮 이대로라면… ${esc(hint)}</p>` : ''}
-    <ul class="lines">${lines.map((l) => `<li>${esc(l.text)}</li>`).join('')}</ul>
-  </section>`;
+  <div class="scene growth">
+    <div class="growth-zone">
+      <div class="post">${marks}</div>
+      <div class="kid standing" style="width:${size}px;height:${size}px;font-size:${size * 0.68}px">${faceOf(s, idleExpression(s))}</div>
+    </div>
+    <article class="diary">
+      <div class="diary-date">${s.age}살 · ${stageOf(s.age).name}</div>
+      <h2>${esc(s.child.name)}, 올 한 해</h2>
+      ${deltaChips(d)}
+      ${hint ? `<p class="omen">🔮 이대로라면… ${esc(hint)}</p>` : ''}
+      <ul class="lines">${lines.map((l) => `<li>${esc(l.text)}</li>`).join('')}</ul>
+    </article>
+  </div>`;
 }
 
 function renderEnding(s: GameState): string {
   const e = ENDING_BY_ID[s.endingId!];
   return `
-  <section class="card ending">
-    <div class="kicker center">${esc(s.child.name)}의 스무 살</div>
+  <section class="book-page ending">
     ${illust(endingArt(e.id, s), e.emoji)}
+    <div class="kicker center">${esc(s.child.name)}의 스무 살</div>
     <h2>${esc(e.title)}</h2>
     <p class="story">${esc(e.text)}</p>
-    <div class="final">
-      ${STAT_KEYS.map((k) => `<div>${STAT_INFO[k].emoji} ${STAT_INFO[k].label} <b>${Math.round(s.stats[k])}</b></div>`).join('')}
-      <div>🍱 이번 생 메뉴 <b>${s.runMenus.length}</b></div>
-      <div>✨ 재능 <b>${TALENT_INFO[s.child.talent].label}</b></div>
-    </div>
-    <button class="btn ghost wide" data-act="dex">📖 도감 보기</button>
+    <article class="diary report">
+      <div class="diary-date">생활기록부</div>
+      <div class="final">
+        ${STAT_KEYS.map((k) => `<div>${STAT_INFO[k].emoji} ${STAT_INFO[k].label} <b>${Math.round(s.stats[k])}</b></div>`).join('')}
+        <div>🍱 이번 생 메뉴 <b>${s.runMenus.length}</b></div>
+        <div>✨ 재능 <b>${TALENT_INFO[s.child.talent].label}</b></div>
+      </div>
+    </article>
+    <button class="btn paper wide" data-act="dex">📖 도감 보기</button>
   </section>`;
 }
 
@@ -447,7 +475,8 @@ function render(): void {
   else main = renderTitle();
   const bar = renderBottomBar();
   const kitchen = screen === 'game' && !!game && isMealStep(game.step) && !game.active;
-  app.className = [bar ? 'has-bar' : '', kitchen ? 'in-kitchen' : ''].join(' ');
+  const scene = kitchen || (screen === 'game' && !!game && !game.active && (game.step === 'follow' || game.step === 'summary'));
+  app.className = [bar ? 'has-bar' : '', kitchen ? 'in-kitchen' : '', scene ? 'in-scene' : '', screen === 'title' ? 'on-title' : ''].join(' ');
   app.innerHTML = main + bar + renderOverlay();
   justPlaced = undefined;
 }
