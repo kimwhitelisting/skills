@@ -279,12 +279,12 @@ function weekView(): string {
       <article class="diary">
         <div class="diary-date">${age}살 · 일주일 결산</div>
         <h2>${verdict}</h2>
-        <div class="stars">🍱 ${stars}/15 · 💗 ${hearts}</div>
+        <div class="week-stats"><span>🍱 점심 <b>${stars}</b>/15</span><span>💗 <b>${hearts}</b></span></div>
         <ul class="result-list">${logs.map((d, i) => `<li>${DAYS[i]} ${d.plan.reqs.map((r) => r.emoji).join('')} 점심 ${'★'.repeat(d.lunch) || '☆'} · ${d.followed ? (d.follow?.over === 'caught' ? '😳 들킴' : d.follow?.delivered ? '🍱 몰래 배달' : d.follow?.over === 'lost' ? '💨 놓침' : '🔭 지켜봄') : '🏠 믿고 보냄'}</li>`).join('')}</ul>
         <div class="chips">${[['💞 유대감', bond], ['🦋 자립심', indep]].map(([k, v]) => `<span class="chip ${(v as number) >= 0 ? 'up' : 'down'}">${k} ${(v as number) > 0 ? '+' : ''}${v}</span>`).join('')}</div>
         <p class="story">알아낸 것: 💗 ${known.likes.join(', ') || '아직 모름'} · 🙅 ${known.dislikes.map((id) => ing(id).name).join(', ') || '아직 모름'}<br>
         <small>진짜 취향: 💗 ${ctx.likes.join(', ')} · 🙅 ${ctx.dislikes.map((id) => ing(id).name).join(', ')}</small></p>
-        <div class="row"><button class="btn primary" data-act="again">새 아이로 다시</button><button class="btn paper" data-age="${age === 7 ? 15 : 7}">${age === 7 ? 15 : 7}살로</button></div>
+        <div class="row"><button class="btn primary" data-act="again">새 아이로</button><button class="btn paper" data-age="${age === 7 ? 15 : 7}">${age === 7 ? 15 : 7}살로</button></div>
       </article>
     </div>
   </div>`;
