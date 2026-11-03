@@ -1,0 +1,12 @@
+.day .kid-zone { position: relative; }
+.react-chip { position: absolute; left: 50%; bottom: 8px; transform: translateX(-140px); z-index: 3; background: var(--sheet); border: 2px solid var(--line); border-radius: 12px; padding: 2px 10px; font-weight: 700; font-size: .9rem; animation: bubble .25s ease-out; white-space: nowrap; }
+.react-chip.mood-happy { border-color: var(--sage); } .react-chip.mood-grumpy { border-color: var(--rose); }
+.counter.leave { display: flex; flex-direction: column; gap: 12px; padding-top: 22px; }
+.leave-mood { text-align: center; font-weight: 700; margin: 0; }
+.forgot { text-align: center; font-family: var(--font-hand); font-size: 1.7rem; line-height: 1.2; background: var(--sheet); padding: 14px; transform: rotate(-1deg); box-shadow: 0 4px 10px rgba(0, 0, 0, .12); animation: pop .3s; }
+.leave .btn small { display: block; font-family: var(--font-body); font-size: .8rem; font-weight: 400; letter-spacing: 0; }
+.leave .btn { padding-block: 10px; }
+.day-sum { text-align: center; margin-bottom: 10px; }
+.day-sum p { margin: 4px 0; }
+.polaroid.mini { width: auto; max-width: 280px; padding: 8px 12px; transform: rotate(-1.5deg); margin: 0 auto 6px; }
+.mood-tag { font-weight: 700; background: var(--sheet); border-radius: 12px; padding: 2px 10px; font-size: .85rem; }
