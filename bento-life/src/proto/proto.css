@@ -19,3 +19,9 @@
 .result-list li { padding: 4px 0; border-bottom: 1px dashed var(--line); }
 .overlay-card .row { display: flex; gap: 8px; margin-top: 10px; }
 .overlay-card .btn { flex: 1; }
+/* 빈 도시락 칸 */
+.bento .cell.empty { background: color-mix(in srgb, var(--sheet) 22%, transparent); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--sheet) 70%, transparent); border: 0; }
+.bento .cell.empty.active { box-shadow: inset 0 0 0 3px var(--mustard); background: color-mix(in srgb, var(--sheet) 40%, transparent); }
+.empty-label { font-family: var(--font-hand); font-weight: 700; font-size: 1.2rem; color: color-mix(in srgb, var(--sheet) 90%, transparent); letter-spacing: -.03em; }
+.menu-label.pending { opacity: .75; font-size: 1.15rem; }
+.pack-btn:disabled { opacity: .55; font-size: 1.3rem; }

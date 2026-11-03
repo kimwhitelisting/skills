@@ -8,12 +8,11 @@ import './proto.css';
 import './order.css';
 import { ingredientArt } from '../art.ts';
 import { INGREDIENTS, ing } from '../data/ingredients.ts';
-import { getMenu } from '../game/bento.ts';
 import { josa } from '../game/korean.ts';
-import { menuKey } from '../game/menus.ts';
 import type { Ingredient, Slot, Tag } from '../game/types.ts';
 import { haptic, sfx } from '../ui/feedback.ts';
 
+import { bentoCells, fillRandom, isFull, menuLabel, placeOrToggle, type Draft } from './bento-ui.ts';
 import { REQUESTS, type Age, type Ctx, type Request, type Sel } from './order-data.ts';
 
 const LIKE_POOL: Tag[] = ['달콤', '고기', '생선', '채소', '과일', '면', '튀김'];
@@ -25,7 +24,8 @@ let age: Age = 7;
 let ctx: Ctx;
 let plan: Request[] = [];
 let day = 0;
-let sel: Sel;
+let sel: Draft = {};
+let justPlaced: Slot | undefined;
 let tab: Slot = 'base';
 let history: Day[] = [];
 let known = { likes: [] as Tag[], dislikes: [] as string[] };
@@ -53,7 +53,7 @@ function newWeek(): void {
 
 function startDay(): void {
   phase = 'pack';
-  sel = { base: pick(avail('base')).id, main: pick(avail('main')).id, side: pick(avail('side')).id };
+  sel = {};
   tab = 'base';
   timer = DAY_TIME;
   clearInterval(timerId);
@@ -68,9 +68,12 @@ function startDay(): void {
 }
 
 function pack(late = false): void {
+  if (!isFull(sel) && !late) return;
   clearInterval(timerId);
+  const full: Sel = isFull(sel) ? sel : fillRandom(sel, avail);
+  sel = full;
   const req = plan[day];
-  const items = [ing(sel.base), ing(sel.main), ing(sel.side)];
+  const items = [ing(full.base), ing(full.main), ing(full.side)];
   const reqScore = req.judge(items, ctx);
   const likedItem = items.find((i) => i.tags.some((t) => ctx.likes.includes(t)));
   const dislikedItem = items.find((i) => ctx.dislikes.includes(i.id));
@@ -87,8 +90,8 @@ function pack(late = false): void {
     if (!known.likes.includes(tag)) { known.likes.push(tag); notes.push(age === 15 ? `(${likedItem.name}만 다 먹었다. ${tag} 좋아하는 듯)` : `${likedItem.name} 진짜 맛있었어! (${tag} 좋아하는 것 같다)`); }
   }
   if (late) notes.push('(늦어서 허둥지둥 싸 준 도시락이었다)');
-  history.push({ req, sel: { ...sel }, score, reqScore, liked: likedItem?.id, disliked: dislikedItem?.id, note: notes.join(' ') });
-  ctx.yesterday = { ...sel };
+  history.push({ req, sel: { ...full }, score, reqScore, liked: likedItem?.id, disliked: dislikedItem?.id, note: notes.join(' ') });
+  ctx.yesterday = { ...full };
   phase = 'evening';
   sfx(score >= 3 ? 'chime' : score >= 2 ? 'ding' : 'tap');
   haptic(score <= 1 ? 40 : 15);
@@ -99,8 +102,6 @@ function pack(late = false): void {
 function render(): void {
   if (phase === 'week') return void (app.innerHTML = weekView());
   const req = plan[day];
-  const items = [ing(sel.base), ing(sel.main), ing(sel.side)];
-  const menu = getMenu(menuKey(sel.base, sel.main, sel.side));
   const kidFace = age === 7 ? '🧒' : '🧑';
   const h = history[day];
   app.innerHTML = `
@@ -119,12 +120,12 @@ function render(): void {
     <div class="counter">
       <div class="clock"><span>⏰ 등교까지</span><div class="bar"><i id="clock" class="low" style="width:${(timer / DAY_TIME) * 100}%"></i></div></div>
       <div class="board">
-        <div class="bento">${(['base', 'main', 'side'] as Slot[]).map((s, n) => `<div class="cell ${s} ${tab === s ? 'active' : ''}" data-tab="${s}">${pic(items[n])}</div>`).join('')}</div>
-        <div class="menu-label">${menu?.name ?? ''}</div>
+        <div class="bento">${bentoCells(sel, tab, pic, justPlaced)}</div>
+        <div class="menu-label ${isFull(sel) ? '' : 'pending'}">${menuLabel(sel)}</div>
       </div>
-      <nav class="labels">${(['base', 'main', 'side'] as Slot[]).map((s) => `<button class="label ${s} ${tab === s ? 'on' : ''}" data-tab="${s}">${{ base: '주식', main: '메인', side: '반찬' }[s]}</button>`).join('')}</nav>
+      <nav class="labels">${(['base', 'main', 'side'] as Slot[]).map((s) => `<button class="label ${s} ${tab === s ? 'on' : ''}" data-tab="${s}">${{ base: '주식', main: '메인', side: '반찬' }[s]}${sel[s] ? ' ✓' : ''}</button>`).join('')}</nav>
       <div class="spread">${avail(tab).map((i) => `<button class="ing ${sel[tab] === i.id ? 'on' : ''}" data-ing="${i.id}"><span class="e">${pic(i)}${known.dislikes.includes(i.id) ? '<span class="mark">🙅</span>' : i.tags.some((t) => known.likes.includes(t)) ? '<span class="mark">💗</span>' : ''}</span><span class="n">${i.name}</span></button>`).join('')}</div>
-      <button class="btn primary wide pack-btn" data-act="pack">🍱 뚜껑 닫고 보내기</button>
+      <button class="btn primary wide pack-btn" data-act="pack" ${isFull(sel) ? '' : 'disabled'}>${isFull(sel) ? '🍱 뚜껑 닫고 보내기' : '세 칸을 다 채워 주세요'}</button>
     </div>` : `
     <div class="counter evening">
       <div class="returned">
@@ -167,10 +168,11 @@ app.addEventListener('click', (e) => {
   if (el.dataset.age) { age = Number(el.dataset.age) as Age; newWeek(); return; }
   if (el.dataset.tab) { tab = el.dataset.tab as Slot; sfx('tap'); render(); return; }
   if (el.dataset.ing) {
-    sel = { ...sel, [tab]: el.dataset.ing };
-    const order: Slot[] = ['base', 'main', 'side'];
-    if (tab !== 'side') tab = order[order.indexOf(tab) + 1];
-    sfx('pop'); haptic(8); render(); return;
+    const placedSlot = tab;
+    const res = placeOrToggle(sel, tab, el.dataset.ing);
+    sel = res.draft; tab = res.tab;
+    justPlaced = res.placed ? placedSlot : undefined;
+    sfx(res.placed ? 'pop' : 'tap'); haptic(8); render(); justPlaced = undefined; return;
   }
   const act = el.dataset.act;
   if (act === 'pack') pack();

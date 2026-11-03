@@ -1,5 +1,5 @@
 .day .kid-zone { position: relative; }
-.react-chip { position: absolute; left: 50%; bottom: 8px; transform: translateX(-140px); z-index: 3; background: var(--sheet); border: 2px solid var(--line); border-radius: 12px; padding: 2px 10px; font-weight: 700; font-size: .9rem; animation: bubble .25s ease-out; white-space: nowrap; }
+.react-chip { position: absolute; left: calc(50% + 4px); bottom: 14px; transform: none; z-index: 3; background: var(--sheet); border: 2px solid var(--line); border-radius: 12px; padding: 2px 10px; font-weight: 700; font-size: .9rem; animation: bubble .25s ease-out; white-space: nowrap; }
 .react-chip.mood-happy { border-color: var(--sage); } .react-chip.mood-grumpy { border-color: var(--rose); }
 .counter.leave { display: flex; flex-direction: column; gap: 12px; padding-top: 22px; }
 .leave-mood { text-align: center; font-weight: 700; margin: 0; }

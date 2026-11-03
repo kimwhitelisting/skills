@@ -549,4 +549,4 @@ export function mountFollow(root: HTMLElement, o: FollowOpts): void {
 }
 
 /** 다른 화면으로 넘어갈 때 애니메이션 정지 */
-export function unmountFollow(): void { cancelAnimationFrame(raf); active = false; st.walking = false; }
+export function unmountFollow(): void { cancelAnimationFrame(raf); active = false; if (st) st.walking = false; }
