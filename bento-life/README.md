@@ -8,7 +8,7 @@
 
 설정 > 실험 설정에서 1년에 보내는 하루 수, 반찬값, 재료 가격을 바꿔 가며 해 볼 수 있다 (새 게임부터 적용).
 
-기획 문서: [`docs/GDD.md`](docs/GDD.md) · 아트 가이드: [`docs/ART.md`](docs/ART.md) · 그림 목록: [`docs/art-assets.csv`](docs/art-assets.csv) · AI 그림 지시문: [`docs/ai-prompts.md`](docs/ai-prompts.md) · 전체 메뉴표: [`docs/menus.csv`](docs/menus.csv)
+**처음이면:** [`docs/HANDOFF.md`](docs/HANDOFF.md) (인수인계) · 기획 문서: [`docs/GDD.md`](docs/GDD.md) · 도트 그림: [`docs/PIXEL.md`](docs/PIXEL.md) · (예전) 아트 가이드: [`docs/ART.md`](docs/ART.md) · 그림 목록: [`docs/art-assets.csv`](docs/art-assets.csv) · AI 그림 지시문: [`docs/ai-prompts.md`](docs/ai-prompts.md) · 전체 메뉴표: [`docs/menus.csv`](docs/menus.csv)
 
 ## 실행
 
