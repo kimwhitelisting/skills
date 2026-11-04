@@ -3,3 +3,4 @@ dist
 android
 ios
 dist-preview
+art-src/store/.states.json

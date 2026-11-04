@@ -46,6 +46,9 @@ npx tsc --noEmit -p .  # 타입 검사
 ## 나이
 화면에는 **세는 나이** (갓난아기 1살 → 20살)로 보이고, 코드의 `s.age`는 0~19다. 화면에 나이를 쓸 땐 `main.ts`의 `shown(age)`를 거친다. 문서·코드 주석의 나이는 코드 나이.
 
+## 안드로이드
+Capacitor로 감쌌다 (`capacitor.config.ts`, 패키지 이름은 **임시** `com.bentolife.app`). 빌드·서명·Play 등록은 [`ANDROID.md`](ANDROID.md), 스토어 문구·설문 초안은 [`STORE.md`](STORE.md), 개인정보처리방침 초안은 [`privacy-policy.md`](privacy-policy.md). 스토어 그래픽은 `npm run store:art`, 스크린샷은 `npm run store:shots` → `art-src/store/`.
+
 ## 규칙 (깨지면 테스트가 실패)
 - 이벤트·엔딩을 추가하면 `src/pixel/event-scenes.ts`의 `SCENES` / `ENDING_SCENES`에 장면을 꼭 넣는다
 - 재료를 추가하면 `npm run gen:menus` (모든 조합의 메뉴표 재생성)
@@ -60,7 +63,7 @@ npx tsc --noEmit -p .  # 타입 검사
 
 ## 다음 할 일 후보
 1. 직접 플레이 → 엔딩 균형, 문장 다듬기, 너무 쉽게 나오는 엔딩 조정
-2. 안드로이드 포장: Capacitor, 앱 아이콘, 스플래시, 세로 고정, 뒤로가기 (지금 브라우저 기록 기반이라 Capacitor 기본 동작과 호환)
+2. 안드로이드: 패키지 이름 확정 → 서명 키 → 실제 휴대폰에서 디버그 APK 확인 → Play 내부 테스트 (ANDROID.md)
 3. 광고 (AdMob) + 광고 제거 결제. 그림이 아동용처럼 보이면 Play가 아동 대상 앱으로 분류해 광고가 제한될 수 있음 — 타깃은 20~40대 부모
 4. 사람이 고친 부품 PNG 반영 (`art-src/pixel-parts/` → `src/assets/pixel/parts/`)
 5. 배경음악은 귀로 들어 보며 다듬기 (곡은 `music.ts` 맨 위 악보만 고치면 된다)
