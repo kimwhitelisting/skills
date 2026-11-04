@@ -477,6 +477,36 @@ function tinyParent(g: Grid, x: number, y: number): void {
   g.rect(x + 4, y, 2, 14, P.greyDark).ellipse(x + 2, y + 3, 2, 2, P.inkSoft).rect(x, y + 5, 4, 8, P.inkSoft).rect(x + 3, y + 8, 2, 2, P.tomato);
 }
 
+
+// ───────── 소품 4 (이야기 꾸러미 2) ─────────
+function fishTank(): Grid {
+  const g = new Grid(36, 30).rect(0, 2, 36, 22, '#7fc4e6').rect(0, 2, 36, 3, '#bfe6f5').rect(0, 20, 36, 4, P.mustard);
+  for (const [x, y, c] of [[8, 10, P.tomato], [22, 14, P.egg], [14, 17, P.sky]] as const) g.ellipse(x, y, 3, 2, c).set(x + 3, y, c).set(x + 4, y - 1, c).set(x + 4, y + 1, c).set(x - 1, y - 1, P.ink);
+  g.vline(30, 8, 19, P.green).vline(31, 11, 19, P.greenDark).set(5, 6, P.white).set(18, 8, P.white);
+  g.rect(-1, 24, 38, 6, '#94653f');
+  return g.outline(P.ink);
+}
+function bookshelf(): Grid {
+  const g = new Grid(40, 52).rect(0, 0, 40, 52, '#94653f');
+  const cs = [P.tomato, P.sky, P.sage, P.mustard, P.plum, P.pink, P.navy];
+  for (let r = 0; r < 4; r++) { g.rect(2, 2 + r * 12, 36, 10, '#6d4a33'); for (let i = 0; i < 8; i++) g.rect(3 + i * 4.4, 3 + r * 12 + (i % 3), 4, 9 - (i % 3), cs[(r * 3 + i) % cs.length]); }
+  return g.outline(P.ink);
+}
+function airLetter(): Grid {
+  const g = new Grid(18, 12).rect(0, 0, 18, 12, P.white);
+  for (let i = 0; i < 18; i += 4) { g.rect(i, 0, 2, 1, P.red).rect(i + 2, 0, 2, 1, P.skyDark).rect(i, 11, 2, 1, P.skyDark).rect(i + 2, 11, 2, 1, P.red); }
+  for (let i = 0; i < 8; i++) g.set(1 + i, 1 + i * 0.6, P.greyDark).set(16 - i, 1 + i * 0.6, P.greyDark);
+  g.rect(13, 2, 3, 3, P.tomato);
+  return g.outline(P.ink);
+}
+function flowers(): Grid {
+  const g = new Grid(14, 18);
+  for (const [x, y, c] of [[4, 4, P.red], [9, 3, P.pink], [7, 7, P.red]] as const) g.ellipse(x, y, 2.5, 2.5, c).set(x, y, P.mustard);
+  g.vline(6, 8, 17, P.greenDark).vline(8, 8, 17, P.greenDark);
+  for (let i = 0; i < 6; i++) g.hline(3 + Math.floor(i / 2), 10 - Math.floor(i / 2), 11 + i, P.white);
+  return g.outline(P.ink);
+}
+
 // ───────── 장면 ─────────
 type Build = (l: Look, e: Expr) => Grid;
 const SCENES: Record<string, { expr: Expr; build: Build }> = {
@@ -562,6 +592,14 @@ const SCENES: Record<string, { expr: Expr; build: Build }> = {
   shades_day: { expr: 'happy', build: (l, e) => { const g = street(); put(g, kid(l, e, 'shades'), 43); g.stamp(['..y..', '.yyy.', 'yyyyy', '.yyy.', '.y.y.'], 30, 24, { y: P.mustard }); return g; } },
   little_chef: { expr: 'happy', build: (l, e) => { const g = kitchen(); kidBehind(g, l, e, 30, 'chef'); counterFront(g); put(g, pan(), 54, 58); put(g, food('egg'), 76, 60); return g; } },
   crown_day: { expr: 'happy', build: (l, e) => { const g = classroom(); put(g, kid(l, e, 'crown'), 43); put(g, friend(l, 'happy'), 14); put(g, childFront(friendLook(l), 'surprise', { outfit: 'sky', plain: true }), 74); return g; } },
+  fishtank: { expr: 'happy', build: (l, e) => { const g = room({ bed: false }); put(g, fishTank(), 56, FEET); put(g, kid(l, e), 26); heart(g, 70, 26); return g; } },
+  aquarium_trip: { expr: 'surprise', build: (l, e) => { const g = g0().rect(0, 0, EV_W, EV_H, '#1f4a78'); for (let i = 0; i < 18; i++) g.set((i * 31) % EV_W, (i * 17) % 50, '#7fc4e6'); g.ellipse(70, 26, 26, 9, '#5f86b8').ellipse(70, 26, 20, 6, '#9fc0e0'); for (let i = 0; i < 10; i++) g.set(56 + i * 3, 22 + (i % 2) * 3, P.white); g.rect(0, FLOOR, EV_W, EV_H - FLOOR, '#2b3f5c'); put(g, kid(l, e), 20); return g; } },
+  library_card: { expr: 'happy', build: (l, e) => { const g = classroom(); put(g, bookshelf(), 66, FEET); put(g, kid(l, e), 30); g.rect(46, 44, 10, 7, P.white).rect(47, 45, 3, 3, P.sky).outline(P.ink); return g; } },
+  book_overdue: { expr: 'sad', build: (l, e) => { const g = room({ desk: true }); put(g, kid(l, e), 40); g.rect(58, 40, 10, 14, P.red).vline(59, 40, 53, P.redDark).outline(P.ink); put(g, phone(), 80, 54); return g; } },
+  penpal: { expr: 'happy', build: (l, e) => { const g = room({ desk: true }); put(g, kid(l, e), 40); put(g, airLetter(), 62, 44); put(g, plane(), 66, 18); return g; } },
+  penpal_visit: { expr: 'happy', build: (l, e) => { const g = park(); put(g, plane(), 60, 16); put(g, kid(l, e), 30); put(g, childFront({ age: l.age, gender: l.gender === 'girl' ? 'boy' : 'girl' }, 'happy', { outfit: 'raincoat', plain: true }), 56); put(g, suitcase(), 80); return g; } },
+  theater_club: { expr: 'surprise', build: (l, e) => { const g = stage(); put(g, pole(), 40, FEET); put(g, kid(l, e, 'shades'), 52); g.rect(14, 46, 14, 10, P.white).hline(16, 25, 49, P.inkSoft).hline(16, 23, 52, P.inkSoft).outline(P.ink); return g; } },
+  stage_debut: { expr: 'happy', build: (l, e) => { const g = stage(); put(g, pole(), 36, FEET); put(g, kid(l, e), 50); put(g, flowers(), 76); for (let i = 0; i < 3; i++) heart(g, 24 + i * 26, 14 + (i % 2) * 6); return g; } },
   bonus: { expr: 'happy', build: (l, e) => { const g = entry(); put(g, grandma(), 26, FLOOR + 8); put(g, kid(l, e), 56, FLOOR + 6); put(g, envelope(), 46, 50); heart(g, 52, 22); return g; } },
 };
 
@@ -599,8 +637,12 @@ const ENDING_SCENES: Record<string, EndBuild> = {
   dogTrainer: (l) => { const g = park(); put(g, kid(l, 'happy', 'cap'), 30); put(g, pup(), 56); put(g, dog(1), 76); heart(g, 66, 40); return g; },
   farmer: (l) => { const g = park(); g.rect(0, 50, EV_W, EV_H - 50, '#8a6a3a'); for (let x = 4; x < EV_W; x += 10) g.vline(x + 3, 46, 52, P.greenDark).ellipse(x + 3, 46, 3, 2, P.green); put(g, kid(l, 'happy', 'cap'), 43); put(g, planters(), 66, FEET); return g; },
   topToKitchen: (l) => { const g = kitchen(); kidBehind(g, l, 'happy', 30, 'chef'); counterFront(g); put(g, calendar(), 66, 66); put(g, pan(), 44, 58); return g; },
-  grandmaRestaurant: (l) => { const g = kitchen(); g.rect(14, 4, 52, 10, P.red).hline(20, 60, 8, P.mustard).outline(P.ink); g.rect(82, 16, 14, 16, P.white).outline(P.ink); g.draw(headOnly({ age: 19, gender: 'girl' }, 'happy'), 77, 15); kidBehind(g, l, 'happy', 30, 'chef'); counterFront(g); put(g, ramenPot(), 50, 60); return g; },
+  grandmaRestaurant: (l) => { const g = kitchen(); g.rect(14, 4, 52, 10, P.red).hline(20, 60, 8, P.mustard).outline(P.ink); g.rect(82, 16, 16, 17, P.white).outline(P.ink); g.draw(new Grid(14, 15).draw(neighbor(), -4, 0), 83, 17); kidBehind(g, l, 'happy', 30, 'chef'); counterFront(g); put(g, ramenPot(), 50, 60); return g; },
   valedictorian: (l) => { const g = stage(); put(g, kid(l, 'happy', 'gradcap'), 43); put(g, micStand(), 66); g.rect(20, 50, 14, 10, P.white).outline(P.ink); for (let i = 0; i < 3; i++) heart(g, 22 + i * 30, 14 + (i % 2) * 6); return g; },
+  marineBio: (l) => { const g = g0().rect(0, 0, EV_W, 40, '#bfe6f5').rect(0, 40, EV_W, EV_H - 40, '#5f86b8'); for (let x = 0; x < EV_W; x += 6) g.set(x, 41, P.white); g.rect(20, 34, 70, 10, P.white).rect(60, 24, 14, 10, P.tomato).outline(P.ink); put(g, kid(l, 'happy', 'raincap'), 32, 36); g.ellipse(88, 56, 12, 4, '#3a5f8f'); return g; },
+  librarian: (l) => { const g = classroom(); put(g, bookshelf(), 4, FEET); put(g, bookshelf(), 70, FEET); put(g, kid(l, 'happy'), 43); return g; },
+  diplomat: (l) => { const g = stage(); g.rect(10, 52, 90, 6, P.white).outline(P.ink); for (const [x, c] of [[16, P.tomato], [40, P.sky], [64, P.sage], [86, P.mustard]] as const) g.rect(x, 10, 10, 7, c).vline(x, 10, 30, P.greyDark); put(g, kid(l, 'happy'), 43, 54); put(g, food('gimbap'), 48, 52); return g; },
+  actor: (l) => { const g = stage(); put(g, pole(), 30, FEET); put(g, kid(l, 'happy', 'shades'), 46); g.stamp(['..y..', '.yyy.', 'yyyyy', '.yyy.', '.y.y.'], 76, 18, { y: P.mustard }); put(g, flowers(), 74); return g; },
   coinRich: (l) => { const g = street(); put(g, kid(l, 'happy', 'shades'), 30); put(g, chartPhone(true), 60, 52); g.stamp(['.yy.', 'y..y', 'y..y', '.yy.'], 80, 30, { y: P.mustard }); return g; },
   idolFail: (l) => { const g = stage(); g.rect(30, 20, 50, 40, '#2a1f33'); put(g, kid(l, 'neutral'), 43); put(g, micStand(), 66); return g; },
   doctor: (l) => { const g = hospital(); const k = kid(l, 'happy'); k.rect(6, 22, 12, 10, P.white); put(g, k, 43); g.rect(54, 46, 2, 6, P.grey); return g; },

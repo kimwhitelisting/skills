@@ -2,6 +2,7 @@
 //  shop: 이야기 꾸러미를 사야 나온다 (산 판부터, 그 뒤 모든 판)
 //  wear: 그 모자를 쓰고 있어야 나온다
 // 플래그 → 엔딩: dog 반려견 훈련사 · piano 피아니스트 · farm 귀농 청년 · photo 사진작가
+//              fish 해양생물학자 · book 도서관 관장 · pen 외교관 · stage 배우
 import { rand } from '../game/rng.ts';
 import type { GameEvent, GameState, Outcome } from '../game/types.ts';
 
@@ -84,6 +85,78 @@ export const SHOP_EVENTS: GameEvent[] = [
         ? { text: '맞다. 나다. 대상을 받았다. 심사평: "보호와 감시 사이를 날카롭게 포착했다."', stats: { happy: 5, social: 3 }, flags: { photo: 2 } }
         : { text: '전봇대 뒤엔 길고양이가 있었다. 장려상.', stats: { happy: 2 }, flags: { photo: 1 } },
     }],
+  },
+  // ───────── 🐠 어항 ─────────
+  {
+    id: 'fishtank', kind: 'random', emoji: '🐠', ageMin: 4, ageMax: 12, weight: 6, once: true, shop: 'story-fish', title: '거실의 어항',
+    text: '작은 어항이 거실에 들어왔다. {c}가 물고기에게 이름을 붙였다. "김밥이야."',
+    choices: [
+      { label: '먹이 당번을 맡긴다', outcome: { text: '매일 아침 도시락보다 먼저 김밥 밥을 챙긴다.', stats: { indep: 3, happy: 2 }, flags: { fish: 1 } } },
+      { label: '같이 물고기 도감을 본다', outcome: { text: '"이건 흰동가리, 이건 블루탱!" 밤새 외웠다.', stats: { smarts: 3, bond: 2 }, flags: { fish: 1 } } },
+    ],
+  },
+  {
+    id: 'aquarium_trip', kind: 'random', emoji: '🐋', ageMin: 7, ageMax: 17, weight: 6, once: true, shop: 'story-fish', title: '아쿠아리움 견학',
+    when: (s) => f(s, 'fish') >= 1,
+    text: '수족관 대형 수조 앞. {c}가 꼼짝도 하지 않는다.',
+    choices: [
+      { label: '해설사 선생님께 질문하게 둔다', outcome: { text: '질문이 스무 개를 넘었다. 해설사 선생님이 명함을 주셨다.', stats: { smarts: 3, social: 2 }, flags: { fish: 1 } } },
+      { label: '고래상어 앞에서 도시락을 먹는다', outcome: { text: '"고래도 도시락 먹을까?" 한참을 웃었다.', stats: { happy: 4, bond: 2 }, flags: { fish: 1 } } },
+    ],
+  },
+  // ───────── 📚 도서관 카드 ─────────
+  {
+    id: 'library_card', kind: 'random', emoji: '📚', ageMin: 5, ageMax: 14, weight: 6, once: true, shop: 'story-library', title: '첫 도서관 카드',
+    text: '{c}가 이름이 적힌 도서관 카드를 받았다. 두 손으로 꼭 쥐고 있다.',
+    choices: [
+      { label: '매주 토요일 같이 간다', outcome: { text: '도서관 앞 벤치가 둘의 도시락 자리가 됐다.', stats: { bond: 3, smarts: 2 }, flags: { book: 1 } } },
+      { label: '혼자 다니게 한다', outcome: { text: '대출 목록이 점점 두꺼워진다. 고르는 책이 달라졌다.', stats: { indep: 3, smarts: 2 }, flags: { book: 1 } } },
+    ],
+  },
+  {
+    id: 'book_overdue', kind: 'random', emoji: '📕', ageMin: 8, ageMax: 17, weight: 6, once: true, shop: 'story-library', title: '연체 30일',
+    when: (s) => f(s, 'book') >= 1,
+    text: '도서관에서 문자가 왔다. 「연체 30일」. {c}가 그 책을 끌어안고 있다. "아직 다 못 읽었어."',
+    choices: [
+      { label: '같이 반납하고 사과한다', outcome: { text: '사서 선생님이 웃으며 같은 작가의 다른 책을 추천해 주셨다.', stats: { social: 2, indep: 2 }, flags: { book: 1 } } },
+      { label: '그 책을 사 준다 (💰-3)', requires: { money: 3 }, outcome: { text: '책장에 처음으로 "내 책"이 생겼다.', money: -3, stats: { happy: 3, smarts: 1 }, flags: { book: 1 } } },
+    ],
+  },
+  // ───────── ✉️ 해외 펜팔 ─────────
+  {
+    id: 'penpal', kind: 'random', emoji: '✉️', ageMin: 9, ageMax: 16, weight: 6, once: true, shop: 'story-penpal', title: '바다 건너 온 편지',
+    text: '외국 펜팔 친구의 첫 편지. 사진 속 도시락엔 샌드위치와 사과 한 알.',
+    choices: [
+      { label: '우리 도시락 사진을 보낸다', outcome: { text: '답장: "WOW! 너희 엄마아빠 셰프야?"', stats: { social: 3, happy: 2 }, flags: { pen: 1 } } },
+      { label: '영어 사전을 사 준다 (💰-2)', requires: { money: 2 }, outcome: { text: '사전에 형광펜 줄이 하루에 열 개씩 늘어난다.', money: -2, stats: { smarts: 3 }, flags: { pen: 1 } } },
+    ],
+  },
+  {
+    id: 'penpal_visit', kind: 'random', emoji: '🛬', ageMin: 13, ageMax: 19, weight: 6, once: true, shop: 'story-penpal', title: '펜팔 친구가 온다',
+    when: (s) => f(s, 'pen') >= 1,
+    text: '몇 년째 편지를 주고받은 펜팔 친구가 한국에 온다!',
+    choices: [
+      { label: '집에 초대해 도시락을 싸 준다', outcome: { text: '친구가 김밥을 한 줄 통째로 먹었다. "이게 그 도시락이구나!"', stats: { social: 3, bond: 2, happy: 2 }, flags: { pen: 1 } } },
+      { label: '공항까지 몰래 따라간다', requires: { followMin: 2 }, outcome: { text: '입국장에서 셋이 마주쳤다. 첫마디가 "Who is that?"이었다.', stats: { bond: -2, social: -2 }, flags: { pen: 1 } } },
+    ],
+  },
+  // ───────── 🎭 연극 동아리 ─────────
+  {
+    id: 'theater_club', kind: 'random', emoji: '🎭', ageMin: 10, ageMax: 17, weight: 6, once: true, shop: 'story-theater', title: '연극 오디션',
+    text: '{c}가 연극 동아리 오디션에 붙었다. 배역은… "아이를 몰래 미행하는 탐정".',
+    choices: [
+      { label: '대본 연습 상대를 해 준다', outcome: { text: '"좀 더 숨어 봐. 아니 그렇게 티 나게 말고." …왠지 찔린다.', stats: { bond: 3, happy: 2 }, flags: { stage: 1 } } },
+      { label: '"연기는 나한테 배워"', outcome: { text: '시범을 보였더니 {c}가 조용히 말했다. "…진짜 잘하네. 자주 해 봤어?"', stats: { happy: 2, indep: -1 }, flags: { stage: 1 } } },
+    ],
+  },
+  {
+    id: 'stage_debut', kind: 'random', emoji: '🌹', ageMin: 12, ageMax: 19, weight: 6, once: true, shop: 'story-theater', title: '첫 공연',
+    when: (s) => f(s, 'stage') >= 1,
+    text: '막이 오른다. 무대 위 {c}가 전봇대 뒤에 숨는다. 객석에서 웃음이 터졌다.',
+    choices: (s) => [
+      { label: '꽃다발을 들고 기다린다', outcome: { text: '커튼콜 때 {c}가 객석을 향해 꾸벅 인사했다. 정확히 내 쪽으로.', stats: { happy: 4, bond: 2 }, flags: { stage: 1 } } },
+      { label: '맨 앞줄에서 크게 웃는다', requires: { followMin: 1 }, outcome: { text: s.age >= 13 ? '"제일 크게 웃은 사람, 다 들렸어." …그래도 싫지 않은 눈치다.' : '무대 위에서 나를 보고 손을 흔들었다. 연출 선생님이 한숨을 쉬었다.', stats: { bond: 2, social: 1 }, flags: { stage: 1 } } },
+    ],
   },
   // ───────── 🚲 자전거 · ⛺ 캠핑 ─────────
   {

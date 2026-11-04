@@ -250,7 +250,7 @@ describe('shop stories', () => {
     }
     expect(without).toBe(0);
     expect(withPack).toBeGreaterThan(300);
-    for (const id of ['pianist', 'dogTrainer', 'farmer', 'photographer']) expect(ends.has(id), id).toBe(true);
+    for (const id of ['pianist', 'dogTrainer', 'farmer', 'photographer', 'marineBio', 'librarian', 'diplomat', 'actor']) expect(ends.has(id), id).toBe(true);
   });
 });
 
