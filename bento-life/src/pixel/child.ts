@@ -262,7 +262,7 @@ const OUTFIT_SWAPS: Record<OutfitId, Record<string, Color>> = {
 export const OUTFITS = Object.keys(OUTFIT_SWAPS) as OutfitId[];
 
 // ───────── 머리 소품 (머리 꼭대기에 붙인다) ─────────
-export type HatId = 'none' | 'crown' | 'gradcap' | 'cap' | 'raincap';
+export type HatId = 'none' | 'crown' | 'gradcap' | 'cap' | 'raincap' | 'chef' | 'shades';
 function hat(id: HatId, look: Look, view: View): Grid {
   const g = blank();
   if (id === 'none') return g;
@@ -270,6 +270,12 @@ function hat(id: HatId, look: Look, view: View): Grid {
   if (id === 'crown') { g.rect(x - 5, y - 1, 10, 3, P.mustard).set(x - 5, y - 2, P.mustard).set(x - 1, y - 3, P.mustard).set(x, y - 3, P.mustard).set(x + 4, y - 2, P.mustard).set(x - 2, y, P.red).set(x + 2, y, P.sky); }
   if (id === 'gradcap') { g.rect(x - 7, y - 1, 15, 2, P.ink).rect(x - 4, y + 1, 9, 2, P.inkSoft).vline(x + 6, y + 1, y + 5, P.mustard).set(x + 6, y + 6, P.mustard); }
   if (id === 'cap') { g.ellipse(x, y + 2, 7, 3.5, P.tomato, (_x, yy) => yy <= y + 2).rect(view === 'side' ? x + 3 : x - 2, y + 2, view === 'side' ? 6 : 5, 1, P.tomatoDark); }
+  if (id === 'chef') { g.rect(x - 5, y - 2, 11, 4, P.white).ellipse(x - 3, y - 4, 3.5, 3, P.white).ellipse(x + 3, y - 4, 3.5, 3, P.white).ellipse(x, y - 6, 3.5, 3, P.white).hline(x - 5, x + 5, y + 1, P.creamDark); }
+  if (id === 'shades' && view === 'front') {
+    const { cx, cy } = headCenter(look, view);
+    const ey = Math.round(cy), L = Math.round(cx - 4), R = Math.round(cx + 2);
+    g.rect(L - 1, ey - 1, 4, 3, P.ink).rect(R - 1, ey - 1, 4, 3, P.ink).hline(L + 3, R - 1, ey - 1, P.ink).set(L, ey - 1, '#7a8aa0').set(R, ey - 1, '#7a8aa0');
+  }
   if (id === 'raincap') { g.ellipse(x, y + 3, 8.5, 4.5, '#ffd84a', (_x, yy) => yy <= y + 3).hline(x - 9, x + 9, y + 3, '#e6b52b'); }
   return g;
 }

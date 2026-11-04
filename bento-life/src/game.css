@@ -56,3 +56,9 @@
 .px-note-head img { width: 48px; height: 40px; border: 2px solid var(--ink); }
 .pixel-ui .scrim { background: rgba(59, 42, 36, .45); }
 .px-verdict .px-stars { font-size: 22px; letter-spacing: 2px; vertical-align: -2px; }
+/* 엔딩 분위기 표식 */
+.px-tone { display: inline-block; font-size: 11px; font-weight: 700; padding: 0 5px; border: 2px solid var(--ink); color: #fff6e6; vertical-align: 1px; }
+.px-tone.happy { background: var(--mint); } .px-tone.bitter { background: #8f857a; } .px-tone.twisted { background: #8a5fb0; } .px-tone.bad { background: #3b2a24; }
+.px-tone-h { margin: 12px 0 6px; font-size: 13px; }
+.px-later { margin: 0; font-size: 13px; line-height: 1.5; background: #fbeed6; border-left: 4px solid var(--gold); padding: 6px 8px; }
+.px-omen.warn { border-color: var(--red); color: var(--red-d); background: #fde3dc; font-weight: 700; }

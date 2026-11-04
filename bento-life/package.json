@@ -14,7 +14,8 @@
     "gen:menus": "node --experimental-strip-types scripts/generate-menus.ts",
     "gen:art": "vite-node scripts/generate-art-list.ts",
     "export:parts": "vite-node scripts/export-parts.ts",
-    "draw:ingredients": "node --experimental-strip-types scripts/draw-ingredients.ts"
+    "draw:ingredients": "node --experimental-strip-types scripts/draw-ingredients.ts",
+    "endings": "vite-node scripts/ending-report.ts"
   },
   "devDependencies": {
     "@types/node": "^22.20.5",

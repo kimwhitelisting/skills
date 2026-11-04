@@ -175,6 +175,35 @@ describe('simulation', () => {
   });
 });
 
+describe('endings', () => {
+  it('ids are unique and every ending has its own scene', async () => {
+    const { hasEndingScene } = await import('../src/pixel/event-scenes.ts');
+    expect(new Set(ENDINGS.map((e) => e.id)).size).toBe(ENDINGS.length);
+    for (const e of ENDINGS) expect(hasEndingScene(e.id), e.id).toBe(true);
+    for (const tone of ['happy', 'bitter', 'twisted', 'bad']) expect(ENDINGS.filter((e) => e.tone === tone).length, tone).toBeGreaterThanOrEqual(5);
+  });
+  it('an early ending ends the run before twenty, with a warning the year before', async () => {
+    const { advanceYear } = await import('../src/game/engine.ts');
+    const { earlyWarning } = await import('../src/game/endings.ts');
+    const s = startGame(newGame(21));
+    s.step = 'summary'; s.active = undefined; s.age = 15;
+    s.flags.runaway = 1; s.stats.bond = 40;
+    expect(earlyWarning(s)?.id).toBe('runaway');
+    s.flags.runaway = 2;
+    advanceYear(s);
+    expect(s.step).toBe('ending');
+    expect(s.endingId).toBe('runaway');
+    expect(s.age).toBe(15);
+  });
+  it('study abroad ends the run at the end of that year', async () => {
+    const { advanceYear } = await import('../src/game/engine.ts');
+    const s = startGame(newGame(22));
+    s.step = 'summary'; s.active = undefined; s.age = 14; s.flags.abroad = 1;
+    advanceYear(s);
+    expect(s.endingId).toBe('abroad');
+  });
+});
+
 describe('pixel parts', () => {
   it('every layer the generator draws can be overridden by a part with the same key', async () => {
     const { childFront, childLayers, partKey, PART_OVERRIDES } = await import('../src/pixel/child.ts');

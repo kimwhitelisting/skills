@@ -21,7 +21,7 @@ import {
   advanceYear, canCommute, chooseEventOption, chooseLeave, commuteParams, continueAfterEvent, endDay, finishCommute,
   hasLeave, leaveOptions, packToday, startGame, todayRequests,
 } from './game/engine.ts';
-import { ENDINGS, ENDING_BY_ID, decideEnding } from './game/endings.ts';
+import { ENDINGS, ENDING_BY_ID, TONE_LABEL, decideEnding, earlyWarning, type Tone } from './game/endings.ts';
 import { josa } from './game/korean.ts';
 import { menuKey } from './game/menus.ts';
 import { clearRun, loadDex, loadRun, saveDex, saveRun, type Dex } from './game/save.ts';
@@ -29,7 +29,7 @@ import { newGame } from './game/state.ts';
 import { fmt } from './game/text.ts';
 import type { Delta, GameState, LeaveChoice, Slot, StatKey } from './game/types.ts';
 import { CHILD_H, childFront, headTop, parentSide, pxAgeOf, type Expr, type HatId, type Look } from './pixel/child.ts';
-import { eventExpr, eventScene } from './pixel/event-scenes.ts';
+import { endingScene, eventExpr, eventScene } from './pixel/event-scenes.ts';
 import { entryFloor, entryWall, miniLunch } from './pixel/extras.ts';
 import { loadPixelFont } from './pixel/font.ts';
 import { food } from './pixel/foods.ts';
@@ -100,7 +100,7 @@ function faceIcon(s: GameState, expr: Expr = 'neutral'): string {
 // ───────────────────────── 장면 (캔버스) ─────────────────────────
 type SceneKind = 'kitchen' | 'entry' | 'event' | 'growth' | 'title' | 'ending' | 'intro';
 const KW = 110, COUNTER_Y = 54, BX = 46, BY = 57, KID_X = 8;
-const SCENE_H: Record<SceneKind, number> = { kitchen: 98, entry: 98, event: 72, growth: 98, title: 98, ending: 98, intro: 80 };
+const SCENE_H: Record<SceneKind, number> = { kitchen: 98, entry: 98, event: 72, growth: 98, title: 98, ending: 72, intro: 80 };
 const bento = bentoBox();
 const fx: Fx[] = [];
 let sceneKind: SceneKind | undefined;
@@ -210,6 +210,11 @@ function drawScene(now: number, dt: number): void {
       else if (sceneKind === 'entry' && t?.pack?.mood === 'happy') bubble(g, KW / 2 + 6, wallH - 40, 1, '♪');
     }
     g.drawImage(sprite(`entry-floor-${H - wallH}`, () => entryFloor(KW, H - wallH)), 0, wallH);
+  } else if (sceneKind === 'ending' && s?.endingId) {
+    const e = ENDING_BY_ID[s.endingId];
+    g.drawImage(sprite(`end-${e.id}-${look.age}${look.gender}`, () => endingScene(e.id, e.tone, look)), 0, 0);
+    if (e.tone === 'happy' && Math.random() < dt * 3) spawn(fx, 'star', 10 + Math.random() * 90, 6 + Math.random() * 20, 1);
+    if (e.tone === 'twisted' && Math.random() < dt * 1.5) spawn(fx, 'sparkle', 10 + Math.random() * 90, 6 + Math.random() * 30, 1);
   } else if (sceneKind === 'growth' || sceneKind === 'ending') {
     g.drawImage(sprite(`entry-wall-${wallH}`, () => entryWall(KW, wallH)), 0, 0);
     g.drawImage(sprite(`entry-floor-${H - wallH}`, () => entryFloor(KW, H - wallH)), 0, wallH);
@@ -443,7 +448,8 @@ function renderSummary(s: GameState): string {
   const d: Delta = {};
   for (const k of STAT_KEYS) d[k] = s.stats[k] - s.yearStart[k];
   const lines = s.log.filter((l) => l.age === s.age).slice(-4);
-  const hint = s.age >= 6 ? fmt(decideEnding(s).hint, s) : '';
+  const warn = earlyWarning(s);
+  const hint = warn ? fmt(warn.hint, s) : s.age >= 6 ? fmt(decideEnding(s).hint, s) : '';
   const days = s.album.filter((a) => a.age === s.age);
   return `
   ${stage('growth', '', `${s.age}살 · ${stageOf(s.age).name}`)}
@@ -451,7 +457,7 @@ function renderSummary(s: GameState): string {
     <h2 class="px-h">${esc(s.child.name)}, 올 한 해</h2>
     ${days.length ? `<p class="px-line">점심 ${days.map((a) => '★'.repeat(a.lunch) || '☆').join(' · ')}</p>` : ''}
     ${chips(d)}
-    ${hint ? `<p class="px-omen">이대로라면… ${esc(hint)}</p>` : ''}
+    ${hint ? `<p class="px-omen ${warn ? 'warn' : ''}">${warn ? '⚠ ' : '이대로라면… '}${esc(hint)}</p>` : ''}
     <ul class="px-lines">${lines.map((l) => `<li>${esc(l.text)}</li>`).join('')}</ul>
     <button class="btn primary wide" data-act="year">${s.age >= FINAL_AGE ? '🎓 스무 살이 되다' : `🎂 ${s.age + 1}살 생일`}</button>
   </section>`;
@@ -463,11 +469,12 @@ function renderEnding(s: GameState): string {
   const follows = s.album.filter((d) => d.leave === 'follow').length;
   const caught = s.album.filter((d) => d.over === 'caught').length;
   return `
-  ${stage('ending', '', `${esc(s.child.name)}의 스무 살`)}
+  ${stage('ending', '', e.early ? `${esc(s.child.name)}의 ${s.age}살` : `${esc(s.child.name)}의 스무 살`)}
   <section class="px-panel">
-    <div class="px-sub">엔딩 ${ENDINGS.indexOf(e) + 1}/${ENDINGS.length}</div>
+    <div class="px-sub"><span class="px-tone ${e.tone}">${TONE_LABEL[e.tone]}</span> ${e.early ? `${s.age}살에 끝난 이야기 · ` : ''}엔딩 ${dex.endings.length}/${ENDINGS.length} 발견</div>
     <h2 class="px-h">${e.emoji} ${esc(e.title)}</h2>
-    <p class="px-story">${esc(e.text)}</p>
+    <p class="px-story">${esc(fmt(e.text, s))}</p>
+    ${e.later ? `<p class="px-later"><b>10년 후…</b> ${esc(fmt(e.later, s))}</p>` : ''}
     <div class="px-report">
       ${STAT_KEYS.map((k) => `<div>${STAT_INFO[k].label} <b>${Math.round(s.stats[k])}</b></div>`).join('')}
       <div>재능 <b>${TALENT_INFO[s.child.talent].label}</b></div>
@@ -542,7 +549,11 @@ function renderDex(): string {
   return sheet('도감', `
     <p class="sub">메뉴 ${dex.menus.length}/${ALL_MENUS.length} · 특별 메뉴 ${sig.filter((m) => dex.menus.includes(m.key)).length}/${sig.length} · 플레이 ${dex.plays}회</p>
     <h3>엔딩</h3>
-    <div class="endings">${ENDINGS.map((e) => (dex.endings.includes(e.id) ? `<div class="end">${e.emoji}<small>${esc(e.title)}</small></div>` : '<div class="end unk">?<small>???</small></div>')).join('')}</div>
+    ${(['happy', 'bitter', 'twisted', 'bad'] as Tone[]).map((tone) => {
+      const list = ENDINGS.filter((e) => e.tone === tone);
+      return `<h4 class="px-tone-h"><span class="px-tone ${tone}">${TONE_LABEL[tone]}</span> ${list.filter((e) => dex.endings.includes(e.id)).length}/${list.length}</h4>
+      <div class="endings">${list.map((e) => (dex.endings.includes(e.id) ? `<div class="end">${e.emoji}<small>${esc(e.title)}</small></div>` : `<div class="end unk">?<small>${e.early ? '스무 살 전에…' : '???'}</small></div>`)).join('')}</div>`;
+    }).join('')}
     <h3>메뉴</h3>${groups}`);
 }
 

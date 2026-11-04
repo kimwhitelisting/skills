@@ -2,6 +2,7 @@ import { TALENT_INFO } from '../game/constants.ts';
 import { getMenu } from '../game/bento.ts';
 import { rand } from '../game/rng.ts';
 import type { GameEvent, GameState } from '../game/types.ts';
+import { MORE_EVENTS } from './events-more.ts';
 
 /** 최근 도시락 (끼니 수 설정에 따라 점심이 없을 수 있으니 가장 최근 메뉴로 대신) */
 const lunchMenu = (s: GameState) => { const k = s.lastMeals.lunch ?? s.lastMenu; return k ? getMenu(k) : undefined; };
@@ -279,9 +280,9 @@ const RANDOM: GameEvent[] = [
     id: 'game', kind: 'random', emoji: '🎮', ageMin: 11, ageMax: 17, weight: 2, title: '게임에 빠졌다',
     text: '새벽 2시, {c}의 방에서 키보드 소리가 들린다.',
     choices: [
-      { label: '와이파이 공유기를 뽑는다', outcome: { text: '전쟁이 시작됐다.', stats: { bond: -4, smarts: 2 } } },
-      { label: '같이 한 판 해 본다', outcome: { text: '의외로 잘한다며 놀랐다. 규칙도 같이 정했다.', stats: { bond: 4, happy: 2 } } },
-      { label: '스스로 조절하게 둔다', outcome: (s) => (s.stats.indep >= 40 ? { text: '알아서 시간을 정해 지키기 시작했다.', stats: { indep: 4 } } : { text: '다크서클이 턱까지 내려왔다.', stats: { health: -3, smarts: -2 } }) },
+      { label: '와이파이 공유기를 뽑는다', outcome: { text: '전쟁이 시작됐다. 다음 날 PC방 영수증이 나왔다.', stats: { bond: -4, smarts: 2 }, flags: { rebel: 1, gamer: 1 } } },
+      { label: '같이 한 판 해 본다', outcome: { text: '의외로 잘한다며 놀랐다. 규칙도 같이 정했다.', stats: { bond: 4, happy: 2 }, flags: { gamer: 1 } } },
+      { label: '스스로 조절하게 둔다', outcome: (s) => (s.stats.indep >= 40 ? { text: '알아서 시간을 정해 지키기 시작했다. 랭킹이 오르고 있다.', stats: { indep: 4 }, flags: { gamer: 1 } } : { text: '다크서클이 턱까지 내려왔다.', stats: { health: -3, smarts: -2 } }) },
     ],
   },
   {
@@ -356,5 +357,5 @@ const RANDOM: GameEvent[] = [
   },
 ];
 
-export const EVENTS: GameEvent[] = [...MILESTONES, ...RANDOM];
+export const EVENTS: GameEvent[] = [...MILESTONES, ...RANDOM, ...MORE_EVENTS];
 export const EVENT_BY_ID: Record<string, GameEvent> = Object.fromEntries(EVENTS.map((e) => [e.id, e]));

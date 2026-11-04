@@ -6,7 +6,7 @@ import { addDelta, applyDelta } from './apply.ts';
 import { cheapestCost, packBento, type Selection } from './bento.ts';
 import { MEAL_PRIORITY, tuningOf, yearlyIncome } from './config.ts';
 import { FINAL_AGE, stageOf } from './constants.ts';
-import { decideEnding } from './endings.ts';
+import { decideEnding, earlyEnding } from './endings.ts';
 import { josa } from './korean.ts';
 import { chance, pick, pickWeighted, shuffle } from './rng.ts';
 import { fmt } from './text.ts';
@@ -58,10 +58,15 @@ function enterStep(s: GameState, step: Step): void {
     s.eventQueue = EVENTS.filter((e) => e.kind === 'milestone' && eligible(s, e)).map((e) => e.id);
     if (!activateNext(s)) return next(s);
   } else if (step === 'random') {
+    // 한 해에 랜덤 이벤트 최대 2개 (아기 때는 드물게)
     const pool = EVENTS.filter((e) => e.kind === 'random' && eligible(s, e));
-    const p = s.age <= 1 ? 0.35 : 0.75;
-    const e = chance(s, p) ? pickWeighted(s, pool, (x) => x.weight ?? 1) : undefined;
-    s.eventQueue = e ? [e.id] : [];
+    const picked: string[] = [];
+    for (const p of s.age <= 1 ? [0.35] : s.age <= 2 ? [0.75] : [0.8, 0.45]) {
+      if (!chance(s, p)) break;
+      const e = pickWeighted(s, pool.filter((x) => !picked.includes(x.id)), (x) => x.weight ?? 1);
+      if (e) picked.push(e.id);
+    }
+    s.eventQueue = picked;
     if (!activateNext(s)) return next(s);
   } else if (step === 'day') {
     s.dayIndex = 0;
@@ -277,6 +282,12 @@ function yearlyDrift(s: GameState): void {
 /** 연말 정산 → 다음 해로. 마지막 해면 엔딩 */
 export function advanceYear(s: GameState): void {
   if (s.step !== 'summary') throw new Error('not summary step');
+  const early = earlyEnding(s);
+  if (early) {
+    s.endingId = early.id;
+    s.step = 'ending';
+    return;
+  }
   if (s.age >= FINAL_AGE) {
     s.endingId = decideEnding(s).id;
     s.step = 'ending';
