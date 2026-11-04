@@ -29,6 +29,7 @@ import { newGame } from './game/state.ts';
 import { fmt } from './game/text.ts';
 import type { Delta, GameState, LeaveChoice, Slot, StatKey } from './game/types.ts';
 import { CHILD_H, childFront, headTop, parentSide, pxAgeOf, type Expr, type HatId, type Look } from './pixel/child.ts';
+import { eventExpr, eventScene } from './pixel/event-scenes.ts';
 import { entryFloor, entryWall, miniLunch } from './pixel/extras.ts';
 import { loadPixelFont } from './pixel/font.ts';
 import { food } from './pixel/foods.ts';
@@ -47,7 +48,7 @@ import { loadPrefs, savePrefs } from './ui/prefs.ts';
 type Screen = 'title' | 'intro' | 'game';
 type Overlay = 'stats' | 'menu' | 'notebook' | 'dex' | 'settings';
 /** 방금 고른 이벤트 선택지의 결과 (엔진은 이미 다음으로 넘어가 있고, 화면만 한 번 더 보여 준다) */
-interface EventResult { emoji: string; title: string; text: string; delta: Delta; money: number; kind: string }
+interface EventResult { id: string; emoji: string; title: string; text: string; delta: Delta; money: number; kind: string }
 
 const app = document.getElementById('app')!;
 app.classList.add('pixel-ui');
@@ -99,7 +100,7 @@ function faceIcon(s: GameState, expr: Expr = 'neutral'): string {
 // ───────────────────────── 장면 (캔버스) ─────────────────────────
 type SceneKind = 'kitchen' | 'entry' | 'event' | 'growth' | 'title' | 'ending' | 'intro';
 const KW = 110, COUNTER_Y = 54, BX = 46, BY = 57, KID_X = 8;
-const SCENE_H: Record<SceneKind, number> = { kitchen: 98, entry: 98, event: 66, growth: 98, title: 98, ending: 98, intro: 80 };
+const SCENE_H: Record<SceneKind, number> = { kitchen: 98, entry: 98, event: 72, growth: 98, title: 98, ending: 98, intro: 80 };
 const bento = bentoBox();
 const fx: Fx[] = [];
 let sceneKind: SceneKind | undefined;
@@ -123,12 +124,17 @@ function blit2(g: CanvasRenderingContext2D, c: HTMLCanvasElement, x: number, y: 
   g.drawImage(c, x, y, c.width * 2, c.height * 2);
 }
 
+/** 이벤트 결과에 따른 표정: 좋은 일이면 웃고, 나쁜 일이면 시무룩 */
+function resultExpr(r: EventResult): Expr {
+  const sum = Object.values(r.delta).reduce((a, b) => a + (b ?? 0), 0) + r.money / 5;
+  return sum > 0.5 ? 'happy' : sum < -0.5 ? 'sad' : 'neutral';
+}
+
 function kidExprNow(s: GameState | undefined, now: number): Expr {
   const t = s?.today;
   if (sceneKind === 'event') {
-    if (!eventResult) return 'surprise';
-    const sum = Object.values(eventResult.delta).reduce((a, b) => a + (b ?? 0), 0);
-    return sum > 0.5 ? 'happy' : sum < -0.5 ? 'sad' : 'neutral';
+    if (!eventResult) return eventExpr(s?.active?.id ?? '');
+    return resultExpr(eventResult);
   }
   if (sceneKind === 'ending' || sceneKind === 'title') return 'happy';
   if (!s || !t) return 'neutral';
@@ -188,7 +194,10 @@ function drawScene(now: number, dt: number): void {
       blit(g, sprite('lid', bentoLid), BX, BY - 30 * (1 - k));
       if (lidT > 0.3 && lidT - dt <= 0.3) { spawn(fx, 'star', BX + 29, BY + 10, 8); spawn(fx, 'sparkle', BX + 29, BY + 20, 8); sfx('chime'); haptic(20); }
     }
-  } else if (sceneKind === 'entry' || sceneKind === 'event' || sceneKind === 'intro') {
+  } else if (sceneKind === 'event') {
+    const id = eventResult?.id ?? s?.active?.id ?? '';
+    g.drawImage(sprite(`ev-${id}-${look.age}${look.gender}-${expr}`, () => eventScene(id, look, expr)), 0, 0);
+  } else if (sceneKind === 'entry' || sceneKind === 'intro') {
     g.drawImage(sprite(`entry-wall-${wallH}`, () => entryWall(KW, wallH)), 0, 0);
     if (sceneKind === 'intro') {
       if (introPage === 0) blit(g, kidSprite({ age: 1, gender: titleLook.gender }, 'happy', false, bob), KW / 2 - 12, wallH - CHILD_H);
@@ -299,9 +308,9 @@ function renderEvent(s: GameState): string {
   const a = s.active!;
   const kind = s.step === 'milestone' ? `${s.age}살` : '어느 날';
   return `
-  ${stage('event', '', kind, `<span class="px-emoji">${a.emoji}</span>`)}
+  ${stage('event', '', kind)}
   <section class="px-panel">
-    <h2 class="px-h">${esc(a.title)}</h2>
+    <h2 class="px-h">${a.emoji} ${esc(a.title)}</h2>
     <p class="px-story">${nl(a.text)}</p>
     ${a.choices.map((c, i) => `<button class="btn wide choice" data-act="choice" data-i="${i}" ${c.enabled ? '' : 'disabled'}>${esc(c.label)}${!c.enabled && c.hint ? `<small>🔒 ${esc(c.hint)}</small>` : ''}</button>`).join('')}
   </section>`;
@@ -309,9 +318,9 @@ function renderEvent(s: GameState): string {
 
 function renderEventResult(r: EventResult): string {
   return `
-  ${stage('event', '', r.kind, `<span class="px-emoji">${r.emoji}</span>`)}
+  ${stage('event', '', r.kind)}
   <section class="px-panel">
-    <h2 class="px-h">${esc(r.title)}</h2>
+    <h2 class="px-h">${r.emoji} ${esc(r.title)}</h2>
     <p class="px-story">${nl(r.text)}</p>
     ${chips(r.delta, r.money)}
     <button class="btn primary wide" data-act="event-ok">계속</button>
@@ -747,7 +756,9 @@ function onAct(el: HTMLElement): void {
       const kind = s.step === 'milestone' ? `${s.age}살` : '어느 날';
       const r = chooseEventOption(s, Number(el.dataset.i));
       continueAfterEvent(s);
-      eventResult = { emoji: a.emoji, title: a.title, text: r.text, delta: r.delta, money: r.money, kind };
+      eventResult = { id: a.id, emoji: a.emoji, title: a.title, text: r.text, delta: r.delta, money: r.money, kind };
+      const ex = resultExpr(eventResult);
+      if (ex === 'happy') spawn(fx, 'heart', 55, 28, 5); else if (ex === 'sad') spawn(fx, 'dust', 55, 50, 4);
       if (s.step === 'day') resetMorning();
       sfx('tap'); haptic(10);
       break;

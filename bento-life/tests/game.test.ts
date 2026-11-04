@@ -137,6 +137,11 @@ describe('content integrity', () => {
     expect(new Set(EVENTS.map((e) => e.id)).size).toBe(EVENTS.length);
     for (let a = 0; a <= 19; a++) expect(EVENTS.some((e) => e.kind === 'milestone' && e.age === a), `age ${a}`).toBe(true);
   });
+  it('every event has its own pixel scene', async () => {
+    const { hasEventScene, EVENT_SCENE_IDS } = await import('../src/pixel/event-scenes.ts');
+    for (const e of EVENTS) expect(hasEventScene(e.id), e.id).toBe(true);
+    for (const id of EVENT_SCENE_IDS) expect(EVENTS.some((e) => e.id === id), `unused scene ${id}`).toBe(true);
+  });
 });
 
 describe('simulation', () => {
