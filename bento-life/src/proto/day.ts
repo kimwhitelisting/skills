@@ -17,7 +17,7 @@ import { INGREDIENTS, ing } from '../data/ingredients.ts';
 import { josa } from '../game/korean.ts';
 import type { Slot, Tag } from '../game/types.ts';
 import { childFront, type Expr, type Look } from '../pixel/child.ts';
-import { entryFloor, entryWall } from '../pixel/extras.ts';
+import { entryFloor, entryWall, miniLunch } from '../pixel/extras.ts';
 import { loadPixelFont } from '../pixel/font.ts';
 import { food } from '../pixel/foods.ts';
 import { bubble, draw as drawFx, spawn, step, type Fx } from '../pixel/fx.ts';
@@ -239,8 +239,8 @@ function drawScene(now: number, dt: number): void {
     blit(g, sprite(kidKey, () => childFront(look, expr, { blink, bob })), KW / 2 - 12, 78 - 40);
     g.drawImage(sprite('entry-floor', () => entryFloor(KW, KH - 78)), 0, 78);
     if (pending?.plan.forgot) {
-      blit(g, sprite('lunch-mini', () => bentoLid()), 70, 80, 1);
-      bubble(g, 84, 64, 1, '!');
+      blit(g, sprite('lunch-mini', miniLunch), 14, 82);
+      bubble(g, 20, 66, 1, '!');
     } else if (pending?.mood === 'happy') bubble(g, KW / 2 + 6, 22, 1, '♪');
   } else {
     g.drawImage(sprite(`kwall-${KW}`, () => kitchenWall(KW, COUNTER_Y + 4)), 0, 0);

@@ -58,3 +58,11 @@ export function entryFloor(w: number, h: number): Grid {
   for (let x = 0; x < 32; x++) for (let y = 1; y < 5; y++) g.set(mx + x, y, (x >> 2) % 2 === 0 ? P.tomato : P.mustard);
   return g;
 }
+
+/** 바닥에 놓인 작은 도시락 (보자기 매듭) */
+export function miniLunch(): Grid {
+  const g = new Grid(20, 14).rect(1, 4, 18, 10, P.tomato).hline(1, 18, 13, P.tomatoDark);
+  for (let i = 0; i < 18; i += 3) g.vline(1 + i, 5, 12, P.tomatoDark);
+  g.rect(7, 1, 6, 5, P.mustard).set(5, 0, P.mustard).set(14, 0, P.mustard).set(6, 1, P.mustard).set(13, 1, P.mustard).rect(9, 3, 2, 2, P.mustardDark);
+  return g.outline(P.ink);
+}
