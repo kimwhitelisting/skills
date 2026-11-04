@@ -197,11 +197,11 @@ export function chooseLeave(s: GameState, choice: LeaveChoice): Evening | undefi
   let d: Delta;
   if (choice === 'escort') {
     d = { bond: 2, indep: 1 };
-    extra.push(pick(s, ['손잡고 같이 걸어갔다. 가는 내내 재잘재잘.', '어린이집 앞에서 한참을 손을 흔들었다.', '가다가 개미 구경을 10분 했다.']));
+    extra.push(pick(s, ['손잡고 같이 걸어갔다. 가는 내내 재잘재잘.', a < 3 ? '어린이집 앞에서 한참을 손을 흔들었다.' : '유치원 앞에서 한참을 손을 흔들었다.', '가다가 개미 구경을 10분 했다.']));
   } else {
     d = a < 6 ? { indep: 3, bond: -1 } : { indep: 4, bond: a < 8 ? -1 : 0 };
     if (a >= 13) s.vigilance = Math.max(0, s.vigilance - 0.08);
-    extra.push(a < 6 ? '어린이집 차에 태워 보냈다. 창문에 얼굴을 붙이고 갔다.' : pick(s, ['혼자 씩씩하게 학교에 갔다.', '친구를 만나 수다 떨며 갔다고 한다.', '무슨 일이 있었는지 물어봐도 "그냥."']));
+    extra.push(a < 6 ? `${a < 3 ? '어린이집' : '유치원'} 차에 태워 보냈다. 창문에 얼굴을 붙이고 갔다.` : pick(s, ['혼자 씩씩하게 학교에 갔다.', '친구를 만나 수다 떨며 갔다고 한다.', '무슨 일이 있었는지 물어봐도 "그냥."']));
   }
   return settle(s, scaled(s, d), extra);
 }

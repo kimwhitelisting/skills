@@ -22,7 +22,7 @@ export const SHOP: ShopItem[] = [
   { id: 'story-theater', kind: 'story', name: '연극 동아리', emoji: '🎭', price: 400, desc: '연극 오디션 · 첫 공연 — 엔딩 하나' },
   { id: 'story-bike', kind: 'story', name: '자전거', emoji: '🚲', price: 250, desc: '보조 바퀴 떼는 날' },
   { id: 'story-camping', kind: 'story', name: '캠핑 장비', emoji: '⛺', price: 350, desc: '주말 캠핑 (여러 번)' },
-  { id: 'theme-mint', kind: 'theme', name: '민트 옷', emoji: '🌿', price: 200, desc: '윗옷이 민트색 (교복 시기 빼고)', theme: ['#bfe6cf', '#97cfb0'] },
+  { id: 'theme-mint', kind: 'theme', name: '민트 옷', emoji: '🌿', price: 200, desc: '윗옷이 민트색', theme: ['#bfe6cf', '#97cfb0'] },
   { id: 'theme-berry', kind: 'theme', name: '딸기 옷', emoji: '🍓', price: 200, desc: '윗옷이 딸기우유색', theme: ['#f3b6c4', '#e08ea2'] },
   { id: 'theme-sky', kind: 'theme', name: '하늘 옷', emoji: '☁️', price: 200, desc: '윗옷이 하늘색', theme: ['#bcdcf2', '#94c2e3'] },
   { id: 'theme-lemon', kind: 'theme', name: '레몬 옷', emoji: '🍋', price: 250, desc: '윗옷이 레몬색', theme: ['#ffe27a', '#e8c24a'] },

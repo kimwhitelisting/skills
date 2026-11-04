@@ -127,7 +127,7 @@ export const SHOP_EVENTS: GameEvent[] = [
     id: 'penpal', kind: 'random', emoji: '✉️', ageMin: 9, ageMax: 16, weight: 6, once: true, shop: 'story-penpal', title: '바다 건너 온 편지',
     text: '외국 펜팔 친구의 첫 편지. 사진 속 도시락엔 샌드위치와 사과 한 알.',
     choices: [
-      { label: '우리 도시락 사진을 보낸다', outcome: { text: '답장: "WOW! 너희 엄마아빠 셰프야?"', stats: { social: 3, happy: 2 }, flags: { pen: 1 } } },
+      { label: '우리 도시락 사진을 보낸다', outcome: { text: '답장: "WOW! 너희 부모님 셰프야?"', stats: { social: 3, happy: 2 }, flags: { pen: 1 } } },
       { label: '영어 사전을 사 준다 (💰-2)', requires: { money: 2 }, outcome: { text: '사전에 형광펜 줄이 하루에 열 개씩 늘어난다.', money: -2, stats: { smarts: 3 }, flags: { pen: 1 } } },
     ],
   },
@@ -193,7 +193,7 @@ export const SHOP_EVENTS: GameEvent[] = [
     ],
   },
   {
-    id: 'crown_day', kind: 'random', emoji: '👑', ageMin: 3, ageMax: 9, weight: 5, once: true, wear: 'hat-crown', title: '왕관 쓰고 등원',
+    id: 'crown_day', kind: 'random', emoji: '👑', ageMin: 3, ageMax: 9, weight: 5, once: true, wear: 'hat-crown', title: '왕관을 쓴 날',
     text: '{c}가 왕관을 벗지 않겠다고 버틴다. "나는 오늘 왕이야!"',
     choices: [
       { label: '왕의 행차를 허락한다', outcome: { text: '반 친구들이 줄을 서서 신하가 되었다. 점심엔 왕의 도시락 시식회.', stats: { social: 4, happy: 3 } } },

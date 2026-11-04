@@ -50,6 +50,12 @@ npx tsc --noEmit -p .  # 타입 검사
 ## 안드로이드
 Capacitor로 감쌌다 (`capacitor.config.ts`, 패키지 이름은 **임시** `com.bentolife.app`). 휴대폰 글자 크기 설정은 무시한다(웹뷰 글자 배율 100% 고정, `scripts/android-assets.ts`가 MainActivity에 넣는다). 빌드·서명·Play 등록은 [`ANDROID.md`](ANDROID.md), 스토어 문구·설문 초안은 [`STORE.md`](STORE.md), 개인정보처리방침 초안은 [`privacy-policy.md`](privacy-policy.md). 스토어 그래픽은 `npm run store:art`, 스크린샷은 `npm run store:shots` → `art-src/store/`.
 
+## 글 점검
+`npm run text:dump` → `art-src/text-dump.md`에 이벤트·엔딩·아침 요청의 모든 문장이 (받침 있는 이름/없는 이름, 스탯 높음/낮음 갈래까지) 한 파일로 모인다. 문장을 고친 뒤 다시 뽑아서 읽는다.
+- 부모 성별은 정하지 않는다: 서술은 "부모님", 선생님 말은 "부모님"/"걱정 마세요" 식으로. "어머님/아버님" 같은 빗금은 쓰지 않는다 (아이 말투의 "엄마아빠"는 괜찮다)
+- 아이 성별에 따라 달라지는 말(형·누나 / 언니·오빠)은 `s.child.gender`로 갈라 쓴다
+- 2살 어린이집 → 3~5살 유치원 → 6살~ 학교 (코드 나이)
+
 ## 규칙 (깨지면 테스트가 실패)
 - 이벤트·엔딩을 추가하면 `src/pixel/event-scenes.ts`의 `SCENES` / `ENDING_SCENES`에 장면을 꼭 넣는다
 - 재료를 추가하면 `npm run gen:menus` (모든 조합의 메뉴표 재생성)

@@ -86,7 +86,7 @@ export const MORE_EVENTS: GameEvent[] = [
   {
     id: 'bully', kind: 'random', emoji: '😈', ageMin: 11, ageMax: 16, weight: 2, once: true, title: '담임 선생님의 전화',
     when: (s) => s.stats.social >= 50 && s.stats.bond < 45,
-    text: '"어머님/아버님, {c}가 친구를 괴롭히는 무리에 있었습니다."',
+    text: '"{c} 부모님이시죠? {c}가 친구를 괴롭히는 무리에 있었습니다."',
     choices: [
       { label: '같이 사과하러 간다', outcome: { text: '그 집 문 앞에서 {c}가 먼저 고개를 숙였다.', stats: { bond: 2, social: -2, indep: 2 } } },
       { label: '"우리 애가 그럴 리 없어요"', outcome: { text: '{c}는 그날 웃었다. 그 웃음이 조금 무서웠다.', stats: { social: 2 }, flags: { lie: 1, rebel: 1 } } },
@@ -151,9 +151,9 @@ export const MORE_EVENTS: GameEvent[] = [
   {
     id: 'genius', kind: 'random', emoji: '🧠', ageMin: 9, ageMax: 14, weight: 3, once: true, title: '월반 제안',
     when: (s) => s.stats.smarts >= 78,
-    text: '교장 선생님: "{c}는 지금 교실이 너무 쉬워요. 월반을 권합니다."',
+    text: '교장 선생님: "{c}한테는 지금 수업이 너무 쉬워요. 월반을 권합니다."',
     choices: [
-      { label: '월반시킨다', outcome: { text: '형, 누나들 사이에서 도시락을 먹는다. 반찬 뺏기는 일이 늘었다.', stats: { smarts: 5, social: -4, happy: -1 }, flags: { skip: 1 } } },
+      { label: '월반시킨다', outcome: (s) => ({ text: `${s.child.gender === 'girl' ? '언니, 오빠들' : '형, 누나들'} 사이에서 도시락을 먹는다. 반찬 뺏기는 일이 늘었다.`, stats: { smarts: 5, social: -4, happy: -1 }, flags: { skip: 1 } }) },
       { label: '또래와 함께 크게 한다', outcome: { text: '반에서 제일 웃긴 애가 됐다. 공부는 집에서 더 한다.', stats: { social: 3, happy: 2 } } },
     ],
   },
@@ -215,7 +215,7 @@ export const MORE_EVENTS: GameEvent[] = [
     choices: [
       { label: '응원한다', outcome: { text: '첫 월급으로 부모님 도시락을 사 왔다. 편의점 도시락이었다.', money: 4, stats: { indep: 4, bond: 2, smarts: -1 } } },
       { label: '"공부해야지"', outcome: { text: '고개를 끄덕였지만 알바 공고는 계속 본다.', stats: { smarts: 2, indep: -1 } } },
-      { label: '몰래 가게 앞에서 지켜본다', requires: { followMin: 2 }, outcome: { text: '진열대 사이로 눈이 마주쳤다. 점장님이 "아버님/어머님이세요?"', stats: { bond: -3, indep: -2, social: -1 } } },
+      { label: '몰래 가게 앞에서 지켜본다', requires: { followMin: 2 }, outcome: { text: '진열대 사이로 눈이 마주쳤다. 점장님이 물었다. "혹시… 부모님이세요?"', stats: { bond: -3, indep: -2, social: -1 } } },
     ],
   },
   {
@@ -254,7 +254,7 @@ export const MORE_EVENTS: GameEvent[] = [
   // ───────── 집안일 ─────────
   {
     id: 'jobloss', kind: 'random', emoji: '📦', ageMin: 5, ageMax: 17, weight: 1, once: true, title: '회사가 문을 닫았다',
-    text: '회사가 문을 닫았다. 반찬값이 절반으로 줄었다. {c}에게 뭐라고 말할까?',
+    text: '다니던 회사가 문을 닫았다. 반찬값이 절반으로 줄었다. {c}에게 뭐라고 말할까?',
     choices: [
       { label: '솔직하게 말한다', outcome: { text: '다음 날 아침, {c}가 자기 도시락을 직접 싸고 있었다.', stats: { indep: 4, bond: 3 }, flags: { cook: 1 }, apply: (s) => { s.money = Math.floor(s.money / 2); } } },
       { label: '티 내지 않는다', outcome: { text: '반찬은 줄었지만 웃음은 줄이지 않았다. {c}는 눈치챘을까?', stats: { happy: 1, health: -2 }, apply: (s) => { s.money = Math.floor(s.money / 2); } } },

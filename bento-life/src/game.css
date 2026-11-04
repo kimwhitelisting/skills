@@ -189,3 +189,24 @@ html:has(#app.fit), html:has(#app.fit) body { height: 100%; overflow: hidden; ov
 #app.tight .px-bars { padding: 4px 8px; gap: 2px 10px; }
 #app.tight .px-found { font-size: 11px; }
 #app.pixel-ui .px-stage { overflow: hidden; }
+/* ═════════ 손가락 크기 · 글자 크기 (모바일) ═════════
+   눈에 보이는 크기는 그대로 두고, 누를 수 있는 영역만 44px 이상으로 넓힌다 */
+#app.pixel-ui .px-hud button, #app.pixel-ui .px-tab, .pixel-ui .px-sheet .switch, .pixel-ui .px-sheet .x { position: relative; }
+#app.pixel-ui .px-hud button::after { content: ''; position: absolute; inset: -6px -3px; }
+#app.pixel-ui .px-tab::after { content: ''; position: absolute; inset: -5px -3px; }
+.pixel-ui .px-sheet .switch::after { content: ''; position: absolute; inset: -7px -6px; }
+.pixel-ui .px-sheet .x::after { content: ''; position: absolute; inset: -6px; }
+.pixel-ui .px-sheet summary { min-height: 44px; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.pixel-ui .px-sheet .toggle-row { min-height: 48px; }
+/* 도트 글꼴(갈무리11)은 11px 아래로 내려가면 뭉개진다 */
+.px-item small { font-size: 11px; line-height: 1.35; }
+#app.pixel-ui .px-food .price { font-size: 11px; }
+#app.pixel-ui .px-food .price::before { font-size: 10px; }
+#app.pixel-ui .px-food .mark { font-size: 10px; line-height: 11px; }
+.px-adv { margin-top: 6px; border-top: 2px dashed var(--ink); padding-top: 4px; }
+.px-adv summary small { font-size: 11px; color: #8f6e58; font-weight: 400; }
+.px-adv[open] { display: flex; flex-direction: column; gap: 10px; }
+.pixel-ui .px-sheet summary { list-style: none; }
+.pixel-ui .px-sheet summary::-webkit-details-marker { display: none; }
+.pixel-ui .px-sheet summary::before { content: '▶'; font-size: 10px; width: 12px; flex: none; }
+.pixel-ui .px-sheet details[open] > summary::before { content: '▼'; }

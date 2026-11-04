@@ -42,8 +42,8 @@ const MILESTONES: GameEvent[] = [
     }],
   },
   {
-    id: 'daycare', kind: 'milestone', age: 3, emoji: '🏫', title: '어린이집 첫 등원',
-    text: '{c}가 문 앞에서 다리에 매달려 운다. 선생님이 "어머님/아버님, 금방 그쳐요~" 하신다.',
+    id: 'daycare', kind: 'milestone', age: 3, emoji: '🏫', title: '유치원 첫 등원',
+    text: '{c}가 문 앞에서 다리에 매달려 운다. 선생님이 "걱정 마세요, 금방 그쳐요~" 하신다.',
     choices: [
       { label: '단호하게 손 흔들고 돌아서기', outcome: { text: '돌아서는 등 뒤로 울음소리가… 10분 뒤 그쳤다고 한다.', stats: { indep: 5, bond: -2 } } },
       { label: '창문 너머로 하루 종일 지켜보기', requires: { followMin: 1 }, outcome: { text: '선생님과 눈이 세 번 마주쳤다.', stats: { bond: 3, indep: -2 } } },
@@ -55,7 +55,7 @@ const MILESTONES: GameEvent[] = [
     text: (s) => {
       const hidden = s.child.dislikes.find((d) => !s.child.known.dislikes.includes(d));
       if (hidden) s.child.known.dislikes.push(hidden);
-      return '{c}가 숟가락을 내던졌다. "이거 싫어!!"\n싫어하는 음식이 확실해졌다. (도감에서 확인)';
+      return '{c}가 숟가락을 내던졌다. "이거 싫어!!"\n싫어하는 음식이 확실해졌다. (육아 수첩에서 확인)';
     },
     choices: [
       { label: '잘게 다져서 몰래 숨기기', outcome: { text: '완벽 범죄 성공. …라고 생각했다.', stats: { health: 3, happy: -1 } } },
@@ -90,7 +90,7 @@ const MILESTONES: GameEvent[] = [
     ],
   },
   {
-    id: 'picnic', kind: 'milestone', age: 8, emoji: '🧺', title: '첫 소풍',
+    id: 'picnic', kind: 'milestone', age: 8, emoji: '🧺', title: '학교 첫 소풍',
     text: (s) => {
       const m = lunchMenu(s);
       return `드디어 소풍날! 최근 점심 도시락은 「${m?.name ?? '???'}」.\n소풍 도시락은 아이들 사이의 자존심이다.`;
@@ -114,7 +114,7 @@ const MILESTONES: GameEvent[] = [
     choices: [
       { label: '담임 선생님께 전화하기', outcome: { text: '해결은 됐지만 {c}는 조금 머쓱해한다.', stats: { bond: 1, indep: -3 } } },
       { label: '스스로 해결하게 두기', outcome: (s) => (s.stats.social >= 35 ? { text: '다음 날 둘이 어깨동무하고 하교했다.', stats: { social: 5, indep: 4 } } : { text: '한동안 혼자 밥을 먹었다고 한다…', stats: { happy: -4, indep: 3 } }) },
-      { label: '화해용 도시락 2인분 싸주기 (💰-4)', requires: { money: 4 }, outcome: { text: '"너희 엄마/아빠 도시락 진짜 맛있다!" 둘은 베프가 되었다.', money: -4, stats: { social: 6, happy: 3 } } },
+      { label: '화해용 도시락 2인분 싸주기 (💰-4)', requires: { money: 4 }, outcome: { text: '"너희 집 도시락 진짜 맛있다!" 둘은 베프가 되었다.', money: -4, stats: { social: 6, happy: 3 } } },
     ],
   },
   {

@@ -442,7 +442,7 @@ function leaveSay(s: GameState): string {
 
 const LEAVE_BTN: Record<LeaveChoice, (s: GameState) => [string, string]> = {
   follow: (s) => (s.today?.forgot ? ['몰래 따라가서 전해 주기', '들키지 말고 사물함에 쏙'] : ['몰래 따라가 보기', '♥를 모을 수 있지만 들키면…']),
-  trust: (s) => (s.age < 6 ? ['어린이집 차 태워 보내기', '자립심이 자란다'] : ['믿고 보내기', `자립심이 자란다${teen(s) && s.vigilance > 0.05 ? ' · 경계가 조금 풀린다' : ''}`]),
+  trust: (s) => (s.age < 6 ? [`${s.age < 3 ? '어린이집' : '유치원'} 차 태워 보내기`, '자립심이 자란다'] : ['믿고 보내기', `자립심이 자란다${teen(s) && s.vigilance > 0.05 ? ' · 경계가 조금 풀린다' : ''}`]),
   escort: () => ['손잡고 같이 가기', '유대감이 자란다'],
 };
 
@@ -683,6 +683,8 @@ function renderDex(): string {
     <h3>메뉴</h3>${groups}`);
 }
 
+/** 고급 설정을 열어 둔 채로 값을 바꿀 수 있게 (다시 그려도 열린 채) */
+let advOpen = false;
 function renderSettings(): string {
   const t: Tuning = { ...DEFAULT_TUNING, ...prefs.tuning };
   const seg = (key: keyof Tuning, values: number[], label: (v: number) => string) =>
@@ -693,14 +695,16 @@ function renderSettings(): string {
     <div class="toggle-row"><span>배경음악</span><button class="switch ${prefs.music ? 'on' : ''}" data-act="pref" data-key="music" aria-pressed="${prefs.music}"><i></i></button></div>
     <div class="toggle-row"><span>효과음</span><button class="switch ${prefs.sound ? 'on' : ''}" data-act="pref" data-key="sound" aria-pressed="${prefs.sound}"><i></i></button></div>
     <div class="toggle-row"><span>진동</span><button class="switch ${prefs.haptics ? 'on' : ''}" data-act="pref" data-key="haptics" aria-pressed="${prefs.haptics}"><i></i></button></div>
-    <h3>실험 설정 <small>새 게임부터 적용</small></h3>
-    <div class="field"><span>1년에 보내는 하루</span>${seg('daysPerYear', [1, 2, 3], (v) => `${v}일`)}</div>
-    <div class="field"><span>하루당 반찬값 수입</span>${seg('incomePerDay', [4, 5, 6, 7, 8], (v) => `${v}`)}</div>
-    <div class="field"><span>재료 가격</span>${seg('priceMult', [0.8, 1, 1.2, 1.5], (v) => `×${v}`)}</div>
-    <p class="sub">→ 1년 수입 ₩${income} · 한 판 ${t.daysPerYear * 20}일</p>
-    ${running ? `<p class="sub">지금 판: 1년 ${running.daysPerYear}일 · 수입 ₩${yearlyIncome(game!)} · 가격 ×${running.priceMult}</p>` : ''}
-    <button class="btn wide" data-act="tune-reset">기본값으로</button>
-    <button class="btn wide" data-act="tips-reset">처음 안내 다시 보기</button>`);
+    <button class="btn wide" data-act="tips-reset">처음 안내 다시 보기</button>
+    <details class="px-adv" ${advOpen || Object.keys(prefs.tuning ?? {}).length ? 'open' : ''}>
+      <summary>고급 설정 <small>난이도 · 새 게임부터 적용</small></summary>
+      <div class="field"><span>1년에 보내는 하루</span>${seg('daysPerYear', [1, 2, 3], (v) => `${v}일`)}</div>
+      <div class="field"><span>하루당 반찬값 수입</span>${seg('incomePerDay', [4, 5, 6, 7, 8], (v) => `${v}`)}</div>
+      <div class="field"><span>재료 가격</span>${seg('priceMult', [0.8, 1, 1.2, 1.5], (v) => `×${v}`)}</div>
+      <p class="sub">→ 1년 수입 ₩${income} · 한 판 ${t.daysPerYear * 20}일</p>
+      ${running ? `<p class="sub">지금 판: 1년 ${running.daysPerYear}일 · 수입 ₩${yearlyIncome(game!)} · 가격 ×${running.priceMult}</p>` : ''}
+      <button class="btn wide" data-act="tune-reset">기본값으로</button>
+    </details>`);
 }
 
 // ───────────────────────── 하트 상점 ─────────────────────────
@@ -759,7 +763,7 @@ function renderShop(): string {
     ${shopMsg ? `<p class="px-shop-msg">${shopMsg}</p>` : ''}
     ${group('story', '이야기 꾸러미', '사면 새 이벤트가 나와요')}
     ${group('gift', '선물', s ? `${esc(s.child.name)}에게 · 한 해에 한 번` : '')}
-    ${group('theme', '옷 색', '한 번 사면 계속')}
+    ${group('theme', '옷 색', '한 번 사면 계속 · 중고등학생 땐 교복')}
     ${group('hat', '모자')}
     ${group('tool', '변장 도구', '등굣길에 들고 가요')}`);
 }
@@ -848,7 +852,7 @@ function renderOverlay(): string {
 const TIPS: Record<string, string> = {
   baby: '아직 아기라 이유식만 먹어요. 주식·메인·반찬 세 칸을 채워 먹여 보세요. 뭘 좋아하는지는 먹여 봐야 알아요.',
   morning: '아이의 말을 잘 들어 봐요. 오늘 사정(체육·시험·배탈…)에 맞는 도시락이면 별을 더 받아요. 재료를 골라 세 칸을 채우고 뚜껑을 닫아요. 등교 시간이 지나면 남은 칸이 아무거나로 채워져요.',
-  'leave-small': '손잡고 같이 가면 유대감이, 어린이집 차에 태워 보내면 자립심이 자라요.',
+  'leave-small': '손잡고 같이 가면 유대감이, 등원 차에 태워 보내면 자립심이 자라요.',
   leave: '몰래 따라가면 등굣길 미니게임! 들키지 않고 가까이 있을수록 ♥가 쌓여요. 하지만 매일 따라가면 아이가 혼자 서는 법을 배우지 못해요.',
   teen: '사춘기가 시작됐어요. 따라갈수록 경계심이 쌓여 더 자주 뒤를 돌아봐요. 믿고 보내면 조금씩 풀려요.',
   evening: '도시락이 돌아왔어요. 먹은 칸만 비어 있어요. 아이의 한마디에 다음 도시락 힌트가 숨어 있어요.',
@@ -1094,8 +1098,8 @@ function onAct(el: HTMLElement): void {
       prefs[key] = !prefs[key];
       setFeedbackPrefs(prefs); setMusicEnabled(prefs.music); if (prefs.music) unlockMusic(); sfx('tap'); top = false; break;
     }
-    case 'tune': prefs.tuning = { ...prefs.tuning, [el.dataset.key as keyof Tuning]: Number(el.dataset.v) }; sfx('tap'); top = false; break;
-    case 'tune-reset': prefs.tuning = {}; top = false; break;
+    case 'tune': advOpen = true; prefs.tuning = { ...prefs.tuning, [el.dataset.key as keyof Tuning]: Number(el.dataset.v) }; sfx('tap'); top = false; break;
+    case 'tune-reset': advOpen = true; prefs.tuning = {}; top = false; break;
     case 'choice': {
       if (!s?.active) return;
       const a = s.active;

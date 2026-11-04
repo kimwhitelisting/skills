@@ -33,7 +33,7 @@ export interface Stage { id: string; name: string; min: number; max: number; ava
 
 export const STAGES: Stage[] = [
   { id: 'infant', name: '영아기', min: 0, max: 1, avatar: ['👶', '👶'], meals: { breakfast: '아침 이유식', lunch: '점심 이유식', dinner: '저녁 이유식' } },
-  { id: 'toddler', name: '유아기', min: 2, max: 6, avatar: ['🧒', '🧒'], meals: { breakfast: '아침밥', lunch: '어린이집 도시락', dinner: '저녁밥' } },
+  { id: 'toddler', name: '유아기', min: 2, max: 6, avatar: ['🧒', '🧒'], meals: { breakfast: '아침밥', lunch: '점심 도시락', dinner: '저녁밥' } },
   { id: 'child', name: '초등학생', min: 7, max: 12, avatar: ['👦', '👧'], meals: { breakfast: '등교 전 아침', lunch: '학교 도시락', dinner: '저녁밥' } },
   { id: 'teen', name: '중학생', min: 13, max: 15, avatar: ['🧑', '👩'], meals: { breakfast: '등교 전 아침', lunch: '학교 도시락', dinner: '학원 가기 전 저녁' } },
   { id: 'high', name: '고등학생', min: 16, max: 18, avatar: ['🧑', '👩'], meals: { breakfast: '0교시 아침', lunch: '학교 도시락', dinner: '야자 도시락' } },

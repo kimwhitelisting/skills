@@ -22,7 +22,8 @@
     "android:open": "cap open android",
     "android:bundle": "npm run android:sync && cd android && ./gradlew bundleRelease",
     "store:art": "vite-node scripts/store-art.ts",
-    "store:shots": "vite-node scripts/store-states.ts && node scripts/store-shots.cjs"
+    "store:shots": "vite-node scripts/store-states.ts && node scripts/store-shots.cjs",
+    "text:dump": "vite-node scripts/text-dump.ts"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.6.0",
