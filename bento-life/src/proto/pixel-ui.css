@@ -59,3 +59,4 @@ body:has(#app.pixel-ui) { background: #f3e2c6; }
 .pixel-ui .tool-btn { border: 3px solid var(--ink); border-radius: 0; box-shadow: 0 5px 0 var(--ink); }
 .pixel-ui .mood-tag { border-radius: 0; border: 2px solid var(--ink); font-family: 'Galmuri11', sans-serif; }
 .pixel-ui .age-pick button { border-radius: 0; border: 3px solid var(--ink); font-family: 'Galmuri11', sans-serif; box-shadow: 0 3px 0 var(--ink); }
+.pixel-ui .btn.primary small { color: #fff6e6; opacity: .9; }

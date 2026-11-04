@@ -463,7 +463,7 @@ function draw(): void {
   const w = street.clientWidth;
   // 화면 높이에 맞춰 하늘을 늘린다 (아래 조작 영역 약 170px을 남기고)
   const avail = window.innerHeight - street.getBoundingClientRect().top - 176;
-  const LW = Math.ceil(w / S), LH = Math.max(100, Math.min(170, Math.floor(avail / S)));
+  const LW = Math.ceil(w / S), LH = Math.max(100, Math.min(128, Math.floor(avail / S)));
   if (canvas.width !== LW || canvas.height !== LH) { canvas.width = LW; canvas.height = LH; canvas.style.width = `${LW * S}px`; canvas.style.height = `${LH * S}px`; }
   const Y = LH - 100, G = GROUND + Y;
   const cam = Math.max(0, st.px - w * 0.28);
