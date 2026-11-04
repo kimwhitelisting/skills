@@ -1,0 +1,27 @@
+/* 맛보기(프로토타입) 공용 스타일 — 본 게임 토큰(style.css)을 그대로 쓴다 */
+#app { padding: 0; }
+.proto { min-height: 100dvh; display: flex; flex-direction: column; }
+.proto-top { display: flex; align-items: center; gap: 8px; padding: calc(10px + env(safe-area-inset-top)) 14px 8px; background: var(--wall); }
+.proto-top h1 { font-size: 1.7rem; margin: 0; flex: 1; }
+.age-pick { display: flex; gap: 4px; }
+.age-pick button { border: 2px solid var(--line); background: var(--sheet); color: var(--ink); border-radius: 10px; font: inherit; font-weight: 700; padding: 4px 9px; cursor: pointer; min-height: 36px; }
+.age-pick button.on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.meter { display: flex; align-items: center; gap: 6px; font-size: .8rem; font-weight: 700; }
+.meter .bar { flex: 1; margin: 0; height: 10px; }
+.meter .bar i { transition: width .1s linear; }
+.overlay-card {
+  position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 20px; background: rgba(35, 28, 22, .4); animation: fade .2s;
+}
+.overlay-card .diary { margin: 0; max-width: 420px; width: 100%; transform: rotate(-.8deg); }
+.overlay-card .diary h2 { text-align: center; }
+.stars { text-align: center; font-size: 2rem; letter-spacing: 4px; margin: 4px 0 8px; }
+.result-list { list-style: none; padding: 0; margin: 8px 0 12px; }
+.result-list li { padding: 4px 0; border-bottom: 1px dashed var(--line); }
+.overlay-card .row { display: flex; gap: 8px; margin-top: 10px; }
+.overlay-card .btn { flex: 1; }
+/* 빈 도시락 칸 */
+.bento .cell.empty { background: color-mix(in srgb, var(--sheet) 22%, transparent); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--sheet) 70%, transparent); border: 0; }
+.bento .cell.empty.active { box-shadow: inset 0 0 0 3px var(--mustard); background: color-mix(in srgb, var(--sheet) 40%, transparent); }
+.empty-label { font-family: var(--font-hand); font-weight: 700; font-size: 1.2rem; color: color-mix(in srgb, var(--sheet) 90%, transparent); letter-spacing: -.03em; }
+.menu-label.pending { opacity: .75; font-size: 1.15rem; }
+.pack-btn:disabled { opacity: .55; font-size: 1.3rem; }

@@ -1,0 +1,52 @@
+/* 하루 맛보기 (도트판) 화면 */
+.day-px { min-height: 100dvh; display: flex; flex-direction: column; }
+.px-hud { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 6px; padding: calc(8px + env(safe-area-inset-top)) 10px 8px; background: var(--pane2); border-bottom: 3px solid var(--ink); }
+.px-title { flex: 1; font-weight: 700; font-size: 16px; }
+.px-hud .age-pick button { min-height: 32px; padding: 0 8px; font-size: 13px; }
+.px-hud .age-pick button.on { background: var(--ink); color: var(--pane); }
+.px-pill b { font-size: 15px; } .px-pill.heart { color: #e2543f; } .px-pill.heart b { color: var(--ink); }
+.px-week { display: flex; justify-content: space-around; padding: 6px 8px; background: var(--pane2); border-bottom: 3px solid var(--ink); font-weight: 700; }
+.px-week span { display: flex; flex-direction: column; align-items: center; min-width: 44px; color: #8f857a; font-size: 14px; }
+.px-week span.today { color: var(--red); } .px-week span.done { color: var(--ink); }
+.px-week b { font-size: 11px; color: var(--gold); min-height: 14px; letter-spacing: -1px; }
+.px-stage { position: relative; display: flex; justify-content: center; background: var(--ink); border-bottom: 3px solid var(--ink); }
+.px-stage canvas { display: block; }
+.px-tag { position: absolute; left: 8px; top: 8px; background: var(--pane); border: 2px solid var(--ink); padding: 1px 6px; font-size: 12px; font-weight: 700; }
+.px-say {
+  position: absolute; right: 8px; top: 34px; max-width: 56%; background: #fffdf8; border: 3px solid var(--ink); box-shadow: 0 3px 0 var(--ink);
+  padding: 6px 9px; font-size: 13px; line-height: 1.45; animation: bubble .25s ease-out;
+}
+.px-say::after { content: ''; position: absolute; left: -9px; bottom: 10px; border: 6px solid transparent; border-right-color: var(--ink); }
+.px-panel { flex: 1; display: flex; flex-direction: column; gap: 10px; background: var(--pane); padding: 12px 12px calc(16px + env(safe-area-inset-bottom)); }
+.px-clock { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; }
+.px-clock .bar { flex: 1; margin: 0; }
+.px-menu { text-align: center; font-weight: 700; font-size: 15px; background: var(--pane2); border: 2px solid var(--ink); padding: 3px 8px; align-self: center; }
+.px-menu.pending { color: #8f857a; font-size: 13px; }
+.px-tabs { display: flex; gap: 6px; }
+.px-tab { flex: 1; min-height: 40px; border: 3px solid var(--ink); background: var(--pane); font: inherit; font-weight: 700; color: var(--ink); box-shadow: 0 3px 0 var(--ink); cursor: pointer; }
+.px-tab.on { background: var(--gold); transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }
+.px-foods { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
+.px-food { position: relative; border: 3px solid var(--ink); background: #fbeed6; padding: 3px 0 2px; font: inherit; font-size: 11px; color: var(--ink); display: flex; flex-direction: column; align-items: center; gap: 1px; box-shadow: 0 3px 0 var(--ink); cursor: pointer; min-width: 0; }
+.px-food img { width: 48px; height: 48px; }
+.px-food span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.px-food.on { background: var(--gold); transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }
+.px-food:active { transform: translateY(3px); box-shadow: none; }
+.px-food .mark { position: absolute; top: -8px; right: -6px; font-style: normal; font-size: 10px; padding: 0 3px; border: 2px solid var(--ink); background: var(--mint); color: #fff; }
+.px-food .mark.no { background: var(--red); }
+.px-line { margin: 0; text-align: center; font-weight: 700; }
+.px-sub { margin: 0; text-align: center; font-size: 12px; color: #6d5546; }
+.px-alert { text-align: center; font-size: 16px; background: #fbeed6; border: 3px solid var(--ink); box-shadow: 0 4px 0 var(--ink); padding: 10px; }
+.px-alert b { color: var(--red); font-size: 20px; }
+.px-warn { margin: 0; text-align: center; font-size: 13px; border: 2px dashed var(--ink); padding: 4px; }
+.px-verdict { text-align: center; font-size: 20px; font-weight: 700; }
+.px-stars { text-align: center; font-size: 26px; color: var(--gold); letter-spacing: 4px; }
+.px-stars span { color: #d8c9b0; }
+.day-px .btn.wide { width: 100%; }
+.day-px .btn small { display: block; font-weight: 400; }
+.px-row { display: flex; gap: 8px; } .px-row .btn { flex: 1; }
+.px-panel.week { align-items: stretch; }
+.px-panel.week h2 { text-align: center; margin: 0; }
+.px-face { width: 96px; height: 160px; align-self: center; }
+.px-week-stats { display: flex; justify-content: center; gap: 18px; font-size: 15px; }
+.px-week-stats b { font-size: 20px; }
+.day-px .chips { justify-content: center; }

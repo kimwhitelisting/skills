@@ -1,0 +1,43 @@
+/* 도트 샘플 — 게임 앱 화면 문법: 굵은 외곽선 패널, 눌리는 버튼, 상단 재화 표시줄, 도트 글꼴 (한 가지 색 세계로 고정) */
+:root {
+  --ink: #3b2a24; --paper: #f3e2c6; --panel: #fff6e6; --accent: #e0604a; --accent-dark: #b6463a;
+  --mustard: #f2b544; --sage: #86b062; --sky: #9fd0ec;
+  color-scheme: light;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; }
+body {
+  background: repeating-linear-gradient(45deg, #efd9b8 0 8px, #f3e2c6 8px 16px);
+  color: var(--ink); font-family: 'Galmuri11', 'Apple SD Gothic Neo', sans-serif; font-size: 14px; line-height: 1.5;
+  -webkit-user-select: none; user-select: none;
+}
+img, canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
+.px-app { max-width: 540px; margin: 0 auto; padding: 0 12px 28px; }
+.px-hud {
+  position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 8px; padding: 10px 2px;
+  background: var(--paper); border-bottom: 3px solid var(--ink); margin: 0 -12px 12px; padding-inline: 12px;
+}
+.px-title { flex: 1; font-weight: 700; font-size: 18px; letter-spacing: 1px; }
+.px-pill { display: inline-flex; align-items: center; gap: 4px; background: var(--panel); border: 3px solid var(--ink); padding: 2px 10px 2px 4px; box-shadow: 0 3px 0 var(--ink); font-weight: 700; min-width: 64px; }
+.px-pill img { width: 24px; height: 24px; }
+.px-pill.pop { animation: pillpop .35s steps(3); }
+@keyframes pillpop { 50% { transform: scale(1.25); } }
+.px-panel { background: var(--panel); border: 3px solid var(--ink); box-shadow: 0 5px 0 var(--ink); padding: 10px 10px 12px; margin-bottom: 18px; }
+.px-panel h2 { margin: 0 0 8px; font-size: 15px; font-weight: 700; }
+.px-stage { display: flex; justify-content: center; background: var(--ink); padding: 3px; }
+.px-stage canvas { display: block; }
+.px-tray { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; margin: 10px 0 8px; }
+.px-food { border: 3px solid var(--ink); background: #fbeed6; padding: 4px 0 2px; font: inherit; font-size: 11px; color: var(--ink); display: flex; flex-direction: column; align-items: center; gap: 2px; box-shadow: 0 3px 0 var(--ink); cursor: pointer; min-width: 0; }
+.px-food img { width: 48px; height: 48px; }
+.px-food span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.px-food:active { transform: translateY(3px); box-shadow: none; }
+.px-row { display: flex; gap: 8px; }
+.px-row.wrap { flex-wrap: wrap; margin-top: 10px; }
+.px-btn { flex: 1; min-height: 48px; border: 3px solid var(--ink); background: var(--accent); color: #fff6e6; font: inherit; font-weight: 700; font-size: 16px; box-shadow: inset 0 -4px 0 var(--accent-dark), 0 4px 0 var(--ink); cursor: pointer; letter-spacing: 1px; }
+.px-btn:active:not(:disabled) { transform: translateY(4px); box-shadow: inset 0 -2px 0 var(--accent-dark); }
+.px-btn:disabled { background: #c9b79c; box-shadow: 0 4px 0 var(--ink); color: #f3e2c6; }
+.px-btn.ghost { background: var(--panel); color: var(--ink); box-shadow: inset 0 -4px 0 #e3cfae, 0 4px 0 var(--ink); flex: 0 0 96px; }
+.px-btn.small { flex: 0 0 auto; min-height: 36px; padding: 0 12px; font-size: 13px; background: var(--panel); color: var(--ink); box-shadow: inset 0 -3px 0 #e3cfae, 0 3px 0 var(--ink); }
+.px-btn.small.on { background: var(--mustard); }
+.px-note { margin: 8px 2px 0; font-size: 12px; color: #6d5546; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
