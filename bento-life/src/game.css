@@ -99,4 +99,3 @@
 .px-found span { border: 2px solid var(--ink); background: #fbeed6; padding: 0 5px; }
 .px-bars { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; padding: 6px 8px; }
 .px-bar { grid-template-columns: 34px 1fr 38px; gap: 4px; font-size: 11px; }
-.px-tag.right { left: auto; right: 8px; top: auto; bottom: 8px; max-width: 52%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

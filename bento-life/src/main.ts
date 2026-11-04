@@ -464,6 +464,31 @@ const YEAR_WORD: Record<StatKey, [string, string]> = {
   bond: ['꼭 붙어 지낸 한 해', '조금 멀어진 한 해'],
 };
 
+/** 생일 전날 아이의 한마디 — 나이별 말투 + 그해 상태. 같은 해에는 늘 같은 말 */
+function birthdayLine(s: GameState): string {
+  const a = s.age, st = s.stats, big = s.child.gender === 'girl' ? '언니' : '형아';
+  const byAge: string[] =
+    a === 0 ? ['아부부…', '빠빠! 빠빠!', '(방긋)', '(손가락을 꼭 쥔다)']
+      : a === 1 ? ['맘마!', '시러!', '이거 모야?', '(케이크를 손으로 퍽)']
+        : a <= 3 ? ['내가! 내가 할래!', '왜? 왜애?', '공룡 케이크 해 줘!', '나 이만큼 컸어!']
+          : a <= 5 ? [`나 이제 ${big}야!`, '케이크에 초 몇 개야?', '유치원에서 좋아하는 친구 생겼어.', '생일엔 도시락에 소시지 열 개!']
+            : a <= 9 ? ['생일 선물 뭐야? 힌트!', '나 키 컸지? 컸지?', '이제 혼자 학교 갈 수 있어!', '친구들이 내 도시락 부러워해.']
+              : a <= 12 ? ['용돈 올려 주는 거지?', '생일엔 피자 먹자. 도시락 말고.', '친구들 불러도 돼?', '선물은 현금이 최고야.']
+                : a <= 15 ? ['…생일 축하 노래는 하지 마.', '케이크 사진 찍어서 올리지 마.', '…고마워. (작게)', '방에 케이크만 넣어 줘.']
+                  : a <= 18 ? ['생일이고 뭐고 시험이야.', '미역국은… 먹을게.', '올해는 도시락 좀 덜 싸도 돼.', '야자 끝나고 케이크 남겨 놔.']
+                    : ['내년이면 진짜 어른이네.', '그동안 도시락… 고마웠어.', '스무 살엔 내가 밥 살게.', '마지막 생일상이네. 아직은.'];
+  const mood: string[] = [];
+  if (a >= 12 && st.bond < 30) mood.push('…', '(방문 너머로) 알아서 할게.');
+  if (a >= 4 && st.happy < 40) mood.push('생일인데 별로 안 신나.');
+  if (a >= 6 && st.indep >= 65) mood.push('이제 혼자 다 할 수 있어.');
+  if (a >= 6 && st.bond >= 75) mood.push('내년에도 생일 같이 보내자.');
+  if (a >= 13 && s.vigilance > 0.2) mood.push('…설마 생일에도 따라올 거야?');
+  const pool = mood.length ? [...mood, ...byAge.slice(0, 2)] : byAge;
+  let h = a * 31;
+  for (const ch of s.child.name) h = (h * 33 + ch.charCodeAt(0)) >>> 0;
+  return pool[h % pool.length];
+}
+
 /** 한 해 결산: 총평 · 키 · 스탯 변화 막대 · 알게 된 것 · 한 장면 · 내년 예고 */
 function renderSummary(s: GameState): string {
   const d: Record<StatKey, number> = Object.fromEntries(STAT_KEYS.map((k) => [k, s.stats[k] - s.yearStart[k]])) as Record<StatKey, number>;
@@ -482,16 +507,13 @@ function renderSummary(s: GameState): string {
   ];
   const events = s.log.filter((l) => l.age === s.age && l.text.includes(' — ')).map((l) => l.text.split(' — ')[0]);
   const moment = days.map((a) => a.moment).filter(Boolean).pop();
-  // 내년 예고는 스포일러 없이: 학교급이 바뀌는 해에만 (누구나 아는 것)
-  const nextStage = s.age < FINAL_AGE && stageOf(s.age + 1).id !== stageOf(s.age).id ? stageOf(s.age + 1) : undefined;
-  const STAGE_EMOJI: Record<string, string> = { toddler: '🧸', child: '🎒', teen: '🏫', high: '📚', adult: '🎓' };
   const bars = STAT_KEYS.map((k) => {
     const v = Math.round(s.stats[k]), was = Math.round(s.yearStart[k]), dd = v - was;
     const lo = Math.min(v, was), hi = Math.max(v, was);
     return `<div class="px-bar"><span>${STAT_INFO[k].label}</span><div class="track"><i style="width:${lo}%"></i>${dd ? `<b class="${dd > 0 ? 'up' : 'down'}" style="left:${lo}%;width:${hi - lo}%"></b>` : ''}</div><em class="${dd > 0 ? 'up' : dd < 0 ? 'down' : ''}">${v}${dd ? `<small>${dd > 0 ? '+' : ''}${dd}</small>` : ''}</em></div>`;
   }).join('');
   return `
-  ${stage('growth', '', `${s.age}살 → ${s.age + 1}살`, nextStage ? `<span class="px-tag right">내년엔 ${STAGE_EMOJI[nextStage.id] ?? ''} ${nextStage.name}!</span>` : '')}
+  ${stage('growth', esc(birthdayLine(s)), `${s.age}살 → ${s.age + 1}살`)}
   <section class="px-panel">
     <div class="px-sub">${esc(s.child.name)}의 ${s.age}살 · ${stageOf(s.age).name}</div>
     <h2 class="px-h">${word}</h2>
