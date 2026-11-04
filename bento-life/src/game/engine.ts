@@ -81,6 +81,7 @@ function next(s: GameState): void {
 
 export function startGame(s: GameState): GameState {
   s.yearStart = { ...s.stats };
+  s.yearKnown = { likes: [...s.child.known.likes], dislikes: [...s.child.known.dislikes], talent: s.child.known.talent };
   enterStep(s, 'milestone');
   return s;
 }
@@ -299,5 +300,6 @@ export function advanceYear(s: GameState): void {
   if (s.age >= 7) applyDelta(s, { indep: 1 });
   yearlyDrift(s);
   s.yearStart = { ...s.stats };
+  s.yearKnown = { likes: [...s.child.known.likes], dislikes: [...s.child.known.dislikes], talent: s.child.known.talent };
   enterStep(s, 'milestone');
 }

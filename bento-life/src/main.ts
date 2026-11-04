@@ -11,6 +11,7 @@ import './proto/follow.css';
 import './proto/pixel-ui.css';
 import './proto/day-px.css';
 import './game.css';
+import { EVENTS } from './data/events.ts';
 import { INGREDIENTS, ing } from './data/ingredients.ts';
 import { voiceAge } from './data/requests.ts';
 import { displayDelta } from './game/apply.ts';
@@ -446,21 +447,63 @@ function eveningView(s: GameState): string {
 }
 
 // ───────────────────────── 화면: 결산 / 엔딩 ─────────────────────────
+/** 그 나이 생일 무렵 키 (cm) — 한국 아이 평균에 가까운 값 + 건강·체력에 따라 ±3 */
+const HEIGHT: Record<'boy' | 'girl', number[]> = {
+  boy: [76, 87, 96, 103, 110, 116, 122, 128, 133, 139, 145, 152, 160, 166, 170, 172, 173, 174, 174, 174],
+  girl: [74, 86, 95, 102, 109, 115, 121, 127, 133, 139, 146, 152, 156, 158, 159, 160, 161, 161, 161, 161],
+};
+function heightAt(s: GameState, age: number, bonus = 0): number {
+  if (age < 0) return 50;
+  return HEIGHT[s.child.gender][Math.min(age, 19)] + Math.round(bonus);
+}
+const YEAR_WORD: Record<StatKey, [string, string]> = {
+  health: ['쑥쑥 잘 먹은 한 해', '자주 아팠던 한 해'],
+  smarts: ['궁금한 게 많았던 한 해', '공부가 손에 안 잡힌 한 해'],
+  happy: ['많이 웃은 한 해', '시무룩한 날이 많았던 한 해'],
+  fitness: ['신나게 뛰어다닌 한 해', '기운이 없던 한 해'],
+  social: ['친구가 늘어난 한 해', '조금 외로웠던 한 해'],
+  indep: ['혼자서도 씩씩했던 한 해', '아직 손이 많이 간 한 해'],
+  bond: ['꼭 붙어 지낸 한 해', '조금 멀어진 한 해'],
+};
+
+/** 한 해 결산: 총평 · 키 · 스탯 변화 막대 · 알게 된 것 · 한 장면 · 내년 예고 */
 function renderSummary(s: GameState): string {
-  const d: Delta = {};
-  for (const k of STAT_KEYS) d[k] = s.stats[k] - s.yearStart[k];
-  const lines = s.log.filter((l) => l.age === s.age).slice(-4);
+  const d: Record<StatKey, number> = Object.fromEntries(STAT_KEYS.map((k) => [k, s.stats[k] - s.yearStart[k]])) as Record<StatKey, number>;
+  const top = [...STAT_KEYS].sort((a, b) => Math.abs(d[b]) - Math.abs(d[a]))[0];
+  const word = Math.abs(d[top]) < 1 ? '조용히 지나간 한 해' : YEAR_WORD[top][d[top] > 0 ? 0 : 1];
+  const bonus = ((s.stats.health + s.stats.fitness) / 2 - 50) / 12;
+  const h0 = heightAt(s, s.age - 1, s.age >= 1 ? bonus : 0), h1 = heightAt(s, s.age, bonus);
   const warn = earlyWarning(s);
   const hint = warn ? fmt(warn.hint, s) : s.age >= 6 ? fmt(decideEnding(s).hint, s) : '';
   const days = s.album.filter((a) => a.age === s.age);
+  const k0 = s.yearKnown ?? { likes: [], dislikes: [], talent: false };
+  const found = [
+    ...s.child.known.likes.filter((x) => !k0.likes.includes(x)).map((x) => `💗 ${x} 좋아함`),
+    ...s.child.known.dislikes.filter((x) => !k0.dislikes.includes(x)).map((x) => `🙅 ${ing(x).name} 싫어함`),
+    ...(s.child.known.talent && !k0.talent ? [`✨ 재능: ${TALENT_INFO[s.child.talent].label}`] : []),
+  ];
+  const events = s.log.filter((l) => l.age === s.age && l.text.includes(' — ')).map((l) => l.text.split(' — ')[0]);
+  const moment = days.map((a) => a.moment).filter(Boolean).pop();
+  const next = s.age < FINAL_AGE ? EVENTS.find((e) => e.kind === 'milestone' && e.age === s.age + 1) : undefined;
+  const bars = STAT_KEYS.map((k) => {
+    const v = Math.round(s.stats[k]), was = Math.round(s.yearStart[k]), dd = v - was;
+    const lo = Math.min(v, was), hi = Math.max(v, was);
+    return `<div class="px-bar"><span>${STAT_INFO[k].label}</span><div class="track"><i style="width:${lo}%"></i>${dd ? `<b class="${dd > 0 ? 'up' : 'down'}" style="left:${lo}%;width:${hi - lo}%"></b>` : ''}</div><em class="${dd > 0 ? 'up' : dd < 0 ? 'down' : ''}">${v}${dd ? `<small>${dd > 0 ? '+' : ''}${dd}</small>` : ''}</em></div>`;
+  }).join('');
   return `
-  ${stage('growth', '', `${s.age}살 · ${stageOf(s.age).name}`)}
+  ${stage('growth', '', `${s.age}살 → ${s.age + 1}살`, next ? `<span class="px-tag right">내년엔 ${next.emoji} ${esc(fmt(next.title, s))}</span>` : '')}
   <section class="px-panel">
-    <h2 class="px-h">${esc(s.child.name)}, 올 한 해</h2>
-    ${days.length ? `<p class="px-line">점심 ${days.map((a) => '★'.repeat(a.lunch) || '☆').join(' · ')}</p>` : ''}
-    ${chips(d)}
+    <div class="px-sub">${esc(s.child.name)}의 ${s.age}살 · ${stageOf(s.age).name}</div>
+    <h2 class="px-h">${word}</h2>
+    <div class="px-year-facts">
+      <span>키 <b>${h0}→${h1}cm</b></span>
+      ${days.length ? `<span>점심 <b>${days.map((a) => '★'.repeat(a.lunch) || '☆').join(' ')}</b></span>` : ''}
+      ${days.some((a) => a.leave === 'follow') ? `<span>따라간 날 <b>${days.filter((a) => a.leave === 'follow').length}</b></span>` : ''}
+    </div>
+    <div class="px-bars">${bars}</div>
+    ${found.length ? `<div class="px-found"><b>올해 알게 된 것</b> ${found.map((x) => `<span>${esc(x)}</span>`).join('')}</div>` : ''}
+    ${moment ? `<p class="px-later"><b>올해의 한 장면</b> 「${esc(moment)}」</p>` : events.length ? `<p class="px-sub">올해 있었던 일 · ${events.map(esc).join(' · ')}</p>` : ''}
     ${hint ? `<p class="px-omen ${warn ? 'warn' : ''}">${warn ? '⚠ ' : '이대로라면… '}${esc(hint)}</p>` : ''}
-    <ul class="px-lines">${lines.map((l) => `<li>${esc(l.text)}</li>`).join('')}</ul>
     <button class="btn primary wide" data-act="year">${s.age >= FINAL_AGE ? '🎓 스무 살이 되다' : `🎂 ${s.age + 1}살 생일`}</button>
   </section>`;
 }

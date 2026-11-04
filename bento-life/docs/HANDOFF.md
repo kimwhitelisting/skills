@@ -33,7 +33,7 @@ npx tsc --noEmit -p .  # 타입 검사
 | 이벤트 68개 | 나이별 20 + 랜덤 48. 플래그로 이어짐 (캐스팅 → 월말 평가 → 데뷔 등) | `src/data/events.ts`, `events-more.ts` |
 | 엔딩 39개 | 해피 18 · 씁쓸 7 · 삐딱 9 · 배드 5, "10년 후…" 한 줄, 스무 살 전 엔딩 6개 + 한 해 전 붉은 경고 | `src/game/endings.ts` |
 | 화면 | 타이틀·소개·이벤트(결과 화면)·아침·배웅·저녁·결산·엔딩·시트(상태·수첩·도감·설정)·안드로이드 뒤로가기·자동 저장 | `src/main.ts`, `src/game.css` |
-| 그림 | 전부 코드 도트. 아이 7단계, 재료 28, 이벤트·엔딩 장면 107개 | `src/pixel/` → [`PIXEL.md`](PIXEL.md) |
+| 그림 | 전부 코드 도트. 아이 8단계, 재료 28, 이벤트·엔딩 장면 107개 | `src/pixel/` → [`PIXEL.md`](PIXEL.md) |
 | 저장 | localStorage `bento-life:run:v2` (형식을 바꾸면 버전을 올린다), 도감 `bento-life:dex:v1` | `src/game/save.ts` |
 | 실험 설정 | 1년 하루 수 1~3, 반찬값 수입, 재료 가격 (새 게임부터) | `src/game/config.ts` |
 | 배경음악 | 파일 없이 WebAudio로 연주하는 8비트 창작곡 10곡 (타이틀·아침·등굣길·저녁·이벤트·결산·엔딩 분위기 4종). 설정에서 효과음과 따로 끄기 | `src/ui/music.ts` |

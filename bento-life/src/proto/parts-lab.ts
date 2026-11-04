@@ -14,7 +14,7 @@ import { loadPixelFont } from '../pixel/font.ts';
 import { Grid, paint } from '../pixel/grid.ts';
 import { loadPartOverrides } from '../pixel/parts-loader.ts';
 
-const STAGE_NAME: Record<PxAge, string> = { 1: '아기', 4: '유치원', 7: '초등 저', 11: '초등 고', 15: '중학생', 18: '고등학생', 19: '스무 살' };
+const STAGE_NAME: Record<PxAge, string> = { 1: '아기', 2: '아장아장', 4: '유치원', 7: '초등 저', 11: '초등 고', 15: '중학생', 18: '고등학생', 19: '스무 살' };
 const STORE = 'bento-life:parts-lab:v1';
 const app = document.getElementById('app')!;
 app.classList.add('pixel-ui');

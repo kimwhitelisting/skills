@@ -141,6 +141,8 @@ export interface GameState {
   /** 가장 최근에 먹인 메뉴 (끼니 수와 무관) */
   lastMenu?: string;
   yearStart: Stats;
+  /** 올해 초에 알고 있던 취향 (결산의 "올해 알게 된 것") */
+  yearKnown?: { likes: string[]; dislikes: string[]; talent: boolean };
   log: LogEntry[];
   /** 이 판의 실험 조정값 (없으면 기본값) */
   tuning?: Partial<import('./config.ts').Tuning>;
