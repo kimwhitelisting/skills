@@ -13,7 +13,7 @@ import type { Ingredient, Slot, Tag } from '../game/types.ts';
 import { haptic, sfx } from '../ui/feedback.ts';
 
 import { bentoCells, fillRandom, isFull, menuLabel, placeOrToggle, type Draft } from './bento-ui.ts';
-import { REQUESTS, type Age, type Ctx, type Request, type Sel } from './order-data.ts';
+import { REQUESTS, type Age, type Ctx, type Request, type Sel } from '../data/requests.ts';
 
 const LIKE_POOL: Tag[] = ['달콤', '고기', '생선', '채소', '과일', '면', '튀김'];
 const DAYS = ['월', '화', '수', '목', '금'];

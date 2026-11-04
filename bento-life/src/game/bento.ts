@@ -7,8 +7,8 @@ import { menuKey } from './menus.ts';
 import { fmt } from './text.ts';
 import type { Delta, GameState, Ingredient, MealTime, Menu, Slot, Tag } from './types.ts';
 
-/** 한 끼의 긍정 효과 배율 (1년 3끼 × 20년 = 60끼 기준). 끼니 수가 줄면 그만큼 커진다 */
-const mealScale = (s: GameState) => (0.6 * 3) / tuningOf(s).mealsPerYear;
+/** 한 끼의 긍정 효과 배율 (1년 3끼 × 20년 = 60끼일 때 0.6). 1년에 싸는 도시락이 줄면 그만큼 커진다 */
+const mealScale = (s: GameState) => (0.6 * 3) / tuningOf(s).daysPerYear;
 
 const MENUS = new Map<string, Menu>((MENU_TABLE as Menu[]).map((m) => [m.key, m]));
 export const ALL_MENUS = MENU_TABLE as Menu[];
@@ -122,10 +122,6 @@ export function packBento(s: GameState, time: MealTime, sel: Selection, everSeen
       d.social = (d.social ?? 0) + Math.round(appeal / 2);
       if (appeal >= 6) say('친구들이 반찬 하나만 달라고 몰려들었다!');
       else if (appeal <= -2) say('친구들이 도시락을 보고 "으… 그게 뭐야?"');
-    }
-    if (s.follow === 2) {
-      for (const k of Object.keys(d) as (keyof Delta)[]) if (d[k]! > 0) d[k]! *= 1.3;
-      say(s.age < 10 ? '따끈할 때 직접 건네줬다. 🍱' : '교문 앞에서 도시락을 건네줬다. 친구들이 쳐다본다…');
     }
   } else {
     d.bond = (d.bond ?? 0) + 1;

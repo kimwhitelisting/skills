@@ -1,3 +1,4 @@
+import { tuningOf } from './config.ts';
 import type { GameState } from './types.ts';
 
 /** hint: 연말 결산에서 "이대로라면…" 방향을 슬쩍 알려 주는 문장 ({c} = 아이 이름) */
@@ -8,7 +9,7 @@ const st = (s: GameState) => s.stats;
 /** 위에서부터 먼저 만족하는 엔딩 하나가 선택된다 */
 export const ENDINGS: Ending[] = [
   { id: 'kangaroo', emoji: '🦘', title: '평생 도시락 받는 어른', text: '서른이 되어도 매일 아침 도시락을 받으러 온다. …이게 맞나?', hint: '{c}는 아직 혼자서는 아무것도 못 하는 것 같다…', test: (s) => st(s).indep < 25 },
-  { id: 'chef', emoji: '👨‍🍳', title: '스타 셰프', text: '"제 요리의 뿌리는 부모님의 도시락입니다." 첫 레스토랑 메뉴판 1번은 그 도시락이었다.', hint: '{c}가 요즘 부엌을 자주 기웃거린다.', test: (s) => (s.flags.cook ?? 0) >= 3 && s.runMenus.length >= 30 },
+  { id: 'chef', emoji: '👨‍🍳', title: '스타 셰프', text: '"제 요리의 뿌리는 부모님의 도시락입니다." 첫 레스토랑 메뉴판 1번은 그 도시락이었다.', hint: '{c}가 요즘 부엌을 자주 기웃거린다.', test: (s) => (s.flags.cook ?? 0) >= 3 && s.runMenus.length >= 15 * tuningOf(s).daysPerYear },
   { id: 'doctor', emoji: '🩺', title: '명의', text: '환자들에게 늘 말한다. "밥은 꼭 챙겨 드세요."', hint: '{c}는 책을 놓지 않고, 감기도 잘 안 걸린다.', test: (s) => st(s).smarts >= 80 && st(s).health >= 60 },
   { id: 'athlete', emoji: '🥇', title: '국가대표', text: '금메달 인터뷰: "도시락 덕분입니다!" 전국에 도시락 열풍이 불었다.', hint: '{c}는 뛰어다니느라 하루가 짧다.', test: (s) => st(s).fitness >= 75 && st(s).health >= 60 },
   { id: 'star', emoji: '🌟', title: '모두의 인기인', text: '어딜 가나 사람이 모인다. 점심시간 반찬 교환 시장에서 배운 협상력 덕분일지도.', hint: '{c} 주변엔 늘 친구들이 북적인다.', test: (s) => st(s).social >= 80 && st(s).happy >= 60 },

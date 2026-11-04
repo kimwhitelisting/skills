@@ -15,7 +15,7 @@ export function newGame(seed = Math.floor(Math.random() * 2 ** 31), tuning?: Par
   // 좋아하는 맛과 겹치는 재료는 싫어하지 않는다 (모순 방지)
   const dislikePool = INGREDIENTS.filter((i) => i.slot !== 'base' && i.appeal <= 1 && !i.tags.some((t) => likes.includes(t))).map((i) => i.id);
   Object.assign(s, {
-    version: 1,
+    version: 2,
     age: 0,
     step: 'milestone',
     child: {
@@ -30,6 +30,10 @@ export function newGame(seed = Math.floor(Math.random() * 2 ** 31), tuning?: Par
     stats: { ...START_STATS },
     money: START_MONEY,
     follow: 1,
+    dayIndex: 0,
+    hearts: 0,
+    vigilance: 0,
+    album: [],
     flags: {},
     eventQueue: [],
     seenEvents: [],

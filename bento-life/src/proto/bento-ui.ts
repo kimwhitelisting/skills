@@ -4,7 +4,7 @@ import { getMenu } from '../game/bento.ts';
 import { josa } from '../game/korean.ts';
 import { menuKey } from '../game/menus.ts';
 import type { Ingredient, Slot } from '../game/types.ts';
-import type { Sel } from './order-data.ts';
+import type { Sel } from '../data/requests.ts';
 
 export const SLOTS: Slot[] = ['base', 'main', 'side'];
 export const SLOT_LABEL: Record<Slot, string> = { base: '주식', main: '메인', side: '반찬' };

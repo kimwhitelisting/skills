@@ -1,7 +1,7 @@
 import type { GameState } from './types.ts';
 
 // 웹/웹뷰 공통 localStorage. 스토어 출시 시 @capacitor/preferences 로 교체 가능하도록 이 파일에만 둔다.
-const RUN_KEY = 'bento-life:run:v1';
+const RUN_KEY = 'bento-life:run:v2';
 const DEX_KEY = 'bento-life:dex:v1';
 
 export interface Dex { menus: string[]; endings: string[]; plays: number }
@@ -20,7 +20,7 @@ function write(key: string, v: unknown) {
 
 export const loadRun = () => {
   const s = read<GameState>(RUN_KEY);
-  return s?.version === 1 ? s : undefined;
+  return s?.version === 2 ? s : undefined;
 };
 export const saveRun = (s: GameState) => write(RUN_KEY, s);
 export const clearRun = () => { try { localStorage.removeItem(RUN_KEY); } catch { /* */ } };

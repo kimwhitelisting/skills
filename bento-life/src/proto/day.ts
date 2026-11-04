@@ -28,7 +28,7 @@ import { blit, clearSprites, sprite } from '../pixel/sprite-cache.ts';
 import { haptic, sfx } from '../ui/feedback.ts';
 import { fillRandom, isFull, menuLabel, placeOrToggle, type Draft } from './bento-ui.ts';
 import { mountFollow, unmountFollow, type FollowResult } from './follow-core.ts';
-import { REQUESTS, type Age, type Ctx, type Request, type Sel } from './order-data.ts';
+import { REQUESTS, type Age, type Ctx, type Request, type Sel } from '../data/requests.ts';
 
 type Mood = 'happy' | 'neutral' | 'grumpy';
 interface Plan { reqs: Request[]; forgot: boolean }

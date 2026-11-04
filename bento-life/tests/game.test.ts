@@ -4,7 +4,7 @@ import { INGREDIENTS } from '../src/data/ingredients.ts';
 import { SIGNATURES } from '../src/data/signatures.ts';
 import { EVENTS } from '../src/data/events.ts';
 import { packBento } from '../src/game/bento.ts';
-import { chooseFollow, startGame } from '../src/game/engine.ts';
+import { chooseLeave, endDay, finishCommute, leaveOptions, packToday, startGame } from '../src/game/engine.ts';
 import { ENDINGS } from '../src/game/endings.ts';
 import { callName, josa, vocative } from '../src/game/korean.ts';
 import { buildMenuTable, comboAgeRange, menuKey } from '../src/game/menus.ts';
@@ -76,19 +76,59 @@ describe('bento', () => {
   it('rejects ingredients outside the age range and unaffordable boxes', () => {
     const s = startGame(newGame(2));
     s.money = 100;
-    s.step = 'breakfast';
     expect(() => packBento(s, 'breakfast', { base: 'rice', main: 'jeyuk', side: 'kimchi' })).toThrow();
     s.age = 10;
     s.money = 1;
     expect(() => packBento(s, 'breakfast', { base: 'rice', main: 'jeyuk', side: 'kimchi' })).toThrow('money');
   });
-  it('helicopter following backfires for teens', () => {
-    const s = startGame(newGame(3));
-    s.step = 'follow';
-    s.age = 15;
-    const d = chooseFollow(s, 2);
-    expect(d.bond).toBeLessThan(0);
-    expect(d.indep).toBeLessThan(0);
+});
+
+describe('day loop', () => {
+  const toDay = (seed: number, age: number) => {
+    const s = startGame(newGame(seed));
+    s.age = age; s.money = 200; s.step = 'day'; s.active = undefined; s.dayIndex = 0;
+    s.today = { reqs: ['pe'], forgot: false, phase: 'morning' };
+    return s;
+  };
+  it('infants skip the see-off and go straight to evening', () => {
+    const s = toDay(4, 1);
+    s.today!.reqs = [];
+    packToday(s, { base: 'porridge', main: 'egg', side: 'banana' });
+    expect(s.today!.phase).toBe('evening');
+    expect(leaveOptions(s)).toEqual([]);
+    endDay(s);
+    expect(s.step).not.toBe('day');
+  });
+  it('preschoolers can be escorted, school kids followed; forgot days force following', () => {
+    const s = toDay(5, 4);
+    packToday(s, { base: 'rice', main: 'bulgogi', side: 'broccoli' });
+    expect(leaveOptions(s)).toEqual(['escort', 'trust']);
+    const e = chooseLeave(s, 'escort')!;
+    expect(e.delta.bond).toBeGreaterThan(0);
+    const k = toDay(6, 8);
+    k.today!.forgot = true;
+    packToday(k, { base: 'rice', main: 'bulgogi', side: 'broccoli' });
+    expect(leaveOptions(k)).toEqual(['follow']);
+    expect(() => chooseLeave(k, 'trust')).toThrow();
+  });
+  it('a meaty lunch on PE day earns stars and the request line', () => {
+    const s = toDay(7, 8);
+    s.child.likes = ['과일', '면']; s.child.dislikes = ['mackerel', 'kimchi'];
+    const p = packToday(s, { base: 'rice', main: 'chicken', side: 'anchovy' });
+    expect(p.reqScore).toBe(2);
+    const e = chooseLeave(s, 'trust')!;
+    expect(e.lunch).toBeGreaterThanOrEqual(2);
+    expect(e.says.join()).toContain('달리기');
+  });
+  it('following a teen backfires and makes them warier', () => {
+    const s = toDay(3, 15);
+    packToday(s, { base: 'rice', main: 'bulgogi', side: 'broccoli' });
+    chooseLeave(s, 'follow');
+    const e = finishCommute(s, { over: 'caught', delivered: false, score: 40, bond: -2, indep: -2, happy: -1 });
+    expect(e.delta.bond ?? 0).toBeLessThan(0);
+    expect(e.delta.indep ?? 0).toBeLessThan(0);
+    expect(s.vigilance).toBeGreaterThan(0.1);
+    expect(s.hearts).toBe(40);
   });
 });
 
@@ -111,16 +151,16 @@ describe('simulation', () => {
     console.log('ending distribution', Object.fromEntries(ENDINGS.map((e) => [e.id, counts[e.id] ?? 0])));
     expect(Object.keys(counts).length).toBeGreaterThanOrEqual(5);
   });
-  it('every meals-per-year setting finishes and stays in a sane money range', () => {
-    for (const mealsPerYear of [1, 2, 3] as const) {
+  it('every days-per-year setting finishes and stays in a sane money range', () => {
+    for (const daysPerYear of [1, 2, 3] as const) {
       let money = 0;
       for (let seed = 1; seed <= 200; seed++) {
-        const s = playthrough(seed, 'random', { mealsPerYear });
+        const s = playthrough(seed, 'random', { daysPerYear });
         expect(s.step).toBe('ending');
-        expect(s.runMenus.length).toBeLessThanOrEqual(20 * mealsPerYear);
+        expect(s.runMenus.length).toBeLessThanOrEqual(20 * daysPerYear);
         money += s.money / 200;
       }
-      console.log(`mealsPerYear=${mealsPerYear} avg end money=${money.toFixed(0)}`);
+      console.log(`daysPerYear=${daysPerYear} avg end money=${money.toFixed(0)}`);
     }
   });
   it('always following leads to the kangaroo ending most of the time', () => {

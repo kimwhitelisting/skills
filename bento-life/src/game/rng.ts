@@ -29,3 +29,5 @@ export function pickWeighted<T>(s: { rng: number }, items: readonly T[], weight:
   }
   return items[items.length - 1];
 }
+
+export const shuffle = <T>(s: { rng: number }, arr: readonly T[]): T[] => pickN(s, arr, arr.length);
