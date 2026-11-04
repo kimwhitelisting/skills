@@ -31,7 +31,7 @@ import { fmt } from './game/text.ts';
 import type { Delta, GameState, LeaveChoice, Slot, StatKey } from './game/types.ts';
 import { CHILD_H, childFront, headTop, parentSide, pxAgeOf, type Expr, type HatId, type Look } from './pixel/child.ts';
 import { endingScene, eventExpr, eventScene } from './pixel/event-scenes.ts';
-import { entryFloor, entryWall, miniLunch } from './pixel/extras.ts';
+import { entryFloor, entryWall, GIRAFFE_X, growthWall, miniLunch } from './pixel/extras.ts';
 import { loadPixelFont } from './pixel/font.ts';
 import { food } from './pixel/foods.ts';
 import { bubble, draw as drawFx, spawn, step as stepFx, type Fx } from './pixel/fx.ts';
@@ -219,19 +219,18 @@ function drawScene(now: number, dt: number): void {
     if (e.tone === 'happy' && Math.random() < dt * 3) spawn(fx, 'star', 10 + Math.random() * 90, 6 + Math.random() * 20, 1);
     if (e.tone === 'twisted' && Math.random() < dt * 1.5) spawn(fx, 'sparkle', 10 + Math.random() * 90, 6 + Math.random() * 30, 1);
   } else if (sceneKind === 'growth' || sceneKind === 'ending') {
-    g.drawImage(sprite(`entry-wall-${wallH}`, () => entryWall(KW, wallH)), 0, 0);
+    g.drawImage(sceneKind === 'growth' ? sprite(`growth-wall-${wallH}`, () => growthWall(KW, wallH)) : sprite(`entry-wall-${wallH}`, () => entryWall(KW, wallH)), 0, 0);
     g.drawImage(sprite(`entry-floor-${H - wallH}`, () => entryFloor(KW, H - wallH)), 0, wallH);
     const feet = wallH + 4;
     const kidX = sceneKind === 'growth' ? 26 : KW / 2 - 24;
     if (sceneKind === 'growth' && s) {
-      // 문기둥 키 재기: 지난 생일마다 그은 눈금
-      const PX = 90;
-      g.fillStyle = P.woodDark; g.fillRect(PX, 4, 8, feet - 4);
-      g.fillStyle = P.wood; g.fillRect(PX + 1, 4, 6, feet - 4);
+      // 기린 키재기 스티커: 지난 생일마다 그은 눈금 (아이 머리 높이)
+      const PX = GIRAFFE_X;
       for (let a = 0; a <= s.age; a++) {
         const top = feet - 2 * (CHILD_H - headTop(lookOf(s, a)).y);
         g.fillStyle = a === s.age ? P.tomato : P.inkSoft;
-        g.fillRect(PX - 1, top, a === s.age ? 10 : 6, 1);
+        g.fillRect(PX - 3, top, a === s.age ? 16 : 13, 1);
+        if (a === s.age) g.fillRect(PX - 3, top + 1, 16, 1);
       }
       blit2(g, kidSprite(look, 'happy', false, bob, s.age >= FINAL_AGE ? 'gradcap' : 'crown'), kidX, feet - CHILD_H * 2);
     } else blit2(g, kidSprite(look, 'happy', false, bob, 'gradcap'), kidX, feet - CHILD_H * 2);
