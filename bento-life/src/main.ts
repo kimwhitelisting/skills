@@ -743,8 +743,11 @@ function yearPhoto(s: GameState): Photo {
   const day = [...s.album].reverse().find((d) => d.age === s.age && d.momentKind && d.momentKind !== 'calm')
     ?? [...s.album].reverse().find((d) => d.age === s.age && d.momentKind);
   if (day?.momentKind) return { ...base, id: `c-${day.momentKind}`, expr: 'happy', caption: day.moment ?? commuteCaption(day.momentKind) };
+  // 이번 생 앨범에 이미 있는 장면은 피한다 (같은 이벤트가 여러 해 나와도 사진이 겹치지 않게)
+  const have = new Set((s.photos ?? []).filter((p) => p.age !== s.age).map((p) => p.id));
   const evs = (s.eventLog ?? []).filter((e) => e.age === s.age);
-  const ev = [...evs].reverse().find((e) => e.kind === 'random') ?? evs[evs.length - 1];
+  const fresh = evs.filter((e) => !have.has(`e-${e.id}`));
+  const ev = [...fresh].reverse().find((e) => e.kind === 'random') ?? fresh[fresh.length - 1];
   if (ev) return { ...base, id: `e-${ev.id}`, expr: ev.expr, caption: ev.caption };
   const stage = pxAgeOf(s.age);
   return { ...base, id: `d-${stage}`, expr: 'happy', caption: dailyCaption(stage) };
@@ -944,7 +947,7 @@ function startCommute(s: GameState): void {
       commuteOn = false;
       if (!game || game !== s || s.today?.phase !== 'commute') return;
       dex.hearts += Math.max(0, Math.round(r.score));
-      finishCommute(s, { over: r.over, delivered: r.delivered, score: r.score, bond: r.bond, indep: r.indep, happy: r.happy, moment: r.moment, log: r.log });
+      finishCommute(s, { over: r.over, delivered: r.delivered, score: r.score, bond: r.bond, indep: r.indep, happy: r.happy, moment: r.moment, momentKind: r.momentKind, log: r.log });
       persist();
       render();
       window.scrollTo({ top: 0 });
