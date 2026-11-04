@@ -50,7 +50,7 @@ const EARLY: Ending[] = [
     test: (s) => f(s, 'idolDebut') >= 1,
   },
   {
-    id: 'abroad', emoji: '✈️', tone: 'bitter', title: '열다섯의 유학', early: { min: 13, max: 17 },
+    id: 'abroad', emoji: '✈️', tone: 'bitter', title: '이른 유학', early: { min: 13, max: 17 },
     text: '공항에서 마지막 도시락을 건넸다. 출국장 너머로 손이 작게 흔들렸다.',
     later: '영상 통화 너머 {c}가 말한다. "여기 도시락은 다 차가워."',
     hint: '{c}가 영어 단어장을 끼고 산다.',

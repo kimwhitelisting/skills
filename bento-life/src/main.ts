@@ -2,7 +2,7 @@
  * 도시락 육아 — 본 게임 (도트판)
  *
  *  한 해: 나이 이벤트 → 하루 (아침 도시락 → 배웅/따라가기 → 등굣길 → 저녁) → 랜덤 이벤트 → 키 재기 결산
- *  0살부터 19살까지 스무 해를 보내면 엔딩.
+ *  스무 해를 보내면 엔딩. 화면 나이는 세는 나이 (갓난아기 1살 → 20살), 규칙 안의 나이(s.age)는 0~19.
  *  모든 장면은 코드로 찍은 도트 그림(src/pixel)을 캔버스에 그린다. 글과 버튼은 DOM.
  */
 import './style.css';
@@ -90,6 +90,8 @@ const lookOf = (s: GameState, age = s.age): Look => ({ age: pxAgeOf(age), gender
 const iconCache = new Map<string, string>();
 const foodIcon = (id: string) => { let u = iconCache.get(id); if (!u) { u = toDataURL(food(id), 3); iconCache.set(id, u); } return u; };
 const teen = (s: GameState) => s.age >= 13;
+/** 화면에 보이는 나이: 세는 나이 (태어나면 1살). 규칙 안의 나이 s.age는 0부터 */
+const shown = (age: number) => age + 1;
 
 /** 얼굴만 잘라 낸 작은 그림 (HUD·수첩용) */
 function faceIcon(s: GameState, expr: Expr = 'neutral'): string {
@@ -263,7 +265,7 @@ function hud(s: GameState): string {
   <header class="px-hud">
     <button class="px-who" data-act="stats" aria-label="상태 보기">
       <img src="${faceIcon(s)}" alt="">
-      <span><b>${esc(s.child.name)}</b> ${s.age}살 <small>${stageOf(s.age).name}</small></span>
+      <span><b>${esc(s.child.name)}</b> ${shown(s.age)}살 <small>${stageOf(s.age).name}</small></span>
     </button>
     <span class="px-pill" title="반찬값">₩ <b>${s.money}</b></span>
     <span class="px-pill heart" title="등굣길 하트">♥ <b>${s.hearts}</b></span>
@@ -280,7 +282,7 @@ function renderTitle(): string {
     <div class="px-sign"><h1>도시락 육아</h1><p>도시락 싸들고 졸졸 따라다니면<br>아이를 얼마나 잘 키울 수 있을까?</p></div>
     ${stage('title', '', '')}
     <section class="px-panel">
-      ${canContinue ? `<button class="btn primary wide" data-act="continue">이어하기<small>${esc(game!.child.name)} · ${game!.age}살</small></button>` : ''}
+      ${canContinue ? `<button class="btn primary wide" data-act="continue">이어하기<small>${esc(game!.child.name)} · ${shown(game!.age)}살</small></button>` : ''}
       <button class="btn ${canContinue ? '' : 'primary'} wide" data-act="new">새로 키우기</button>
       <div class="px-row">
         <button class="btn" data-act="dex">도감 <small>메뉴 ${dex.menus.length}/${ALL_MENUS.length} · 엔딩 ${dex.endings.length}/${ENDINGS.length}</small></button>
@@ -312,7 +314,7 @@ function renderIntro(): string {
 // ───────────────────────── 화면: 이벤트 ─────────────────────────
 function renderEvent(s: GameState): string {
   const a = s.active!;
-  const kind = s.step === 'milestone' ? `${s.age}살` : '어느 날';
+  const kind = s.step === 'milestone' ? `${shown(s.age)}살` : '어느 날';
   return `
   ${stage('event', '', kind)}
   <section class="px-panel">
@@ -336,7 +338,7 @@ function renderEventResult(r: EventResult): string {
 // ───────────────────────── 화면: 하루 ─────────────────────────
 const DAY_LABEL = (s: GameState) => {
   const n = tuningOf(s).daysPerYear;
-  return `${s.age}살${n > 1 ? ` · ${s.dayIndex + 1}/${n}일` : ''}`;
+  return `${shown(s.age)}살${n > 1 ? ` · ${s.dayIndex + 1}/${n}일` : ''}`;
 };
 
 function hello(s: GameState): string {
@@ -476,7 +478,7 @@ function birthdayLine(s: GameState): string {
               : a <= 12 ? ['용돈 올려 주는 거지?', '생일엔 피자 먹자. 도시락 말고.', '친구들 불러도 돼?', '선물은 현금이 최고야.']
                 : a <= 15 ? ['…생일 축하 노래는 하지 마.', '케이크 사진 찍어서 올리지 마.', '…고마워. (작게)', '방에 케이크만 넣어 줘.']
                   : a <= 18 ? ['생일이고 뭐고 시험이야.', '미역국은… 먹을게.', '올해는 도시락 좀 덜 싸도 돼.', '야자 끝나고 케이크 남겨 놔.']
-                    : ['내년이면 진짜 어른이네.', '그동안 도시락… 고마웠어.', '스무 살엔 내가 밥 살게.', '마지막 생일상이네. 아직은.'];
+                    : ['내년이면 진짜 어른이네.', '그동안 도시락… 고마웠어.', '어른 되면 내가 밥 살게.', '마지막 생일상이네. 아직은.'];
   const mood: string[] = [];
   if (a >= 12 && st.bond < 30) mood.push('…', '(방문 너머로) 알아서 할게.');
   if (a >= 4 && st.happy < 40) mood.push('생일인데 별로 안 신나.');
@@ -513,9 +515,9 @@ function renderSummary(s: GameState): string {
     return `<div class="px-bar"><span>${STAT_INFO[k].label}</span><div class="track"><i style="width:${lo}%"></i>${dd ? `<b class="${dd > 0 ? 'up' : 'down'}" style="left:${lo}%;width:${hi - lo}%"></b>` : ''}</div><em class="${dd > 0 ? 'up' : dd < 0 ? 'down' : ''}">${v}${dd ? `<small>${dd > 0 ? '+' : ''}${dd}</small>` : ''}</em></div>`;
   }).join('');
   return `
-  ${stage('growth', esc(birthdayLine(s)), `${s.age}살 → ${s.age + 1}살`)}
+  ${stage('growth', esc(birthdayLine(s)), s.age >= FINAL_AGE ? `${shown(s.age)}살 · 마지막 해` : `${shown(s.age)}살 → ${shown(s.age + 1)}살`)}
   <section class="px-panel">
-    <div class="px-sub">${esc(s.child.name)}의 ${s.age}살 · ${stageOf(s.age).name}</div>
+    <div class="px-sub">${esc(s.child.name)}의 ${shown(s.age)}살 · ${stageOf(s.age).name}</div>
     <h2 class="px-h">${word}</h2>
     <div class="px-year-facts">
       <span>키 <b>${h0}→${h1}cm</b></span>
@@ -526,7 +528,7 @@ function renderSummary(s: GameState): string {
     ${found.length ? `<div class="px-found"><b>올해 알게 된 것</b> ${found.map((x) => `<span>${esc(x)}</span>`).join('')}</div>` : ''}
     ${moment ? `<p class="px-later"><b>올해의 한 장면</b> 「${esc(moment)}」</p>` : events.length ? `<p class="px-sub">올해 있었던 일 · ${events.map(esc).join(' · ')}</p>` : ''}
     ${hint ? `<p class="px-omen ${warn ? 'warn' : ''}">${warn ? '⚠ ' : '이대로라면… '}${esc(hint)}</p>` : ''}
-    <button class="btn primary wide" data-act="year">${s.age >= FINAL_AGE ? '🎓 스무 살이 되다' : `🎂 ${s.age + 1}살 생일`}</button>
+    <button class="btn primary wide" data-act="year">${s.age >= FINAL_AGE ? '🎓 어른이 되다' : `🎂 ${shown(s.age + 1)}살 생일`}</button>
   </section>`;
 }
 
@@ -536,9 +538,9 @@ function renderEnding(s: GameState): string {
   const follows = s.album.filter((d) => d.leave === 'follow').length;
   const caught = s.album.filter((d) => d.over === 'caught').length;
   return `
-  ${stage('ending', '', e.early ? `${esc(s.child.name)}의 ${s.age}살` : `${esc(s.child.name)}의 스무 살`)}
+  ${stage('ending', '', e.early ? `${esc(s.child.name)}의 ${shown(s.age)}살` : `${esc(s.child.name)}의 스무 살`)}
   <section class="px-panel">
-    <div class="px-sub"><span class="px-tone ${e.tone}">${TONE_LABEL[e.tone]}</span> ${e.early ? `${s.age}살에 끝난 이야기 · ` : ''}엔딩 ${dex.endings.length}/${ENDINGS.length} 발견</div>
+    <div class="px-sub"><span class="px-tone ${e.tone}">${TONE_LABEL[e.tone]}</span> ${e.early ? `${shown(s.age)}살에 끝난 이야기 · ` : ''}엔딩 ${dex.endings.length}/${ENDINGS.length} 발견</div>
     <h2 class="px-h">${e.emoji} ${esc(e.title)}</h2>
     <p class="px-story">${esc(fmt(e.text, s))}</p>
     ${e.later ? `<p class="px-later"><b>10년 후…</b> ${esc(fmt(e.later, s))}</p>` : ''}
@@ -590,17 +592,17 @@ function renderNotebook(s: GameState): string {
   const list = (arr: string[]) => (arr.length ? arr.join(', ') : '아직 몰라요');
   const stars = s.album.slice(-10);
   return sheet('육아 수첩', `
-    <div class="px-note-head"><img src="${faceIcon(s, 'happy')}" alt=""><span><b>${esc(s.child.name)}</b> · ${s.age}살</span></div>
+    <div class="px-note-head"><img src="${faceIcon(s, 'happy')}" alt=""><span><b>${esc(s.child.name)}</b> · ${shown(s.age)}살</span></div>
     <dl class="note">
       <dt>좋아하는 맛</dt><dd>${esc(list(k.likes))}</dd>
       <dt>싫어하는 음식</dt><dd>${esc(list(k.dislikes.map((id) => ing(id).name)))}</dd>
-      <dt>재능</dt><dd>${k.talent ? TALENT_INFO[s.child.talent].label : '11살 즈음 알 수 있을 것 같다'}</dd>
+      <dt>재능</dt><dd>${k.talent ? TALENT_INFO[s.child.talent].label : '12살 즈음 알 수 있을 것 같다'}</dd>
       <dt>이번 생에 먹인 메뉴</dt><dd>${s.runMenus.length}가지</dd>
       ${s.vigilance > 0.05 ? `<dt>경계심</dt><dd>${Math.round(s.vigilance * 100)}% — 믿고 보내면 풀린다</dd>` : ''}
     </dl>
-    ${stars.length ? `<h3>최근 도시락</h3><ul class="lines">${stars.reverse().map((a) => `<li><small>${a.age}살</small> ${esc(getMenu(a.menu)?.name ?? '')} ${'★'.repeat(a.lunch) || '☆'}${a.over === 'caught' ? ' · 들킴' : a.leave === 'follow' ? ' · 따라감' : ''}</li>`).join('')}</ul>` : ''}
+    ${stars.length ? `<h3>최근 도시락</h3><ul class="lines">${stars.reverse().map((a) => `<li><small>${shown(a.age)}살</small> ${esc(getMenu(a.menu)?.name ?? '')} ${'★'.repeat(a.lunch) || '☆'}${a.over === 'caught' ? ' · 들킴' : a.leave === 'follow' ? ' · 따라감' : ''}</li>`).join('')}</ul>` : ''}
     <h3>최근 기록</h3>
-    <ul class="lines">${s.log.slice(-12).reverse().map((l) => `<li><small>${l.age}살</small> ${esc(l.text)}</li>`).join('')}</ul>`);
+    <ul class="lines">${s.log.slice(-12).reverse().map((l) => `<li><small>${shown(l.age)}살</small> ${esc(l.text)}</li>`).join('')}</ul>`);
 }
 
 function renderDex(): string {
@@ -783,7 +785,7 @@ function startCommute(s: GameState): void {
   const p = commuteParams(s);
   setTrack('commute');
   mountFollow(app, {
-    age: p.level, standalone: false, label: `${s.age}살`, title: `${s.age}살 등굣길`, look: lookOf(s),
+    age: p.level, standalone: false, label: `${shown(s.age)}살`, title: `${shown(s.age)}살 등굣길`, look: lookOf(s),
     mood: p.mood, lookMult: p.lookMult, forgot: p.forgot,
     onEnd: (r) => {
       unmountFollow();
@@ -875,7 +877,7 @@ function onAct(el: HTMLElement): void {
     case 'choice': {
       if (!s?.active) return;
       const a = s.active;
-      const kind = s.step === 'milestone' ? `${s.age}살` : '어느 날';
+      const kind = s.step === 'milestone' ? `${shown(s.age)}살` : '어느 날';
       const r = chooseEventOption(s, Number(el.dataset.i));
       continueAfterEvent(s);
       eventResult = { id: a.id, emoji: a.emoji, title: a.title, text: r.text, delta: r.delta, money: r.money, kind };
