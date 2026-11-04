@@ -15,9 +15,7 @@ const body = html.match(/<body>([\s\S]*?)<\/body>/)![1].trim();
 
 const page = `<title>${title}</title>
 <meta name="description" content="도시락 싸들고 졸졸 따라다니면 아이를 얼마나 잘 키울 수 있을까? — 개발 중인 미리보기">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Gowun+Dodum&display=swap">
+${html.includes('fonts.googleapis.com') ? '<link rel="preconnect" href="https://fonts.googleapis.com">\n<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Gowun+Dodum&display=swap">' : ''}
 <style>${css}
 /* 미리보기 페이지는 바깥 틀이 이미 상하 안전 영역을 비워 준다 */
 body { padding-top: 0; padding-bottom: 0; }

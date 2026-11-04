@@ -1,0 +1,20 @@
+/** 도트 팔레트 — 따뜻한 그림책 색을 조금 더 진하게 (작은 크기에서도 또렷하게) */
+export const P = {
+  ink: '#3b2a24', inkSoft: '#5c4438',
+  skin: '#f7cfa8', skinShade: '#e4a882', blush: '#f2988a',
+  eye: '#2a1d19', mouth: '#b54a44', tongue: '#f28c96', white: '#fffaf0',
+  hairBoy: '#4a3123', hairBoyHi: '#6d4a33', hairGirl: '#8a5232', hairGirlHi: '#b0703f', clip: '#f2b544',
+  shirt: '#fdf6e8', shirtShade: '#e8dcc6', smock: '#f5c94a', smockShade: '#d9a933',
+  pack: '#e0604a', packShade: '#b6463a', shorts: '#5f86b8', shortsShade: '#476a96',
+  navy: '#36456b', navyDark: '#283452', collar: '#f6efe2', tie: '#d9544a',
+  shoe: '#5a3d30', sock: '#fffaf0',
+  tomato: '#e0604a', tomatoDark: '#b6463a', mustard: '#f2b544', mustardDark: '#c98d24',
+  sage: '#86b062', sageDark: '#5e8a42', sky: '#9fd0ec', skyDark: '#78b4da', plum: '#a77bb3',
+  cream: '#fbf2df', creamDark: '#efdcbd', wall: '#f6e7cf', wallLine: '#e7d1ae',
+  wood: '#d9a066', woodDark: '#b27a45', woodLine: '#c48c55',
+  rice: '#fffdf6', riceShade: '#e9e0cf', nori: '#2f3a2c', noriHi: '#45533f',
+  egg: '#ffd45a', eggDark: '#e3a72f', green: '#6faa45', greenDark: '#4b7f2e', greenLight: '#b6dc7c',
+  red: '#e2543f', redDark: '#b13a2c', brown: '#a2643a', brownDark: '#734325', pink: '#f6a3ae',
+  grey: '#bdb3a6', greyDark: '#8f857a', road: '#c9c0b3', roadDark: '#b0a698', grass: '#a6cf7a', grassDark: '#86b45c',
+  shadow: 'rgba(59,42,36,0.18)',
+} as const;
