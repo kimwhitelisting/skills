@@ -20,6 +20,8 @@ const inAge = (e: GameEvent, age: number) =>
 function eligible(s: GameState, e: GameEvent) {
   if (!inAge(e, s.age)) return false;
   if ((e.once || e.kind === 'milestone') && s.seenEvents.includes(e.id)) return false;
+  if (e.shop && !s.unlocks?.includes(e.shop)) return false;
+  if (e.wear && !s.wear?.includes(e.wear)) return false;
   return e.when ? e.when(s) : true;
 }
 

@@ -7,10 +7,17 @@
 import type { HatId } from '../pixel/child.ts';
 import type { Delta } from './types.ts';
 
-export type ShopKind = 'theme' | 'hat' | 'tool' | 'gift';
+export type ShopKind = 'story' | 'theme' | 'hat' | 'tool' | 'gift';
 export interface ShopItem { id: string; kind: ShopKind; name: string; emoji: string; price: number; desc: string; theme?: [string, string]; hat?: HatId; gift?: Delta }
 
 export const SHOP: ShopItem[] = [
+  // 이야기 꾸러미: 사면 새 이벤트가 나오기 시작한다 (산 판부터) — 전용 엔딩이 있는 것도
+  { id: 'story-puppy', kind: 'story', name: '강아지 입양', emoji: '🐶', price: 500, desc: '보호소의 강아지 · 산책 당번 · 늙은 강아지 — 엔딩 하나' },
+  { id: 'story-piano', kind: 'story', name: '중고 피아노', emoji: '🎹', price: 450, desc: '거실의 피아노 · 발표회 — 엔딩 하나' },
+  { id: 'story-garden', kind: 'story', name: '텃밭 화분', emoji: '🌱', price: 300, desc: '베란다 텃밭 — 싫어하던 채소를 먹게 될지도 · 엔딩 하나' },
+  { id: 'story-camera', kind: 'story', name: '필름 카메라', emoji: '📷', price: 400, desc: '첫 필름 · 사진 공모전 — 엔딩 하나' },
+  { id: 'story-bike', kind: 'story', name: '자전거', emoji: '🚲', price: 250, desc: '보조 바퀴 떼는 날' },
+  { id: 'story-camping', kind: 'story', name: '캠핑 장비', emoji: '⛺', price: 350, desc: '주말 캠핑 (여러 번)' },
   { id: 'theme-mint', kind: 'theme', name: '민트 옷', emoji: '🌿', price: 200, desc: '윗옷이 민트색 (교복 시기 빼고)', theme: ['#bfe6cf', '#97cfb0'] },
   { id: 'theme-berry', kind: 'theme', name: '딸기 옷', emoji: '🍓', price: 200, desc: '윗옷이 딸기우유색', theme: ['#f3b6c4', '#e08ea2'] },
   { id: 'theme-sky', kind: 'theme', name: '하늘 옷', emoji: '☁️', price: 200, desc: '윗옷이 하늘색', theme: ['#bcdcf2', '#94c2e3'] },

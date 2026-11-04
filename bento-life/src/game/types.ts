@@ -143,6 +143,10 @@ export interface GameState {
   /** 가장 최근에 먹인 메뉴 (끼니 수와 무관) */
   lastMenu?: string;
   yearStart: Stats;
+  /** 하트 상점에서 산 것 (이야기 꾸러미 등) — 판 시작과 살 때 채워진다 */
+  unlocks?: string[];
+  /** 지금 입고 있는 옷 색·모자 (상점 id) */
+  wear?: string[];
   /** 올해 초에 알고 있던 취향 (결산의 "올해 알게 된 것") */
   yearKnown?: { likes: string[]; dislikes: string[]; talent: boolean };
   log: LogEntry[];
@@ -193,6 +197,10 @@ export interface GameEvent {
   weight?: number;
   once?: boolean;
   when?: (s: GameState) => boolean;
+  /** 하트 상점에서 이 물건을 사야 나오는 이벤트 (이야기 꾸러미) */
+  shop?: string;
+  /** 이 모자/옷을 입고 있어야 나오는 이벤트 */
+  wear?: string;
   title: string;
   text: string | ((s: GameState) => string);
   choices: Choice[] | ((s: GameState) => Choice[]);

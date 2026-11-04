@@ -3,6 +3,7 @@ import { getMenu } from '../game/bento.ts';
 import { rand } from '../game/rng.ts';
 import type { GameEvent, GameState } from '../game/types.ts';
 import { MORE_EVENTS } from './events-more.ts';
+import { SHOP_EVENTS } from './events-shop.ts';
 
 /** 최근 도시락 (끼니 수 설정에 따라 점심이 없을 수 있으니 가장 최근 메뉴로 대신) */
 const lunchMenu = (s: GameState) => { const k = s.lastMeals.lunch ?? s.lastMenu; return k ? getMenu(k) : undefined; };
@@ -357,5 +358,5 @@ const RANDOM: GameEvent[] = [
   },
 ];
 
-export const EVENTS: GameEvent[] = [...MILESTONES, ...RANDOM, ...MORE_EVENTS];
+export const EVENTS: GameEvent[] = [...MILESTONES, ...RANDOM, ...MORE_EVENTS, ...SHOP_EVENTS];
 export const EVENT_BY_ID: Record<string, GameEvent> = Object.fromEntries(EVENTS.map((e) => [e.id, e]));

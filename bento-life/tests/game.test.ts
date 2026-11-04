@@ -211,7 +211,8 @@ describe('money and hearts', () => {
     s.step = 'summary'; s.active = undefined; s.age = 5; s.money = 0;
     s.tuning = { ...s.tuning, incomeBase: 0, incomePerDay: 0 };
     advanceYear(s);
-    while (s.active) { const { chooseEventOption, continueAfterEvent } = await import('../src/game/engine.ts'); chooseEventOption(s, s.active.choices.findIndex((c) => c.enabled)); continueAfterEvent(s); }
+    const { chooseEventOption, continueAfterEvent } = await import('../src/game/engine.ts');
+    for (let a = s.active as { choices: { enabled: boolean }[] } | undefined; a; a = s.active) { chooseEventOption(s, a.choices.findIndex((c) => c.enabled)); continueAfterEvent(s); }
     expect(s.step).toBe('day');
     expect(s.flags.grandma).toBe(1);
     expect(s.today?.notice).toContain('할머니');
@@ -222,6 +223,24 @@ describe('money and hearts', () => {
     expect(new Set(SHOP.map((i) => i.id)).size).toBe(SHOP.length);
     expect(toolIds(['tool-news', 'hat-cap', 'tool-pot'])).toEqual(['news', 'pot']);
     for (const i of SHOP) expect(i.price, i.id).toBeGreaterThan(0);
+  });
+});
+
+describe('shop stories', () => {
+  it('story events only appear after buying the pack, and their endings become reachable', async () => {
+    const { SHOP } = await import('../src/game/shop.ts');
+    const stories = SHOP.filter((i) => i.kind === 'story').map((i) => i.id);
+    let without = 0, withPack = 0;
+    const ends = new Set<string>();
+    for (let seed = 1; seed <= 300; seed++) {
+      without += playthrough(seed, 'random').seenEvents.filter((id) => EVENTS.find((e) => e.id === id)?.shop).length;
+      const s = playthrough(seed, 'random', undefined, { unlocks: stories, wear: ['hat-chef'] });
+      withPack += s.seenEvents.filter((id) => EVENTS.find((e) => e.id === id)?.shop || EVENTS.find((e) => e.id === id)?.wear).length;
+      ends.add(s.endingId!);
+    }
+    expect(without).toBe(0);
+    expect(withPack).toBeGreaterThan(300);
+    for (const id of ['pianist', 'dogTrainer', 'farmer', 'photographer']) expect(ends.has(id), id).toBe(true);
   });
 });
 
