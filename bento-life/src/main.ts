@@ -416,13 +416,12 @@ function eveningView(s: GameState): string {
   const menu = p.meal.menu;
   const commuteLine = c ? `${c.over === 'caught' ? '등굣길에 들켰다' : c.over === 'lost' ? '등굣길에 놓쳤다' : c.delivered ? '몰래 배달 성공' : '교문까지 지켜봤다'} · ♥ ${Math.round(c.score)}` : '';
   const leaveLine = t.leave === 'escort' ? '오늘은 손잡고 같이 갔다.' : t.leave === 'trust' ? '오늘은 믿고 보냈다.' : '';
-  const lines = [...e.extra, ...p.meal.lines];
+  const lines = [...e.extra, ...p.meal.lines].slice(0, 3);
   return `
   ${stage('kitchen', e.says.map(esc).join(' '), `${DAY_LABEL(s)} · 저녁`)}
   <section class="px-panel">
     <div class="px-menu">${menu.signature ? '✨ ' : ''}${esc(menu.name)}${p.meal.firstEver ? ' <span class="new">도감 등록</span>' : ''}</div>
-    <div class="px-verdict">${s.age <= 1 ? ['다 뱉어 냈다…', '조금 먹었다', '잘 먹었다', '한 그릇 뚝딱!'][e.lunch] : ['그대로 돌아왔다…', '조금 먹고 남겼다', '거의 다 먹었다', '싹 비웠다!'][e.lunch]}</div>
-    <div class="px-stars">${'★'.repeat(e.lunch)}<span>${'★'.repeat(3 - e.lunch)}</span></div>
+    <div class="px-verdict">${s.age <= 1 ? ['다 뱉어 냈다…', '조금 먹었다', '잘 먹었다', '한 그릇 뚝딱!'][e.lunch] : ['그대로 돌아왔다…', '조금 먹고 남겼다', '거의 다 먹었다', '싹 비웠다!'][e.lunch]} <span class="px-stars">${'★'.repeat(e.lunch)}<span>${'★'.repeat(3 - e.lunch)}</span></span></div>
     ${commuteLine ? `<p class="px-line">${commuteLine}</p>${c?.moment ? `<p class="px-sub">「${esc(c.moment)}」</p>` : ''}` : leaveLine ? `<p class="px-line">${leaveLine}</p>` : ''}
     ${lines.length ? `<ul class="px-lines">${lines.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>` : ''}
     ${chips(e.delta)}

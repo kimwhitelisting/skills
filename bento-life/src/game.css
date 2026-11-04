@@ -56,3 +56,4 @@
 .px-note-head { display: flex; align-items: center; gap: 8px; }
 .px-note-head img { width: 48px; height: 40px; border: 2px solid var(--ink); }
 .pixel-ui .scrim { background: rgba(59, 42, 36, .45); }
+.px-verdict .px-stars { font-size: 22px; letter-spacing: 2px; vertical-align: -2px; }
