@@ -30,8 +30,8 @@ npx tsc --noEmit -p .  # 타입 검사
 | 한 해 | 나이 이벤트 → 하루 (기본 1일) → 랜덤 이벤트 최대 2개 → 키 재기 결산 | `src/game/engine.ts` |
 | 하루 | 아침 요청 듣고 도시락 세 칸 (30초) → 배웅 (0–1 없음 / 2–5 같이 가기·어린이집 차 / 6~ 몰래 따라가기·믿고 보내기, 30% 도시락 두고 간 날) → 등굣길 미니게임 → 저녁 별점과 아이의 한마디 | `engine.ts`, `src/data/requests.ts`, `src/proto/follow-core.ts` |
 | 사춘기 경계심 | 13살~ 따라갈수록 쌓이고 믿고 보내면 풀림 → 등굣길에서 더 자주 돌아봄 | `engine.ts` |
-| 이벤트 82개 | 나이별 20 + 랜덤 48. 플래그로 이어짐 (캐스팅 → 월말 평가 → 데뷔 등) | `src/data/events.ts`, `events-more.ts` |
-| 엔딩 44개 | 해피 18 · 씁쓸 7 · 삐딱 9 · 배드 5, "10년 후…" 한 줄, 스무 살 전 엔딩 6개 + 한 해 전 붉은 경고 | `src/game/endings.ts` |
+| 이벤트 82개 | 나이별 20 + 랜덤 49 + 상점 이야기 13. 플래그로 이어짐 (캐스팅 → 월말 평가 → 데뷔 등) | `src/data/events.ts`, `events-more.ts`, `events-shop.ts` |
+| 엔딩 44개 | 해피 21 · 씁쓸 8 · 삐딱 10 · 배드 5, "10년 후…" 한 줄, 스무 살 전 엔딩 6개 + 한 해 전 붉은 경고 | `src/game/endings.ts` |
 | 화면 | 타이틀·소개·이벤트(결과 화면)·아침·배웅·저녁·결산·엔딩·시트(상태·수첩·도감·설정)·안드로이드 뒤로가기·자동 저장 | `src/main.ts`, `src/game.css` |
 | 그림 | 전부 코드 도트. 아이 8단계, 재료 28, 이벤트·엔딩 장면 107개 | `src/pixel/` → [`PIXEL.md`](PIXEL.md) |
 | 저장 | localStorage `bento-life:run:v2` (형식을 바꾸면 버전을 올린다), 도감 `bento-life:dex:v1` | `src/game/save.ts` |
