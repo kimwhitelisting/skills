@@ -231,6 +231,12 @@ export function finishCommute(s: GameState, r: CommuteResult): Evening {
     if (r.over !== 'caught') lunchAdj = -1;
     extra.push(r.over === 'caught' ? '도시락은 받았지만… 친구들 앞에서 받았다.' : '도시락은 교무실에서 늦게 받았다. 다 식어 있었다.');
   }
+  if (r.injury) {
+    // 진짜 위험에서 참았다가 크게 다쳤다 — 병원, 깁스, 한동안 우울
+    addDelta(d, { health: -8, happy: -3, fitness: -3 });
+    s.flags.injury = (s.flags.injury ?? 0) + 1;
+    extra.push('병원에 다녀왔다. 깁스를 했다. 그날 밤 잠이 오지 않았다.');
+  }
   if (s.age >= 13) s.vigilance = Math.min(0.4, s.vigilance + (r.over === 'caught' ? 0.2 : 0.1));
   return settle(s, scaled(s, d), extra, lunchAdj);
 }

@@ -72,6 +72,8 @@ export interface CommuteResult {
   moment?: string;
   /** 등굣길 한 장면의 종류 (caught, nearmiss, deliver…) — 사진첩 사진 */
   momentKind?: string;
+  /** 진짜 위험한 순간에 참아서 크게 다쳤다 */
+  injury?: boolean;
   log?: string[];
 }
 

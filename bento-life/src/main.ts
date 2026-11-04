@@ -435,7 +435,7 @@ function eveningView(s: GameState): string {
   const p = t.pack!;
   const c = t.commute;
   const menu = p.meal.menu;
-  const commuteLine = c ? `${c.over === 'caught' ? '등굣길에 들켰다' : c.over === 'lost' ? '등굣길에 놓쳤다' : c.delivered ? '몰래 배달 성공' : '교문까지 지켜봤다'} · ♥ ${Math.round(c.score)}` : '';
+  const commuteLine = c ? `${c.injury ? '등굣길에서 크게 다쳤다' : c.over === 'caught' ? '등굣길에 들켰다' : c.over === 'lost' ? '등굣길에 놓쳤다' : c.delivered ? '몰래 배달 성공' : '교문까지 지켜봤다'} · ♥ ${Math.round(c.score)}` : '';
   const leaveLine = t.leave === 'escort' ? '오늘은 손잡고 같이 갔다.' : t.leave === 'trust' ? '오늘은 믿고 보냈다.' : '';
   const lines = [...e.extra, ...p.meal.lines].slice(0, 3);
   return `
@@ -947,7 +947,7 @@ function startCommute(s: GameState): void {
       commuteOn = false;
       if (!game || game !== s || s.today?.phase !== 'commute') return;
       dex.hearts += Math.max(0, Math.round(r.score));
-      finishCommute(s, { over: r.over, delivered: r.delivered, score: r.score, bond: r.bond, indep: r.indep, happy: r.happy, moment: r.moment, momentKind: r.momentKind, log: r.log });
+      finishCommute(s, { over: r.over, delivered: r.delivered, score: r.score, bond: r.bond, indep: r.indep, happy: r.happy, moment: r.moment, momentKind: r.momentKind, injury: r.injury, log: r.log });
       persist();
       render();
       window.scrollTo({ top: 0 });

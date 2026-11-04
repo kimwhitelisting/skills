@@ -297,6 +297,17 @@ export const MORE_EVENTS: GameEvent[] = [
     ],
   },
 
+  {
+    id: 'cast', kind: 'random', emoji: '🦴', ageMin: 6, ageMax: 19, weight: 12, once: true, title: '깁스',
+    when: (s) => f(s, 'injury') >= 1,
+    text: '{c}의 깁스에 친구들이 낙서를 잔뜩 해 왔다. 한쪽 구석에 작게: 「그날 왜 안 왔어?」',
+    choices: [
+      { label: '"미안해. 무서워서 못 움직였어."', outcome: { text: '{c}가 한참 보더니 깁스 위에 썼다. 「괜찮아. 다음엔 와.」', stats: { bond: 3, happy: 2 } } },
+      { label: '"혼자 이겨내라고 그랬지."', outcome: { text: '{c}가 대답 없이 낙서를 지웠다.', stats: { bond: -3, indep: 2 } } },
+      { label: '깁스에 도시락 그림을 그려 준다', outcome: { text: '반에서 제일 멋진 깁스가 됐다. 그래도 그 낙서는 남아 있다.', stats: { happy: 3, social: 2 } } },
+    ],
+  },
+
   // ───────── 학교 ─────────
   {
     id: 'trip', kind: 'random', emoji: '🚌', ageMin: 12, ageMax: 17, weight: 2, once: true, title: '수학여행',

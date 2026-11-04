@@ -60,3 +60,6 @@ body:has(#app.pixel-ui) { background: #f3e2c6; }
 .pixel-ui .mood-tag { border-radius: 0; border: 2px solid var(--ink); font-family: 'Galmuri11', sans-serif; }
 .pixel-ui .age-pick button { border-radius: 0; border: 3px solid var(--ink); font-family: 'Galmuri11', sans-serif; box-shadow: 0 3px 0 var(--ink); }
 .pixel-ui .btn.primary small { color: #fff6e6; opacity: .9; }
+.pixel-ui .crisis-card.danger { background: #ffe1d6; border-color: var(--red-d); box-shadow: 0 6px 0 var(--red-d); animation: pop .2s, shake .3s .2s 2; }
+.pixel-ui .crisis-card .danger-tag { display: inline-block; background: var(--red); color: #fff6e6; font-weight: 700; padding: 1px 10px; border: 2px solid var(--ink); margin-bottom: 4px; }
+@keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }

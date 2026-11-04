@@ -39,7 +39,14 @@ const WALK = 92;
 const DASH = 320;
 const COVERS = ['🌳', '🪧', '📮', '🚏', '🌲', '🗑️', '🚙', '🌳'];
 
-interface Crisis { at: number; emoji: string; text: string; saved: string; alone: string; hurt: string; done?: boolean }
+interface Crisis { at: number; emoji: string; text: string; saved: string; alone: string; hurt: string; done?: boolean; danger?: boolean }
+/** 진짜 위험한 순간 — 이때만큼은 사춘기여도 달려가는 게 맞다. 참으면 크게 다칠 수 있다 (가끔 평범한 위기 대신 나온다) */
+const DANGERS: Record<Age, Omit<Crisis, 'at'>> = {
+  6: { danger: true, emoji: '🚗', text: '공을 쫓아 차도로 뛰어든다! 차가 온다!', saved: '번쩍 안아 올렸다. 차가 바로 옆을 지나갔다. 한참을 안고 있었다.', alone: '차가 끼익 멈췄다. 아이가 얼어붙어 있다…', hurt: '차에 부딪혔다. 구급차 소리가 들린다…' },
+  10: { danger: true, emoji: '🚲', text: '내리막길에서 자전거 브레이크가 고장 났다!', saved: '몸으로 막아 세웠다. "…무서웠어." 처음으로 손을 꼭 잡았다.', alone: '수풀로 넘어지며 겨우 멈췄다. 무릎만 까졌다.', hurt: '전봇대에 부딪혀 팔이 부러졌다…' },
+  15: { danger: true, emoji: '🚛', text: '이어폰을 낀 채 빨간불에 건넌다! 트럭이 온다!', saved: '팔을 잡아당겼다. 트럭이 경적을 울리며 지나갔다. "…고마워." 화내지 않았다.', alone: '트럭이 아슬아슬하게 멈췄다. 이어폰을 빼는 손이 떨린다.', hurt: '피하다 넘어져 다리를 크게 다쳤다…' },
+};
+const DANGER_CHANCE = 0.25;
 const CRISES: Record<Age, Crisis[]> = {
   6: [
     { at: 0.36, emoji: '🐕', text: '큰 개가 아이를 보고 짖는다!', saved: '"엄마아빠다!" 와락 안겼다.', alone: '울먹이다가 씩씩하게 지나갔다.', hurt: '울면서 주저앉았다…' },
@@ -76,7 +83,7 @@ interface State {
   t: number; px: number; kx: number; walking: boolean; dashTo?: number; lastMoveT: number; slow: number;
   kidState: 'walk' | 'tele' | 'look' | 'pause'; kidTimer: number; nextLook: number; fakeOut: boolean;
   sus: number; lostFor: number; score: number; nearMiss: number; covers: { x: number; e: string }[];
-  crisis?: Crisis; crisisLeft: number; log: string[]; bond: number; indep: number; happy: number;
+  crisis?: Crisis; crises: Crisis[]; dangerSaved?: boolean; injury?: boolean; crisisLeft: number; log: string[]; bond: number; indep: number; happy: number;
   over?: 'school' | 'caught' | 'lost'; delivered?: boolean; deliverLeft: number;
   events: { at: number; kind: 'neighbor' | 'dog' | 'friend'; done?: boolean }[];
   neighbor?: { x: number; left: number }; dog?: { left: number; bark: number }; friend?: Watcher & { left: number };
@@ -103,7 +110,7 @@ export interface FollowOpts {
   /** 도트 캐릭터 생김새 (없으면 나이에 맞춰 기본) */
   look?: Look;
 }
-export interface FollowResult { over: 'school' | 'caught' | 'lost'; delivered: boolean; score: number; nearMiss: number; log: string[]; bond: number; indep: number; happy: number; moment: string; momentKind: string }
+export interface FollowResult { over: 'school' | 'caught' | 'lost'; delivered: boolean; score: number; nearMiss: number; log: string[]; bond: number; indep: number; happy: number; moment: string; momentKind: string; injury: boolean }
 let opts: FollowOpts = { age: 10, standalone: true, forgot: true };
 const label = () => opts.label ?? TUNE[age].label;
 const kidLook = (): Look => opts.look ?? { age: age === 15 ? 15 : 7, gender: 'girl' };
@@ -120,12 +127,15 @@ const shuffle = <T,>(a: T[]) => a.map((v) => [Math.random(), v] as const).sort((
 function newRun(showIntro = true): void {
   const covers: { x: number; e: string }[] = [];
   for (let x = 200; x < ROUTE - 120; x += rnd(160, 270)) covers.push({ x, e: COVERS[Math.floor(Math.random() * COVERS.length)] });
-  CRISES[age].forEach((c) => (c.done = false));
+  // 이번 판 위기 두 개: 가끔 하나가 진짜 위험으로 바뀐다
+  const chanceDanger = (window as unknown as { __dangerChance?: number }).__dangerChance ?? DANGER_CHANCE;
+  const crises: Crisis[] = CRISES[age].map((c) => ({ ...c, done: false }));
+  if (Math.random() < chanceDanger) { const i = Math.random() < 0.5 ? 0 : 1; crises[i] = { ...DANGERS[age], at: crises[i].at, done: false }; }
   const kinds = shuffle<'neighbor' | 'dog' | 'friend'>(['neighbor', 'dog', 'friend']);
   st = {
     phase: showIntro ? 'intro' : 'run', t: 0, px: 70, kx: 250, walking: false, lastMoveT: -9, slow: 0,
     kidState: 'walk', kidTimer: 0, nextLook: rnd(...TUNE[age].look), fakeOut: false,
-    sus: 0, lostFor: 0, score: 0, nearMiss: 0, covers, crisisLeft: 0, log: [], bond: 0, indep: 0, happy: 0, deliverLeft: 0,
+    sus: 0, lostFor: 0, score: 0, nearMiss: 0, covers, crises, crisisLeft: 0, log: [], bond: 0, indep: 0, happy: 0, deliverLeft: 0,
     events: [{ at: 0.2, kind: kinds[0] }, { at: 0.57, kind: kinds[1] }],
     newsLeft: 0, newsUsed: false, heartAcc: 0, moment: { rank: 0, kind: 'calm', text: '별일 없던 평화로운 등굣길' }, stepAcc: 0,
   };
@@ -268,8 +278,8 @@ function tick(dt: number, real: number): void {
     render();
   }
   // ── 위기 ──
-  const c = CRISES[age].find((x) => !x.done && st.kx >= x.at * ROUTE);
-  if (c) { c.done = true; st.crisis = c; st.crisisLeft = 2.6; st.kidState = 'pause'; st.kidTimer = -99; st.walking = false; sfx('ding'); haptic(40); render(); }
+  const c = st.crises.find((x) => !x.done && st.kx >= x.at * ROUTE);
+  if (c) { c.done = true; st.crisis = c; st.crisisLeft = c.danger ? 1.8 : 2.6; st.kidState = 'pause'; st.kidTimer = -99; st.walking = false; sfx('ding'); haptic(40); render(); }
 
   if (st.sus >= 100) end('caught');
   else if (st.lostFor > 2.2) end('lost');
@@ -295,6 +305,28 @@ function resolveCrisis(ran: boolean): void {
   const c = st.crisis!;
   st.crisis = undefined;
   st.kidState = 'walk'; st.kidTimer = 0; st.nextLook = rnd(...TUNE[age].look);
+  if (c.danger) {
+    if (ran) {
+      st.dashTo = st.kx - 40; st.dangerSaved = true;
+      st.log.push(`${c.emoji} 달려갔다 — ${c.saved}`);
+      st.bond += 4; st.indep -= 1; st.score += 40;
+      st.sus = Math.min(99, st.sus + (age === 6 ? 0 : age === 10 ? 30 : 50));
+      remember(6, 'danger-saved', `${c.emoji} 앞뒤 안 보고 뛰어들어 붙잡은 순간`);
+      sfx('chime'); haptic(60);
+    } else if (Math.random() < 0.2) {
+      st.log.push(`${c.emoji} 참았다 — ${c.alone}`);
+      st.happy -= 3; st.indep += 1;
+      remember(4, 'danger-luck', `${c.emoji} 심장이 멎는 줄 알았던 순간`);
+      sfx('tap'); haptic(60);
+    } else {
+      st.log.push(`${c.emoji} 참았다 — ${c.hurt}`);
+      st.injury = true; st.happy -= 4; st.bond -= 2;
+      remember(7, 'danger-hurt', `${c.emoji} 달려가지 못한 순간`);
+      sfx('tap'); haptic(120);
+      return end('lost'); // 등굣길은 거기서 끝난다 — 구급차를 따라 병원으로
+    }
+    return render();
+  }
   if (ran) {
     st.dashTo = st.kx - 40;
     st.log.push(`${c.emoji} 달려갔다 — ${c.saved}`);
@@ -325,8 +357,9 @@ function finishDeliver(ok: boolean): void {
 function end(how: 'school' | 'caught' | 'lost'): void {
   st.over = how; st.phase = 'over'; st.walking = false;
   if (how === 'school') { st.bond += 1; st.indep += 1; }
-  if (how === 'caught') { st.bond -= 2; st.indep -= 2; st.happy -= 1; st.score *= 0.5; remember(5, 'caught', '결국 딱 걸린 순간'); }
-  if (how === 'lost') { st.indep += 1; remember(1.5, 'lost', '아이를 놓치고 두리번거린 순간'); }
+  if (how === 'caught' && st.dangerSaved) { st.indep -= 2; st.score *= 0.7; st.log.push('🫂 들켰지만, 오늘은 아무 말도 하지 않았다.'); }
+  else if (how === 'caught') { st.bond -= 2; st.indep -= 2; st.happy -= 1; st.score *= 0.5; remember(5, 'caught', '결국 딱 걸린 순간'); }
+  if (how === 'lost' && !st.injury) { st.indep += 1; remember(1.5, 'lost', '아이를 놓치고 두리번거린 순간'); }
   st.score = Math.round(st.score);
   const before = saved.total;
   saved = { total: saved.total + st.score, best: Math.max(saved.best, st.score), runs: saved.runs + 1 };
@@ -370,7 +403,8 @@ function render(): void {
     ${st.phase === 'intro' ? introCard() : ''}
     ${st.crisis ? `
     <div class="crisis">
-      <div class="crisis-card">
+      <div class="crisis-card ${st.crisis.danger ? 'danger' : ''}">
+        ${st.crisis.danger ? '<div class="danger-tag">⚠ 위험!</div>' : ''}
         <div class="crisis-emoji">${st.crisis.emoji}</div>
         <p>${st.crisis.text}</p>
         <div class="crisis-time"><i id="ctime"></i></div>
@@ -429,14 +463,17 @@ function polaroid(): string {
   else if (k === 'crisis-run') { put(parentSide(4), 18); put(childFront(kid, 'happy'), 32); }
   else if (k === 'crisis-alone') { put(tree(), 4); put(childFront(kid, 'happy'), 34); }
   else if (k === 'crisis-hurt') { put(tree(), 4); put(childFront(kid, 'sad'), 34); }
+  else if (k === 'danger-saved') { put(parentSide(4, { dash: true }), 16); put(childFront(kid, 'surprise'), 32); }
+  else if (k === 'danger-luck') { put(childFront(kid, 'surprise'), 30); }
+  else if (k === 'danger-hurt') { put(childFront(kid, 'sad'), 30); }
   else if (k === 'lost') { put(parentSide(0), 26); }
   else { put(childSide(kid, 1), 22); }
   return `<figure class="polaroid"><img class="p-img" src="${toDataURL(g, 3)}" alt=""><figcaption>${st.moment.text}</figcaption></figure>`;
 }
 
 function resultCard(): string {
-  const title = st.over === 'school' ? (st.delivered ? '🍱 몰래 배달 성공!' : opts.forgot === false ? '🏫 끝까지 지켜봤다' : '🏫 학교 도착') : st.over === 'caught' ? '😳 들켰다!' : '💨 놓쳤다…';
-  const line = st.over === 'caught'
+  const title = st.injury ? '🚑 병원으로…' : st.over === 'school' ? (st.delivered ? '🍱 몰래 배달 성공!' : opts.forgot === false ? '🏫 끝까지 지켜봤다' : '🏫 학교 도착') : st.over === 'caught' ? '😳 들켰다!' : '💨 놓쳤다…';
+  const line = st.injury ? '등굣길은 거기서 끝났다. 구급차를 따라 병원으로 갔다.' : st.over === 'caught'
     ? (age === 15 ? '"진짜 미쳤어? 따라오지 말라고 했잖아!"' : age === 10 ? '"…왜 계속 따라와? 창피해."' : '"어! 엄마아빠다!" (기뻐하지만 혼자 가는 연습은 못 했다)')
     : st.over === 'lost' ? '아이는 혼자 학교에 갔다. 무슨 일이 있었는지는 모른다.' : st.delivered ? '점심시간, 사물함을 연 아이가 갸웃했다. "어? 내 도시락이 왜 여기…?"' : '아이는 끝까지 몰랐다.';
   const fx = [['💞 유대감', st.bond], ['🦋 자립심', st.indep], ['😊 행복', st.happy]].filter(([, v]) => v)
@@ -523,7 +560,7 @@ function draw(): void {
   document.getElementById('warn')!.textContent = gap > LOSE_DIST * 0.8 ? '너무 멀어요! 놓치겠어요' : gap < 60 ? '너무 가까워요!' : gap < 140 && watchedBy() === 0 ? '♥♥ 딱 좋은 거리' : '';
   document.getElementById('slowmo')!.className = `slowmo ${st.slow > 0 ? 'on' : ''}`;
   const ct = document.getElementById('ctime');
-  if (ct && st.crisis) ct.style.width = `${(st.crisisLeft / 2.6) * 100}%`;
+  if (ct && st.crisis) ct.style.width = `${(st.crisisLeft / (st.crisis.danger ? 1.8 : 2.6)) * 100}%`;
   if (ct && st.phase === 'deliver') ct.style.width = `${(st.deliverLeft / 2.2) * 100}%`;
 }
 
@@ -597,7 +634,7 @@ function bindOnce(): void {
 
 const result = (): FollowResult => ({
   over: st.over!, delivered: !!st.delivered, score: st.score, nearMiss: st.nearMiss, log: st.log,
-  bond: st.bond, indep: st.indep, happy: st.happy, moment: st.moment.text, momentKind: st.moment.kind,
+  bond: st.bond, indep: st.indep, happy: st.happy, moment: st.moment.text, momentKind: st.moment.kind, injury: !!st.injury,
 });
 
 /** 화면(root)에 따라가기 한 판을 띄운다 */

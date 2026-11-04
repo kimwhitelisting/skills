@@ -120,6 +120,16 @@ describe('day loop', () => {
     expect(e.lunch).toBeGreaterThanOrEqual(2);
     expect(e.says.join()).toContain('달리기');
   });
+  it('holding back in real danger can mean an injury', () => {
+    const s = toDay(9, 8);
+    packToday(s, { base: 'rice', main: 'bulgogi', side: 'broccoli' });
+    chooseLeave(s, 'follow');
+    const h = s.stats.health;
+    const e = finishCommute(s, { over: 'school', delivered: false, score: 80, bond: -2, indep: 1, happy: -4, injury: true, momentKind: 'danger-hurt' });
+    expect(s.stats.health).toBeLessThan(h - 5);
+    expect(s.flags.injury).toBe(1);
+    expect(e.extra.join()).toContain('깁스');
+  });
   it('following a teen backfires and makes them warier', () => {
     const s = toDay(3, 15);
     packToday(s, { base: 'rice', main: 'bulgogi', side: 'broccoli' });
