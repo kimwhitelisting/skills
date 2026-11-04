@@ -249,7 +249,7 @@ function settle(s: GameState, leave: Delta, extra: string[] = [], lunchAdj = 0):
   const says = lunchSays(s, p, lunch);
   t.evening = { lunch, says, extra, delta: total };
   t.phase = 'evening';
-  s.album.push({ age: s.age, menu: p.meal.menu.key, lunch, leave: t.leave, over: t.commute?.over, moment: t.commute?.moment });
+  s.album.push({ age: s.age, menu: p.meal.menu.key, lunch, leave: t.leave, over: t.commute?.over, moment: t.commute?.moment, momentKind: t.commute?.momentKind });
   if (s.album.length > 60) s.album.shift();
   return t.evening;
 }

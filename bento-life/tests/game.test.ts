@@ -244,6 +244,18 @@ describe('shop stories', () => {
   });
 });
 
+describe('photo album', () => {
+  it('every photo kind draws at every growth stage', async () => {
+    const { photoScene, COMMUTE_PHOTO_IDS, DAILY_PHOTO_IDS, EV_W, EV_H } = await import('../src/pixel/event-scenes.ts');
+    const { PX_AGES } = await import('../src/pixel/child.ts');
+    const ids = [...COMMUTE_PHOTO_IDS.map((k) => `c-${k}`), ...DAILY_PHOTO_IDS.map((k) => `d-${k}`), ...EVENTS.map((e) => `e-${e.id}`)];
+    for (const age of PX_AGES) for (const id of ids) {
+      const g = photoScene(id, { age, gender: age % 2 ? 'girl' : 'boy' });
+      expect(g.w, id).toBe(EV_W); expect(g.h, id).toBe(EV_H);
+    }
+  });
+});
+
 describe('music', () => {
   it('every track parses and its parts line up bar for bar', async () => {
     const { TRACK_IDS, trackOf, parse, stepsOf, freq } = await import('../src/ui/music.ts');

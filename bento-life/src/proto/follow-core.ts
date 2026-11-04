@@ -103,7 +103,7 @@ export interface FollowOpts {
   /** 도트 캐릭터 생김새 (없으면 나이에 맞춰 기본) */
   look?: Look;
 }
-export interface FollowResult { over: 'school' | 'caught' | 'lost'; delivered: boolean; score: number; nearMiss: number; log: string[]; bond: number; indep: number; happy: number; moment: string }
+export interface FollowResult { over: 'school' | 'caught' | 'lost'; delivered: boolean; score: number; nearMiss: number; log: string[]; bond: number; indep: number; happy: number; moment: string; momentKind: string }
 let opts: FollowOpts = { age: 10, standalone: true, forgot: true };
 const label = () => opts.label ?? TUNE[age].label;
 const kidLook = (): Look => opts.look ?? { age: age === 15 ? 15 : 7, gender: 'girl' };
@@ -597,7 +597,7 @@ function bindOnce(): void {
 
 const result = (): FollowResult => ({
   over: st.over!, delivered: !!st.delivered, score: st.score, nearMiss: st.nearMiss, log: st.log,
-  bond: st.bond, indep: st.indep, happy: st.happy, moment: st.moment.text,
+  bond: st.bond, indep: st.indep, happy: st.happy, moment: st.moment.text, momentKind: st.moment.kind,
 });
 
 /** 화면(root)에 따라가기 한 판을 띄운다 */

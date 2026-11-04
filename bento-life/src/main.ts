@@ -11,7 +11,7 @@ import './proto/follow.css';
 import './proto/pixel-ui.css';
 import './proto/day-px.css';
 import './game.css';
-import { EVENTS } from './data/events.ts';
+import { EVENTS, EVENT_BY_ID } from './data/events.ts';
 import { INGREDIENTS, ing } from './data/ingredients.ts';
 import { voiceAge } from './data/requests.ts';
 import { applyDelta, displayDelta } from './game/apply.ts';
@@ -28,10 +28,10 @@ import { menuKey } from './game/menus.ts';
 import { clearRun, loadDex, loadRun, saveDex, saveRun, type Dex } from './game/save.ts';
 import { newGame } from './game/state.ts';
 import { fmt } from './game/text.ts';
-import type { Delta, GameEvent, GameState, LeaveChoice, Slot, StatKey } from './game/types.ts';
+import type { Delta, GameEvent, GameState, LeaveChoice, Photo, Slot, StatKey } from './game/types.ts';
 import { CHILD_H, childFront, headTop, parentSide, pxAgeOf, setDefaultHat, setTheme, type Expr, type HatId, type Look } from './pixel/child.ts';
 import { SHOP, SHOP_BY_ID, toolIds, type ShopItem, type ShopKind } from './game/shop.ts';
-import { endingScene, eventExpr, eventScene } from './pixel/event-scenes.ts';
+import { COMMUTE_PHOTO_IDS, commuteCaption, DAILY_PHOTO_IDS, dailyCaption, endingScene, eventExpr, eventScene, photoScene } from './pixel/event-scenes.ts';
 import { entryFloor, entryWall, GIRAFFE_X, growthWall, miniLunch } from './pixel/extras.ts';
 import { loadPixelFont } from './pixel/font.ts';
 import { food } from './pixel/foods.ts';
@@ -49,7 +49,7 @@ import { loadPrefs, savePrefs } from './ui/prefs.ts';
 
 // ───────────────────────── 상태 ─────────────────────────
 type Screen = 'title' | 'intro' | 'game';
-type Overlay = 'stats' | 'menu' | 'notebook' | 'dex' | 'settings' | 'shop';
+type Overlay = 'stats' | 'menu' | 'notebook' | 'dex' | 'settings' | 'shop' | 'album';
 /** 방금 고른 이벤트 선택지의 결과 (엔진은 이미 다음으로 넘어가 있고, 화면만 한 번 더 보여 준다) */
 interface EventResult { id: string; emoji: string; title: string; text: string; delta: Delta; money: number; kind: string }
 
@@ -511,8 +511,7 @@ function renderSummary(s: GameState): string {
     ...s.child.known.dislikes.filter((x) => !k0.dislikes.includes(x)).map((x) => `🙅 ${ing(x).name} 싫어함`),
     ...(s.child.known.talent && !k0.talent ? [`✨ 재능: ${TALENT_INFO[s.child.talent].label}`] : []),
   ];
-  const events = s.log.filter((l) => l.age === s.age && l.text.includes(' — ')).map((l) => l.text.split(' — ')[0]);
-  const moment = days.map((a) => a.moment).filter(Boolean).pop();
+  const photo = yearPhoto(s);
   const bars = STAT_KEYS.map((k) => {
     const v = Math.round(s.stats[k]), was = Math.round(s.yearStart[k]), dd = v - was;
     const lo = Math.min(v, was), hi = Math.max(v, was);
@@ -520,8 +519,7 @@ function renderSummary(s: GameState): string {
   }).join('');
   return `
   ${stage('growth', esc(birthdayLine(s)), s.age >= FINAL_AGE ? `${shown(s.age)}살 · 마지막 해` : `${shown(s.age)}살 → ${shown(s.age + 1)}살`)}
-  <section class="px-panel">
-    <div class="px-sub">${esc(s.child.name)}의 ${shown(s.age)}살 · ${stageOf(s.age).name}</div>
+  <section class="px-panel summary">
     <h2 class="px-h">${word}</h2>
     <div class="px-year-facts">
       <span>키 <b>${h0}→${h1}cm</b></span>
@@ -530,7 +528,10 @@ function renderSummary(s: GameState): string {
     </div>
     <div class="px-bars">${bars}</div>
     ${found.length ? `<div class="px-found"><b>올해 알게 된 것</b> ${found.map((x) => `<span>${esc(x)}</span>`).join('')}</div>` : ''}
-    ${moment ? `<p class="px-later"><b>올해의 한 장면</b> 「${esc(moment)}」</p>` : events.length ? `<p class="px-sub">올해 있었던 일 · ${events.map(esc).join(' · ')}</p>` : ''}
+    <div class="px-photo-card">
+      <button class="px-polaroid" data-act="photo-now" aria-label="크게 보기"><img src="${photoUrl(photo, 2)}" alt=""></button>
+      <div><b>올해의 한 장면</b><p>${esc(photo.caption)}</p><button class="btn" data-act="album">사진첩 ›</button></div>
+    </div>
     ${hint ? `<p class="px-omen ${warn ? 'warn' : ''}">${warn ? '⚠ ' : '이대로라면… '}${esc(hint)}</p>` : ''}
     <button class="btn primary wide" data-act="year">${s.age >= FINAL_AGE ? '🎓 어른이 되다' : `🎂 ${shown(s.age + 1)}살 생일`}</button>
   </section>`;
@@ -556,7 +557,7 @@ function renderEnding(s: GameState): string {
       <div>이번 판 ♥ <b>${s.hearts}</b></div>
       <div>따라간 날 <b>${follows}</b>${caught ? ` (들킴 ${caught})` : ''}</div>
     </div>
-    <div class="px-row"><button class="btn" data-act="dex">도감</button><button class="btn primary" data-act="new">다시 키우기</button></div>
+    <div class="px-row"><button class="btn" data-act="album">앨범</button><button class="btn" data-act="dex">도감</button><button class="btn primary" data-act="new">다시 키우기</button></div>
   </section>`;
 }
 
@@ -585,6 +586,7 @@ function renderStats(s: GameState): string {
 function renderMenu(): string {
   return sheet('메뉴', `<div class="stack">
     <button class="btn option" data-act="shop"><span><b>♥ 하트 상점</b><small>옷 색·모자·변장 도구·선물 — 지갑 ♥${dex.hearts}</small></span></button>
+    <button class="btn option" data-act="album"><span><b>📷 사진첩</b><small>해마다 한 장 · 모은 장면 ${Object.keys(dex.photos).length}/${PHOTO_TOTAL}</small></span></button>
     <button class="btn option" data-act="notebook"><span><b>육아 수첩</b><small>알아낸 취향과 지난 기록</small></span></button>
     <button class="btn option" data-act="dex"><span><b>도감</b><small>메뉴 ${dex.menus.length}/${ALL_MENUS.length} · 엔딩 ${dex.endings.length}/${ENDINGS.length}</small></span></button>
     <button class="btn option" data-act="settings"><span><b>설정</b><small>소리, 진동, 실험 설정</small></span></button>
@@ -729,10 +731,76 @@ function renderShop(): string {
     ${group('tool', '변장 도구', '등굣길에 들고 가요')}`);
 }
 
+// ───────────────────────── 사진첩 ─────────────────────────
+let albumTab: 'life' | 'all' = 'life';
+let photoView: Photo | undefined;
+const PHOTO_TOTAL = COMMUTE_PHOTO_IDS.length + DAILY_PHOTO_IDS.length + EVENTS.length;
+const firstSentence = (t: string) => (t.match(/^[^.!?…]*[.!?…]+/)?.[0] ?? t).trim();
+
+/** 올해의 한 장면 고르기: 등굣길 결정적 순간 → 올해 이벤트 → 그 나이의 일상 */
+function yearPhoto(s: GameState): Photo {
+  const base = { age: s.age, gender: s.child.gender, name: s.child.name, theme: dex.equip.theme, hat: dex.equip.hat };
+  const day = [...s.album].reverse().find((d) => d.age === s.age && d.momentKind && d.momentKind !== 'calm')
+    ?? [...s.album].reverse().find((d) => d.age === s.age && d.momentKind);
+  if (day?.momentKind) return { ...base, id: `c-${day.momentKind}`, expr: 'happy', caption: day.moment ?? commuteCaption(day.momentKind) };
+  const evs = (s.eventLog ?? []).filter((e) => e.age === s.age);
+  const ev = [...evs].reverse().find((e) => e.kind === 'random') ?? evs[evs.length - 1];
+  if (ev) return { ...base, id: `e-${ev.id}`, expr: ev.expr, caption: ev.caption };
+  const stage = pxAgeOf(s.age);
+  return { ...base, id: `d-${stage}`, expr: 'happy', caption: dailyCaption(stage) };
+}
+const photoCache = new Map<string, string>();
+/** 사진 그리기 — 찍을 때 입고 있던 옷·모자로 */
+function photoUrl(p: Photo, scale: number): string {
+  const key = `${p.id}|${p.age}|${p.gender}|${p.expr}|${p.theme ?? ''}|${p.hat ?? ''}|${scale}`;
+  let u = photoCache.get(key);
+  if (!u) {
+    setTheme(p.theme ? SHOP_BY_ID[p.theme]?.theme as [string, string] | undefined : undefined);
+    setDefaultHat((p.hat ? SHOP_BY_ID[p.hat]?.hat : undefined) ?? 'none');
+    u = toDataURL(photoScene(p.id, { age: pxAgeOf(p.age), gender: p.gender }, p.expr as Expr), scale);
+    setTheme(dex.equip.theme ? SHOP_BY_ID[dex.equip.theme]?.theme as [string, string] | undefined : undefined);
+    setDefaultHat((dex.equip.hat ? SHOP_BY_ID[dex.equip.hat]?.hat : undefined) ?? 'none');
+    photoCache.set(key, u);
+  }
+  return u;
+}
+const photoTitle = (p: Photo) => {
+  if (p.id.startsWith('e-')) { const e = EVENT_BY_ID[p.id.slice(2)]; return e ? `${e.emoji} ${e.title.replace(/\{c\}/g, p.name)}` : ''; }
+  return p.id.startsWith('c-') ? '🍱 등굣길' : '🏠 일상';
+};
+function renderAlbum(): string {
+  const s = screen === 'game' ? game : undefined;
+  const tabs = `<div class="seg px-album-tabs">${s ? `<button class="${albumTab === 'life' ? 'on' : ''}" data-act="album-tab" data-v="life">이번 생</button>` : ''}<button class="${albumTab === 'all' || !s ? 'on' : ''}" data-act="album-tab" data-v="all">수집 ${Object.keys(dex.photos).length}/${PHOTO_TOTAL}</button></div>`;
+  let body: string;
+  if (s && albumTab === 'life') {
+    body = `<p class="sub">${esc(s.child.name)}의 앨범 · 해마다 한 장</p><div class="px-album">${Array.from({ length: FINAL_AGE + 1 }, (_, a) => {
+      const p = s.photos?.find((x) => x.age === a);
+      return p ? `<button class="px-thumb" data-act="photo-open" data-id="${p.id}" data-age="${a}"><img src="${photoUrl(p, 1)}" alt=""><small>${shown(a)}살</small></button>`
+        : `<div class="px-thumb empty"><span>${a <= s.age ? '…' : '?'}</span><small>${shown(a)}살</small></div>`;
+    }).join('')}</div>`;
+  } else {
+    const group = (title: string, ids: string[]) => `<h3>${title} <small>${ids.filter((id) => dex.photos[id]).length}/${ids.length}</small></h3><div class="px-album">${ids.map((id) => {
+      const p = dex.photos[id];
+      return p ? `<button class="px-thumb" data-act="photo-open" data-id="${id}"><img src="${photoUrl(p, 1)}" alt=""><small>${shown(p.age)}살</small></button>` : '<div class="px-thumb empty"><span>?</span><small>???</small></div>';
+    }).join('')}</div>`;
+    body = group('🍱 등굣길', COMMUTE_PHOTO_IDS.map((k) => `c-${k}`)) + group('🏠 일상', DAILY_PHOTO_IDS.map((k) => `d-${k}`)) + group('📅 그해의 일', EVENTS.map((e) => `e-${e.id}`));
+  }
+  return sheet('📷 사진첩', tabs + body);
+}
+function renderLightbox(): string {
+  const p = photoView;
+  if (!p) return '';
+  return `<div class="px-lightbox" data-act="photo-close">
+    <figure><img src="${photoUrl(p, 3)}" alt=""><figcaption><b>${shown(p.age)}살 · ${esc(p.caption)}</b><small>${esc(photoTitle(p))} · ${esc(p.name)}</small></figcaption></figure>
+    <span class="px-sub">눌러서 닫기</span>
+  </div>`;
+}
+
 function renderOverlay(): string {
   if (!overlay) return '';
   if (overlay === 'dex') return renderDex();
   if (overlay === 'shop') return renderShop();
+  if (overlay === 'album') return renderAlbum();
   if (overlay === 'settings') return renderSettings();
   if (!game) return '';
   if (overlay === 'stats') return renderStats(game);
@@ -788,7 +856,7 @@ function render(): void {
     body = `<div class="day-px">${hud(s)}${tip ? inner.replace('<section class="px-panel">', `<section class="px-panel">${tipHtml(tip)}`) : inner}</div>`;
   }
   else body = renderTitle();
-  app.innerHTML = body + renderOverlay();
+  app.innerHTML = body + renderOverlay() + renderLightbox();
   sceneCanvas = document.getElementById('scene') as HTMLCanvasElement | null;
   if (sceneCanvas) fitScene(sceneCanvas, Number(sceneCanvas.dataset.h));
   syncTimer();
@@ -893,6 +961,7 @@ function openOverlay(o: Overlay): void {
   sfx('tap');
 }
 window.addEventListener('popstate', () => {
+  photoView = undefined;
   if (overlay) overlay = undefined;
   else if (commuteOn) return void history.pushState({ g: 1 }, ''); // 등굣길 도중엔 나가지 않는다
   else if (screen !== 'title') screen = 'title';
@@ -998,6 +1067,7 @@ function onAct(el: HTMLElement): void {
       if (!dex.events.includes(a.id)) dex.events.push(a.id);
       eventResult = { id: a.id, emoji: a.emoji, title: a.title, text: r.text, delta: r.delta, money: r.money, kind };
       const ex = resultExpr(eventResult);
+      (s.eventLog ??= []).push({ age: s.age, id: a.id, expr: ex, caption: firstSentence(r.text), kind: EVENT_BY_ID[a.id]?.kind ?? 'random' });
       if (ex === 'happy') spawn(fx, 'heart', 55, 28, 5); else if (ex === 'sad') spawn(fx, 'dust', 55, 50, 4);
       if (s.step === 'day') resetMorning();
       sfx('tap'); haptic(10);
@@ -1027,14 +1097,28 @@ function onAct(el: HTMLElement): void {
       resetMorning();
       sfx('tap');
       break;
-    case 'year':
+    case 'year': {
       if (!s) return;
+      // 올해의 한 장면을 앨범과 사진첩에 붙인다
+      const ph = yearPhoto(s);
+      s.photos = [...(s.photos ?? []).filter((p) => p.age !== s.age), ph];
+      dex.photos[ph.id] = ph;
       advanceYear(s);
       resetMorning();
       if (s.step === 'ending') { if (!dex.endings.includes(s.endingId!)) dex.endings.push(s.endingId!); sfx('chime'); }
       else sfx('ding');
       haptic(20);
       break;
+    }
+    case 'album': albumTab = screen === 'game' && game ? albumTab : 'all'; openOverlay('album'); break;
+    case 'album-tab': albumTab = el.dataset.v as 'life' | 'all'; top = false; break;
+    case 'photo-now': if (s) photoView = yearPhoto(s); top = false; break;
+    case 'photo-open': {
+      const id = el.dataset.id!;
+      photoView = el.dataset.age ? s?.photos?.find((p) => p.age === Number(el.dataset.age)) : dex.photos[id];
+      top = false; break;
+    }
+    case 'photo-close': photoView = undefined; top = false; break;
     default: return;
   }
   persist();

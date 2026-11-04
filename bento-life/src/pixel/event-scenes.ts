@@ -638,4 +638,36 @@ export function endingScene(id: string, tone: string, look: Look): Grid {
   return (ENDING_SCENES[id] ?? TONE_FALLBACK[tone] ?? TONE_FALLBACK.happy)(look);
 }
 
+// ───────── 사진첩: 등굣길 한 장면 · 일상 장면 ─────────
+type PhotoBuild = (l: Look) => Grid;
+const COMMUTE_PHOTOS: Record<string, { caption: string; build: PhotoBuild }> = {
+  caught: { caption: '결국 딱 걸린 순간', build: (l) => { const g = street(); put(g, pole(), 30, FEET); put(g, parent(2), 40); put(g, kid(l, 'yuck'), 62); g.stamp(['k.k', 'k.k', 'k.k', '...', 'k.k'], 72, 18, { k: P.red }); return g; } },
+  nearmiss: { caption: '아슬아슬하게 쏙 숨은 순간', build: (l) => { const g = street(); put(g, tree(), 22, FEET); put(g, parent(0), 20); put(g, tree(), 22, FEET); put(g, kid(l, 'surprise'), 70); sweat(g, 48, 28); return g; } },
+  'neighbor-fail': { caption: '이웃의 우렁찬 인사에 얼어붙은 순간', build: (l) => { const g = street(); put(g, neighbor(), 24); put(g, parent(0), 46); put(g, kid(l, 'surprise'), 76); g.rect(4, 14, 26, 10, P.white).outline(P.ink); g.hline(7, 26, 18, P.inkSoft); return g; } },
+  'neighbor-ok': { caption: '이웃 입을 손가락 하나로 막은 순간', build: (l) => { const g = street(); put(g, neighbor(), 24); put(g, parent(0), 46); put(g, kid(l, 'neutral'), 80); g.rect(36, 18, 4, 2, P.ink); return g; } },
+  dog: { caption: '모르는 강아지가 졸졸 따라온 날', build: (l) => { const g = street(); put(g, parent(0), 18); put(g, dog(0), 44); put(g, childSide(l, 2, 'happy'), 70); heart(g, 52, 40); return g; } },
+  deliver: { caption: '사물함에 도시락을 몰래 쏙 넣은 순간', build: (l) => { const g = park(); put(g, school(), 4, FLOOR); put(g, kid(l, 'happy'), 78); put(g, miniLunch(), 60); g.stamp(['..y..', '.yyy.', 'yyyyy', '.yyy.', '.y.y.'], 62, 40, { y: P.mustard }); return g; } },
+  'crisis-run': { caption: '참지 못하고 뛰쳐나간 순간', build: (l) => { const g = street(); put(g, parentSide(4, { dash: true }), 34); put(g, kid(l, 'happy'), 60); heart(g, 56, 26); return g; } },
+  'crisis-alone': { caption: '혼자 해내는 걸 숨어서 지켜본 순간', build: (l) => { const g = street(); put(g, tree(), 8, FEET); put(g, parent(0), 8); put(g, tree(), 8, FEET); put(g, kid(l, 'happy'), 64); g.stamp(['..y..', '.yyy.', 'yyyyy', '.yyy.', '.y.y.'], 80, 22, { y: P.mustard }); return g; } },
+  'crisis-hurt': { caption: '뛰어나가고 싶은 걸 꾹 참은 순간', build: (l) => { const g = tint(street(), '#7d86a8', 0.25); put(g, tree(), 8, FEET); put(g, parent(0), 8); put(g, tree(), 8, FEET); put(g, kid(l, 'sad'), 64); return g; } },
+  lost: { caption: '아이를 놓치고 두리번거린 순간', build: () => { const g = street(); put(g, parent(0), 40); put(g, pole(), 80, FEET); g.stamp(['.kk.', 'k..k', '..k.', '.k..', '....', '.k..'], 62, 14, { k: P.ink }); return g; } },
+  calm: { caption: '별일 없던 평화로운 등굣길', build: (l) => { const g = street(); put(g, tree(), 6, FEET); put(g, childSide(l, 1, 'neutral'), 50); put(g, parent(0), 84); return g; } },
+};
+const DAILY_CAPTION: Record<number, string> = {
+  1: '처음 먹어 본 이유식', 2: '혼자 숟가락질한 날', 4: '유치원 도시락 가방', 7: '책가방보다 큰 도시락통',
+  11: '반찬 하나 더 넣어 달라던 날', 15: '말없이 비워 온 도시락통', 18: '밤 열 시의 야자 도시락', 19: '마지막으로 싼 도시락',
+};
+export const COMMUTE_PHOTO_IDS = Object.keys(COMMUTE_PHOTOS);
+export const DAILY_PHOTO_IDS = Object.keys(DAILY_CAPTION).map(Number);
+export const commuteCaption = (kind: string) => COMMUTE_PHOTOS[kind]?.caption ?? '등굣길';
+export const dailyCaption = (stage: number) => DAILY_CAPTION[stage] ?? '도시락 먹는 날';
+/** 사진 한 장 그리기 — id: c-<등굣길 종류> · e-<이벤트> · d-<성장 단계> */
+export function photoScene(id: string, look: Look, expr: Expr = 'happy'): Grid {
+  const [kind, rest] = [id.slice(0, 1), id.slice(2)];
+  if (kind === 'c') return (COMMUTE_PHOTOS[rest] ?? COMMUTE_PHOTOS.calm).build(look);
+  if (kind === 'e') return eventScene(rest, look, expr);
+  const g = kitchen(); kidBehind(g, look, 'happy', 22); counterFront(g); put(g, miniLunch(), 56, 60); heart(g, 60, 40);
+  return g;
+}
+
 void dog;

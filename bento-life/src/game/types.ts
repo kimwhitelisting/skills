@@ -70,6 +70,8 @@ export interface CommuteResult {
   indep: number;
   happy: number;
   moment?: string;
+  /** 등굣길 한 장면의 종류 (caught, nearmiss, deliver…) — 사진첩 사진 */
+  momentKind?: string;
   log?: string[];
 }
 
@@ -110,7 +112,10 @@ export interface Today {
 }
 
 /** 앨범 한 칸 (하루 기록) */
-export interface DayRecord { age: number; menu: string; lunch: number; leave?: LeaveChoice; over?: CommuteResult['over']; moment?: string }
+export interface DayRecord { age: number; menu: string; lunch: number; leave?: LeaveChoice; over?: CommuteResult['over']; moment?: string; momentKind?: string }
+
+/** 사진첩 한 장 — 그림은 저장하지 않고, 다시 그릴 재료만 저장한다 */
+export interface Photo { id: string; age: number; gender: 'boy' | 'girl'; expr: string; caption: string; name: string; theme?: string; hat?: string }
 
 export interface LogEntry { age: number; text: string }
 
@@ -134,6 +139,10 @@ export interface GameState {
   /** 사춘기 경계심 0~0.4: 따라갈수록 쌓이고, 믿고 보내면 풀린다 */
   vigilance: number;
   album: DayRecord[];
+  /** 이번 생 앨범: 해마다 한 장 */
+  photos?: Photo[];
+  /** 올해 고른 이벤트 결과 (사진 고르기용) */
+  eventLog?: { age: number; id: string; expr: string; caption: string; kind: 'milestone' | 'random' }[];
   flags: Record<string, number>;
   eventQueue: string[];
   seenEvents: string[];
