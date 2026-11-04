@@ -3,6 +3,14 @@ import type { Prefs } from './prefs.ts';
 
 let ctx: AudioContext | undefined;
 let prefs: Pick<Prefs, 'sound' | 'haptics'> = { sound: true, haptics: true };
+/** 효과음·배경음악이 함께 쓰는 오디오 장치. create면 없을 때 만든다 (사용자가 누른 뒤에만) */
+export function audioCtx(create = false): AudioContext | undefined {
+  try {
+    if (!ctx && create) ctx = new AudioContext();
+    if (ctx && create && ctx.state === 'suspended') void ctx.resume();
+  } catch { return undefined; }
+  return ctx;
+}
 export const setFeedbackPrefs = (p: Pick<Prefs, 'sound' | 'haptics'>) => { prefs = p; };
 
 function tone(freq: number, dur: number, opts: { type?: OscillatorType; vol?: number; to?: number; delay?: number } = {}) {

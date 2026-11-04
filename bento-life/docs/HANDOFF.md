@@ -15,7 +15,7 @@
 cd bento-life
 npm install
 npm run dev            # http://localhost:5173
-npm test               # 테스트 21개 + 자동 플레이 2,000판
+npm test               # 테스트 22개 + 자동 플레이 2,000판
 npm run endings        # 플레이 성향별 엔딩 분포 (약 6천 판)
 npm run balance        # 성향별 평균 스탯
 npm run build:preview  # dist-preview/*.single.html (본 게임 + 맛보기들)
@@ -36,6 +36,9 @@ npx tsc --noEmit -p .  # 타입 검사
 | 그림 | 전부 코드 도트. 아이 7단계, 재료 28, 이벤트·엔딩 장면 107개 | `src/pixel/` → [`PIXEL.md`](PIXEL.md) |
 | 저장 | localStorage `bento-life:run:v2` (형식을 바꾸면 버전을 올린다), 도감 `bento-life:dex:v1` | `src/game/save.ts` |
 | 실험 설정 | 1년 하루 수 1~3, 반찬값 수입, 재료 가격 (새 게임부터) | `src/game/config.ts` |
+| 배경음악 | 파일 없이 WebAudio로 연주하는 8비트 창작곡 10곡 (타이틀·아침·등굣길·저녁·이벤트·결산·엔딩 분위기 4종). 설정에서 효과음과 따로 끄기 | `src/ui/music.ts` |
+| 처음 안내 | 처음 보는 화면마다 한 번 (이유식·아침·배웅·사춘기·저녁·결산·붉은 경고). 떠 있는 동안 아침 시계 멈춤. 설정 > "처음 안내 다시 보기" | `src/main.ts` (`TIPS`) |
+| 도트 부품 작업대 | 고친 부품 PNG를 올리면 표정·걷기·장면 속 모습을 바로 확인 (`/proto-parts.html`) | `src/proto/parts-lab.ts` |
 
 ## 규칙 (깨지면 테스트가 실패)
 - 이벤트·엔딩을 추가하면 `src/pixel/event-scenes.ts`의 `SCENES` / `ENDING_SCENES`에 장면을 꼭 넣는다
@@ -54,7 +57,7 @@ npx tsc --noEmit -p .  # 타입 검사
 2. 안드로이드 포장: Capacitor, 앱 아이콘, 스플래시, 세로 고정, 뒤로가기 (지금 브라우저 기록 기반이라 Capacitor 기본 동작과 호환)
 3. 광고 (AdMob) + 광고 제거 결제. 그림이 아동용처럼 보이면 Play가 아동 대상 앱으로 분류해 광고가 제한될 수 있음 — 타깃은 20~40대 부모
 4. 사람이 고친 부품 PNG 반영 (`art-src/pixel-parts/` → `src/assets/pixel/parts/`)
-5. 소리: 지금은 WebAudio 합성 효과음만 (`src/ui/feedback.ts`)
+5. 배경음악은 귀로 들어 보며 다듬기 (곡은 `music.ts` 맨 위 악보만 고치면 된다)
 
 ## 지켜 온 약속
 - 외부 GitHub 코드 설치(pixelfx `npm i github:…`, codixel 복제)는 자동 권한 검사에서 막혔다. 우회하지 말고 사용자가 허용하면 진행
@@ -63,4 +66,4 @@ npx tsc --noEmit -p .  # 타입 검사
 - 커밋 메시지 끝: `Co-Authored-By` / `Claude-Session` 두 줄 (기존 커밋 참고)
 
 ## 맛보기들 (비교용으로 남겨 둠)
-`npm run dev` 후 `/proto-day.html`(도시락 하루 — 본 게임에 합쳐진 원본), `/proto-follow.html`(등굣길), `/proto-order.html`(아이 마음 읽기), `/proto-pixel.html`(도트 샘플). 파스텔판 예전 화면 관련 파일(`src/art.ts`, `docs/ART.md`, `docs/ai-prompts.md`)은 지금 본 게임에서 쓰지 않는다.
+`npm run dev` 후 `/proto-parts.html`(도트 부품 작업대), `/proto-day.html`(도시락 하루 — 본 게임에 합쳐진 원본), `/proto-follow.html`(등굣길), `/proto-order.html`(아이 마음 읽기), `/proto-pixel.html`(도트 샘플). 파스텔판 예전 화면 관련 파일(`src/art.ts`, `docs/ART.md`, `docs/ai-prompts.md`)은 지금 본 게임에서 쓰지 않는다.

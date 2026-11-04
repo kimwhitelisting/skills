@@ -204,6 +204,23 @@ describe('endings', () => {
   });
 });
 
+describe('music', () => {
+  it('every track parses and its parts line up bar for bar', async () => {
+    const { TRACK_IDS, trackOf, parse, stepsOf, freq } = await import('../src/ui/music.ts');
+    expect(Math.round(freq('A4'))).toBe(440);
+    expect(Math.round(freq('C4'))).toBe(262);
+    for (const id of TRACK_IDS) {
+      const t = trackOf(id);
+      const n = stepsOf(t);
+      expect(n % 8, id).toBe(0);
+      const count = (s: string) => s.split(/\s+/).filter((x) => x && x !== '|').length;
+      expect(count(t.bass), `${id} bass`).toBe(n);
+      if (t.drum) expect(count(t.drum), `${id} drum`).toBe(n);
+      expect(parse(t.lead).length, id).toBeGreaterThan(4);
+    }
+  });
+});
+
 describe('pixel parts', () => {
   it('every layer the generator draws can be overridden by a part with the same key', async () => {
     const { childFront, childLayers, partKey, PART_OVERRIDES } = await import('../src/pixel/child.ts');

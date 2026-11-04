@@ -19,7 +19,7 @@ npm run dev        # http://localhost:5173 — 휴대폰으로 같은 와이파�
 npm test           # 단위 테스트 + 2,000판 자동 플레이 (멈춤/버그 검사)
 npm run balance    # 플레이 성향별 평균 스탯·엔딩 분포 리포트
 npm run build      # dist/ 에 배포용 빌드
-npm run build:preview  # dist-preview/*.single.html — 휴대폰 미리보기 페이지용 단일 HTML (본 게임 + 맛보기 2종)
+npm run build:preview  # dist-preview/*.single.html — 휴대폰 미리보기 페이지용 단일 HTML (본 게임 + 맛보기 + 도트 부품 작업대)
 ```
 
 ## 구조

@@ -62,3 +62,25 @@
 .px-tone-h { margin: 12px 0 6px; font-size: 13px; }
 .px-later { margin: 0; font-size: 13px; line-height: 1.5; background: #fbeed6; border-left: 4px solid var(--gold); padding: 6px 8px; }
 .px-omen.warn { border-color: var(--red); color: var(--red-d); background: #fde3dc; font-weight: 700; }
+/* 처음 하는 사람 안내 */
+.px-tip { display: flex; flex-direction: column; gap: 6px; background: #fff3c4; border: 3px solid var(--ink); box-shadow: 0 4px 0 var(--ink); padding: 8px 10px; animation: bubble .25s ease-out; }
+.px-tip p { margin: 0; font-size: 13px; line-height: 1.55; }
+.px-tip .btn { align-self: flex-end; min-height: 36px; padding: 4px 14px; font-size: 14px; }
+/* 도트 부품 작업대 (proto-parts.html) */
+.lab { min-height: 100dvh; display: flex; flex-direction: column; }
+.lab .seg { display: flex; flex-wrap: wrap; gap: 4px; }
+.lab .seg button, .lab-layers button { min-height: 34px; padding: 0 8px; border: 3px solid var(--ink); background: var(--pane); font: inherit; font-size: 12px; font-weight: 700; color: var(--ink); cursor: pointer; }
+.lab .seg button.on, .lab-layers button.on { background: var(--ink); color: var(--pane); }
+.lab-layers { display: flex; flex-wrap: wrap; gap: 4px; }
+.lab-layers button.mod { box-shadow: inset 0 -4px 0 var(--mint); }
+.lab-row { display: flex; gap: 12px; flex-wrap: wrap; }
+.lab-part { display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
+.lab-part canvas { border: 3px solid var(--ink); image-rendering: pixelated; }
+.lab-side { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 150px; }
+.lab-side code, .lab-list code { font-size: 12px; word-break: break-all; }
+.lab-up { display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.lab-msg { margin: 0; font-size: 13px; font-weight: 700; }
+.lab-strip { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; }
+.lab-strip canvas { image-rendering: pixelated; background: #f7eedf; border: 2px solid var(--ink); }
+.lab-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.lab-list .btn { min-height: 32px; padding: 2px 10px; font-size: 13px; }

@@ -42,6 +42,7 @@ import { blit, clearSprites, sprite } from './pixel/sprite-cache.ts';
 import { isFull, menuLabel, placeOrToggle, SLOTS, SLOT_LABEL, type Draft } from './proto/bento-ui.ts';
 import { mountFollow, unmountFollow } from './proto/follow-core.ts';
 import { haptic, setFeedbackPrefs, sfx } from './ui/feedback.ts';
+import { nowPlaying, setMusicEnabled, setTrack, unlockMusic, type TrackId } from './ui/music.ts';
 import { loadPrefs, savePrefs } from './ui/prefs.ts';
 
 // ───────────────────────── 상태 ─────────────────────────
@@ -55,6 +56,7 @@ app.classList.add('pixel-ui');
 loadPixelFont();
 const prefs = loadPrefs();
 setFeedbackPrefs(prefs);
+setMusicEnabled(prefs.music);
 let screen: Screen = 'title';
 let overlay: Overlay | undefined;
 let game: GameState | undefined = loadRun();
@@ -564,6 +566,7 @@ function renderSettings(): string {
   const income = t.incomeBase + t.incomePerDay * t.daysPerYear;
   const running = game && game.step !== 'ending' ? tuningOf(game) : undefined;
   return sheet('설정', `
+    <div class="toggle-row"><span>배경음악</span><button class="switch ${prefs.music ? 'on' : ''}" data-act="pref" data-key="music" aria-pressed="${prefs.music}"><i></i></button></div>
     <div class="toggle-row"><span>효과음</span><button class="switch ${prefs.sound ? 'on' : ''}" data-act="pref" data-key="sound" aria-pressed="${prefs.sound}"><i></i></button></div>
     <div class="toggle-row"><span>진동</span><button class="switch ${prefs.haptics ? 'on' : ''}" data-act="pref" data-key="haptics" aria-pressed="${prefs.haptics}"><i></i></button></div>
     <h3>실험 설정 <small>새 게임부터 적용</small></h3>
@@ -572,7 +575,8 @@ function renderSettings(): string {
     <div class="field"><span>재료 가격</span>${seg('priceMult', [0.8, 1, 1.2, 1.5], (v) => `×${v}`)}</div>
     <p class="sub">→ 1년 수입 ₩${income} · 한 판 ${t.daysPerYear * 20}일</p>
     ${running ? `<p class="sub">지금 판: 1년 ${running.daysPerYear}일 · 수입 ₩${yearlyIncome(game!)} · 가격 ×${running.priceMult}</p>` : ''}
-    <button class="btn wide" data-act="tune-reset">기본값으로</button>`);
+    <button class="btn wide" data-act="tune-reset">기본값으로</button>
+    <button class="btn wide" data-act="tips-reset">처음 안내 다시 보기</button>`);
 }
 
 function renderOverlay(): string {
@@ -584,6 +588,30 @@ function renderOverlay(): string {
   if (overlay === 'menu') return renderMenu();
   return renderNotebook(game);
 }
+
+// ───────────────────────── 처음 하는 사람 안내 (한 번씩) ─────────────────────────
+const TIPS: Record<string, string> = {
+  baby: '아직 아기라 이유식만 먹어요. 주식·메인·반찬 세 칸을 채워 먹여 보세요. 뭘 좋아하는지는 먹여 봐야 알아요.',
+  morning: '아이의 말을 잘 들어 봐요. 오늘 사정(체육·시험·배탈…)에 맞는 도시락이면 별을 더 받아요. 재료를 골라 세 칸을 채우고 뚜껑을 닫아요. 등교 시간이 지나면 남은 칸이 아무거나로 채워져요.',
+  'leave-small': '손잡고 같이 가면 유대감이, 어린이집 차에 태워 보내면 자립심이 자라요.',
+  leave: '몰래 따라가면 등굣길 미니게임! 들키지 않고 가까이 있을수록 ♥가 쌓여요. 하지만 매일 따라가면 아이가 혼자 서는 법을 배우지 못해요.',
+  teen: '사춘기가 시작됐어요. 따라갈수록 경계심이 쌓여 더 자주 뒤를 돌아봐요. 믿고 보내면 조금씩 풀려요.',
+  evening: '도시락이 돌아왔어요. 먹은 칸만 비어 있어요. 아이의 한마디에 다음 도시락 힌트가 숨어 있어요.',
+  summary: '한 해가 끝났어요. 문기둥 눈금이 해마다 올라가요. "이대로라면…"은 지금 향하고 있는 엔딩 방향이에요.',
+  warn: '붉은 경고는 스무 살이 되기 전에 이야기가 끝날 수도 있다는 신호예요. 마음을 달래 주는 선택으로 되돌릴 수 있어요.',
+};
+function currentTip(): string | undefined {
+  const s = game;
+  if (screen !== 'game' || !s || overlay || eventResult || s.active) return undefined;
+  const t = s.today;
+  const want = (k: string) => (prefs.seenTips.includes(k) ? undefined : k);
+  if (s.step === 'day' && t?.phase === 'morning' && !busy) return want(s.age <= 1 ? 'baby' : 'morning');
+  if (s.step === 'day' && t?.phase === 'leave') return (s.age >= 13 && want('teen')) || want(s.age < 6 ? 'leave-small' : 'leave');
+  if (s.step === 'day' && t?.phase === 'evening') return want('evening');
+  if (s.step === 'summary') return (earlyWarning(s) && want('warn')) || want('summary');
+  return undefined;
+}
+const tipHtml = (k: string) => `<div class="px-tip"><p>${esc(TIPS[k])}</p><button class="btn" data-act="tip-ok" data-key="${k}">알겠어요</button></div>`;
 
 // ───────────────────────── 렌더 ─────────────────────────
 function gameBody(s: GameState): string {
@@ -603,12 +631,17 @@ function render(): void {
   sceneKind = undefined;
   let body: string;
   if (screen === 'intro') body = renderIntro();
-  else if (screen === 'game' && s) body = `<div class="day-px">${hud(s)}${gameBody(s)}</div>`;
+  else if (screen === 'game' && s) {
+    const tip = currentTip();
+    const inner = gameBody(s);
+    body = `<div class="day-px">${hud(s)}${tip ? inner.replace('<section class="px-panel">', `<section class="px-panel">${tipHtml(tip)}`) : inner}</div>`;
+  }
   else body = renderTitle();
   app.innerHTML = body + renderOverlay();
   sceneCanvas = document.getElementById('scene') as HTMLCanvasElement | null;
   if (sceneCanvas) fitScene(sceneCanvas, Number(sceneCanvas.dataset.h));
   syncTimer();
+  setTrack(musicFor());
 }
 
 // ───────────────────────── 아침 시계 ─────────────────────────
@@ -616,11 +649,11 @@ function inMorning(): boolean {
   return screen === 'game' && !!game && game.step === 'day' && game.today?.phase === 'morning' && !game.active && !eventResult;
 }
 function syncTimer(): void {
-  const run = inMorning() && hasLeave(game!.age) && !overlay && !busy;
+  const run = inMorning() && hasLeave(game!.age) && !overlay && !busy && !currentTip();
   if (!run) { clearInterval(timerId); timerId = 0; return; }
   if (timerId) return;
   timerId = window.setInterval(() => {
-    if (!inMorning() || overlay || busy || document.hidden) return;
+    if (!inMorning() || overlay || busy || document.hidden || currentTip()) return;
     timer -= 0.25;
     const bar = document.getElementById('clock');
     if (bar) { bar.style.width = `${Math.max(0, (timer / MORNING_TIME) * 100)}%`; bar.classList.toggle('low', timer < 10); }
@@ -667,12 +700,23 @@ function afterEvening(s: GameState): void {
 }
 
 // ───────────────────────── 등굣길 ─────────────────────────
+/** 지금 장면의 배경음악 */
+function musicFor(): TrackId | undefined {
+  const s = game;
+  if (screen !== 'game' || !s) return 'title';
+  if (s.step === 'ending' && s.endingId) return `end-${ENDING_BY_ID[s.endingId].tone}` as TrackId;
+  if (eventResult || s.active) return 'event';
+  if (s.step === 'day' && s.today) return s.today.phase === 'evening' ? 'evening' : s.today.phase === 'commute' ? 'commute' : 'morning';
+  return 'growth';
+}
+
 function startCommute(s: GameState): void {
   if (commuteOn) return;
   commuteOn = true;
   clearInterval(timerId); timerId = 0;
   sceneKind = undefined;
   const p = commuteParams(s);
+  setTrack('commute');
   mountFollow(app, {
     age: p.level, standalone: false, label: `${s.age}살`, title: `${s.age}살 등굣길`, look: lookOf(s),
     mood: p.mood, lookMult: p.lookMult, forgot: p.forgot,
@@ -754,10 +798,12 @@ function onAct(el: HTMLElement): void {
     case 'close': history.back(); return;
     case 'home': overlay = undefined; screen = 'title'; history.replaceState(null, ''); break;
     case 'event-ok': eventResult = undefined; sfx('tap'); break;
+    case 'tip-ok': prefs.seenTips = [...prefs.seenTips, el.dataset.key!]; sfx('tap'); top = false; break;
+    case 'tips-reset': prefs.seenTips = []; prefs.seenIntro = false; sfx('tap'); top = false; break;
     case 'pref': {
-      const key = el.dataset.key as 'sound' | 'haptics';
+      const key = el.dataset.key as 'sound' | 'haptics' | 'music';
       prefs[key] = !prefs[key];
-      setFeedbackPrefs(prefs); sfx('tap'); top = false; break;
+      setFeedbackPrefs(prefs); setMusicEnabled(prefs.music); if (prefs.music) unlockMusic(); sfx('tap'); top = false; break;
     }
     case 'tune': prefs.tuning = { ...prefs.tuning, [el.dataset.key as keyof Tuning]: Number(el.dataset.v) }; sfx('tap'); top = false; break;
     case 'tune-reset': prefs.tuning = {}; top = false; break;
@@ -813,7 +859,9 @@ function onAct(el: HTMLElement): void {
   if (top) window.scrollTo({ top: 0 });
 }
 
+app.addEventListener('pointerdown', () => unlockMusic());
 app.addEventListener('click', (e) => {
+  unlockMusic();
   if (commuteOn) return; // 등굣길은 follow-core가 처리
   const target = e.target as HTMLElement;
   const s = game;
@@ -841,6 +889,6 @@ function loop(now: number) {
 window.addEventListener('resize', () => { if (sceneCanvas) fitScene(sceneCanvas, Number(sceneCanvas.dataset.h)); });
 
 // 자동 테스트용 (게임 진행에는 영향 없음)
-(window as unknown as { __game: () => unknown }).__game = () => game && { result: !!eventResult, step: game.step, age: game.age, phase: game.today?.phase, active: !!game.active, money: game.money, ending: game.endingId, opts: game.today ? leaveOptions(game) : [] };
+(window as unknown as { __game: () => unknown }).__game = () => game && { music: nowPlaying(), tip: currentTip(), result: !!eventResult, step: game.step, age: game.age, phase: game.today?.phase, active: !!game.active, money: game.money, ending: game.endingId, opts: game.today ? leaveOptions(game) : [] };
 
 void loadPartOverrides().catch(() => 0).then(() => { clearSprites(); render(); requestAnimationFrame(loop); });

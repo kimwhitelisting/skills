@@ -4,6 +4,10 @@ import type { Tuning } from '../game/config.ts';
 export interface Prefs {
   sound: boolean;
   haptics: boolean;
+  /** 배경음악 */
+  music: boolean;
+  /** 이미 본 첫 플레이 안내 */
+  seenTips: string[];
   /** 실험 설정 — 다음 새 게임부터 적용 */
   tuning: Partial<Tuning>;
   seenIntro: boolean;
@@ -11,7 +15,7 @@ export interface Prefs {
 }
 
 const KEY = 'bento-life:prefs:v1';
-const DEFAULTS: Prefs = { sound: true, haptics: true, tuning: {}, seenIntro: false, seenDragHint: false };
+const DEFAULTS: Prefs = { sound: true, haptics: true, music: true, seenTips: [], tuning: {}, seenIntro: false, seenDragHint: false };
 
 export function loadPrefs(): Prefs {
   try {
