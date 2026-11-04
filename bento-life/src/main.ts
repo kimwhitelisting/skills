@@ -1038,7 +1038,7 @@ function onAct(el: HTMLElement): void {
         if (it.kind === 'theme') dex.equip.theme = it.id;
         if (it.kind === 'hat') dex.equip.hat = it.id;
         applyEquip();
-        shopMsg = `${it.emoji} ${it.name}을(를) 샀어요.`;
+        shopMsg = `${it.emoji} ${josa(it.name, '을/를')} 샀어요.`;
       }
       sfx('chime'); haptic(15); top = false; break;
     }

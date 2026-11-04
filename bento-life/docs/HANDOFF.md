@@ -15,7 +15,7 @@
 cd bento-life
 npm install
 npm run dev            # http://localhost:5173
-npm test               # 테스트 22개 + 자동 플레이 2,000판
+npm test               # 테스트 27개 + 자동 플레이 2,000판
 npm run endings        # 플레이 성향별 엔딩 분포 (약 6천 판)
 npm run balance        # 성향별 평균 스탯
 npm run build:preview  # dist-preview/*.single.html (본 게임 + 맛보기들)
