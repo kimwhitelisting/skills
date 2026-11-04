@@ -3,18 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
-    <meta name="theme-color" content="#f4ecdd" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#23253a" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f3e2c6" />
     <title>도시락 육아</title>
   </head>
   <body>
-    <!-- 손그림 느낌의 울퉁불퉁한 테두리 (큰 카드/액자에만 사용) -->
-    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-      <filter id="rough" x="-5%" y="-5%" width="110%" height="110%">
-        <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="3" seed="7" result="n" />
-        <feDisplacementMap in="SourceGraphic" in2="n" scale="5" />
-      </filter>
-    </svg>
     <div id="app"></div>
     <script type="module" src="/src/entry-app.ts"></script>
   </body>
