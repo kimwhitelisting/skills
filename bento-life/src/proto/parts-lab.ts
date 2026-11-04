@@ -66,9 +66,19 @@ function canvasOf(g: Grid, scale: number, grid = false): HTMLCanvasElement {
   paint(ctx, g, 0, 0, scale);
   return c;
 }
+/** 미리보기 링크(claude.ai) 안에서는 그쪽 저장 기능으로, 그 밖(npm run dev)에서는 일반 다운로드로 */
+interface Saver { save(r: { filename: string; data: Blob }): Promise<unknown> }
+const claudeUse = (window as unknown as { claude?: { use?: (n: string) => Promise<unknown> } }).claude?.use;
+const saverP: Promise<Saver | null> = claudeUse ? (claudeUse('downloads') as Promise<Saver | null>).catch(() => null) : Promise.resolve(null);
 function download(g: Grid, name: string): void {
-  canvasOf(g, 1).toBlob((b) => {
+  canvasOf(g, 1).toBlob(async (b) => {
     if (!b) return;
+    const saver = await saverP;
+    if (saver) {
+      try { await saver.save({ filename: `${name}.png`, data: b }); msg = `✓ ${name}.png 저장했어요.`; }
+      catch (e) { const code = (e as { code?: string }).code; msg = code === 'declined' ? '저장을 취소했어요.' : '⚠ 이 화면에서는 파일을 저장할 수 없어요.'; }
+      return render();
+    }
     const a = document.createElement('a');
     a.href = URL.createObjectURL(b); a.download = `${name}.png`;
     document.body.append(a); a.click(); a.remove();
