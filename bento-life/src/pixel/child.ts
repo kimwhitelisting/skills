@@ -2,13 +2,17 @@
  * 아이 도트 캐릭터 생성기 — 층(레이어)을 따로 그려서 겹친다.
  *   다리 → 옷 → 머리(피부) → 머리카락 → 얼굴 → 소품  → 마지막에 외곽선
  * 각 층은 코드로 그리지만, 사람이 고친 PNG가 있으면 그걸로 바꿔 끼운다 (PART_OVERRIDES).
- * 같은 규칙으로 그리기 때문에 7살에서 15살로 자라도 같은 아이로 보인다.
+ * 같은 규칙으로 그리기 때문에 아기에서 스무 살까지 7단계로 자라도 같은 아이로 보인다.
+ *   1 아기(우주복) · 4 유치원(노란 원복) · 7 초등 저학년 · 11 초등 고학년 · 15 중학생 교복 · 18 고등학생 교복 · 19 스무 살 사복
  *  - 남자아이: 진갈색 머리 + 정수리 뻗친 머리 / 여자아이: 밤색 단발 + 머스터드색 핀 / 둘 다 왼쪽 눈 밑 점
  */
 import { Grid, recolor, rotsprite, type Color } from './grid.ts';
 import { P } from './palette.ts';
 
-export type PxAge = 7 | 15;
+export type PxAge = 1 | 4 | 7 | 11 | 15 | 18 | 19;
+export const PX_AGES: PxAge[] = [1, 4, 7, 11, 15, 18, 19];
+/** 실제 나이 → 도트 성장 단계 */
+export const pxAgeOf = (age: number): PxAge => (age <= 1 ? 1 : age <= 5 ? 4 : age <= 9 ? 7 : age <= 12 ? 11 : age <= 15 ? 15 : age <= 18 ? 18 : 19);
 export type Gender = 'boy' | 'girl';
 export type Expr = 'neutral' | 'happy' | 'yuck' | 'sad' | 'surprise';
 export type View = 'front' | 'side';
@@ -27,11 +31,21 @@ export const partKey = (view: View, look: Look, layer: string) => `${view}-${loo
 const part = (view: View, look: Look, layer: string, make: () => Grid): Grid => PART_OVERRIDES.get(partKey(view, look, layer)) ?? make();
 
 // ───────── 체형 ─────────
-function body(age: PxAge) {
-  return age === 7
-    ? { rx: 7.5, ry: 7, torsoTop: 25, torsoH: 8, legTop: 33, legH: 5, torsoW: 12 }
-    : { rx: 6.5, ry: 7, torsoTop: 19, torsoH: 10, legTop: 29, legH: 9, torsoW: 12 };
-}
+// 발끝은 늘 같은 줄(38)에 닿는다: legTop + legH = 38. 클수록 머리는 작아지고 몸과 다리가 길어진다.
+const BODY: Record<PxAge, { rx: number; ry: number; torsoTop: number; torsoH: number; legTop: number; legH: number; torsoW: number }> = {
+  1: { rx: 8, ry: 7.5, torsoTop: 29, torsoH: 6, legTop: 35, legH: 3, torsoW: 12 },
+  4: { rx: 7.8, ry: 7.2, torsoTop: 27, torsoH: 7, legTop: 34, legH: 4, torsoW: 12 },
+  7: { rx: 7.5, ry: 7, torsoTop: 25, torsoH: 8, legTop: 33, legH: 5, torsoW: 12 },
+  11: { rx: 7, ry: 7, torsoTop: 22, torsoH: 9, legTop: 31, legH: 7, torsoW: 12 },
+  15: { rx: 6.5, ry: 7, torsoTop: 19, torsoH: 10, legTop: 29, legH: 9, torsoW: 12 },
+  18: { rx: 6.3, ry: 7, torsoTop: 17, torsoH: 11, legTop: 28, legH: 10, torsoW: 12 },
+  19: { rx: 6.3, ry: 7, torsoTop: 17, torsoH: 11, legTop: 28, legH: 10, torsoW: 12 },
+};
+const body = (age: PxAge) => BODY[age];
+type Style = 'baby' | 'kinder' | 'kid' | 'tween' | 'uniform' | 'senior' | 'casual';
+const STYLE: Record<PxAge, Style> = { 1: 'baby', 4: 'kinder', 7: 'kid', 11: 'tween', 15: 'uniform', 18: 'senior', 19: 'casual' };
+const BABY_PINK = '#f6b7c0', BABY_PINK_D = '#e48896', TWEEN_PLUM = '#a77bb3', TWEEN_PLUM_D = '#86609a';
+const SENIOR = '#575b70', SENIOR_D = '#40435a', CASUAL_BOY = '#7fa7c9', CASUAL_BOY_D = '#5f88ab', CASUAL_GIRL = '#e9a3b0', CASUAL_GIRL_D = '#cf8191', LONG_SKIRT = '#c9b28f', SENIOR_SKIRT = '#7a4e5a';
 const blank = () => new Grid(CHILD_W, CHILD_H);
 const headCenter = (look: Look, view: View) => {
   const b = body(look.age);
@@ -51,15 +65,23 @@ function headFull(look: Look, view: View): Grid {
   const hair = look.gender === 'boy' ? P.hairBoy : P.hairGirl;
   const hairHi = look.gender === 'boy' ? P.hairBoyHi : P.hairGirlHi;
   const fy = Math.round(cy - 3);
-  if (look.age === 15) g.rect(cx - 1, Math.round(cy + ry) - 1, 2, 2, P.skinShade); // 목
+  const baby = look.age === 1;
+  const long = look.age >= 18 ? 3 : 0;
+  if (look.age >= 15) g.rect(cx - 1, Math.round(cy + ry) - 1, 2, 2, P.skinShade); // 목
   g.ellipse(cx, cy, rx, ry, P.skin);
-  if (look.gender === 'girl') {
-    g.ellipse(cx, cy - 0.5, rx + 1.3, ry + 0.8, hair, (x, y) => y <= fy || (y <= cy + 3 && (side ? x < cx : x < cx - rx + 2 || x > cx + rx - 2)));
+  if (baby) {
+    // 아기: 정수리에 몇 가닥 (여자아이는 핀, 남자아이는 뻗친 머리 — 크면서 이어진다)
+    const top = Math.round(cy - ry);
+    g.ellipse(cx, cy - 0.5, rx + 0.3, ry + 0.3, hair, (_x, y) => y <= top + 1);
+    if (look.gender === 'girl') g.set(cx, top - 1, hair).set(cx - 1, top - 2, hair).rect(side ? Math.round(cx + 1) : Math.round(cx - 4), top + 1, 2, 1, P.clip);
+    else g.set(cx + 1, top - 1, hair).set(cx + 2, top - 2, hair).set(cx + 3, top - 2, hair);
+  } else if (look.gender === 'girl') {
+    g.ellipse(cx, cy - 0.5, rx + 1.3, ry + 0.8 + long * 0.4, hair, (x, y) => y <= fy || (y <= cy + 3 + long && (side ? x < cx : x < cx - rx + 2 || x > cx + rx - 2)));
     for (let x = Math.round(cx - rx + 1); x <= Math.round(cx + rx - 1); x++) if (!side || x >= cx - 1) g.set(x, fy + 1, (x - Math.round(cx)) % 4 === 0 ? P.skin : hair);
     g.rect(side ? Math.round(cx + 1) : Math.round(cx - rx + 1), fy - 1, 2, 1, P.clip);
     g.set(Math.round(cx - 1), Math.round(cy - ry), hairHi).set(Math.round(cx), Math.round(cy - ry), hairHi);
   } else {
-    g.ellipse(cx, cy - 0.5, rx + 0.8, ry + 0.8, hair, (x, y) => y <= fy || (y <= cy && (side ? x < cx - 1 : x < cx - rx + 1 || x > cx + rx - 1)));
+    g.ellipse(cx, cy - 0.5, rx + 0.8, ry + 0.8, hair, (x, y) => y <= fy || (y <= cy + (long ? 1 : 0) && (side ? x < cx - 1 : x < cx - rx + 1 || x > cx + rx - 1)));
     for (let x = Math.round(cx - rx + 1); x <= Math.round(cx + rx - 1); x++) if ((!side || x >= cx - 1) && (x + 2) % 3 !== 0) g.set(x, fy + 1, hair);
     const top = Math.round(cy - ry - 1);
     g.set(cx + 1, top, hair).set(cx + 2, top - 1, hair).set(cx + 3, top - 1, hair);
@@ -97,13 +119,13 @@ function face(look: Look, view: View, expr: Expr, blink: boolean): Grid {
       }
       case 'surprise': g.rect(ex, ey - 1, 2, 3, P.eye).set(ex, ey - 1, P.white); break;
       default:
-        g.rect(ex, ey, 2, 2, P.eye).set(ex, ey, look.age === 7 ? P.white : P.eye);
+        g.rect(ex, ey, 2, 2, P.eye).set(ex, ey, look.age <= 11 ? P.white : P.eye);
         if (expr === 'sad') g.set(n === 0 ? ex + 2 : ex - 1, ey - 2, P.eye);
     }
   });
   if (expr === 'sad') g.set(side ? Math.round(cx + 3) : L, ey + 2, P.sky).set(side ? Math.round(cx + 3) : L, ey + 3, P.sky);
   if (!side) g.set(R + 2, ey + 2, P.inkSoft); // 왼쪽 눈 밑 점
-  if (look.age === 7 || expr === 'happy') {
+  if (look.age <= 7 || expr === 'happy') {
     if (side) g.set(Math.round(cx + 2), ey + 2, P.blush);
     else g.hline(L - 1, L, ey + 2, P.blush).hline(R + 1, R + 1, ey + 3, P.blush);
   }
@@ -119,42 +141,70 @@ function face(look: Look, view: View, expr: Expr, blink: boolean): Grid {
 
 // ───────── 옷 · 다리 (정면) ─────────
 function outfitColors(look: Look) {
-  const teen = look.age === 15;
-  return { top1: teen ? P.navy : look.gender === 'girl' ? P.smock : P.shirt, top2: teen ? P.navyDark : look.gender === 'girl' ? P.smockShade : P.shirtShade, teen };
+  const st = STYLE[look.age], girl = look.gender === 'girl';
+  const uni = st === 'uniform' || st === 'senior';
+  const c: Record<Style, [Color, Color]> = {
+    baby: girl ? [BABY_PINK, BABY_PINK_D] : [P.sky, P.skyDark],
+    kinder: [P.smock, P.smockShade],
+    kid: girl ? [P.smock, P.smockShade] : [P.shirt, P.shirtShade],
+    tween: girl ? [TWEEN_PLUM, TWEEN_PLUM_D] : [P.sage, P.sageDark],
+    uniform: [P.navy, P.navyDark],
+    senior: [SENIOR, SENIOR_D],
+    casual: girl ? [CASUAL_GIRL, CASUAL_GIRL_D] : [CASUAL_BOY, CASUAL_BOY_D],
+  };
+  const [top1, top2] = c[st];
+  /** 바지(다리 전체를 덮는 색) — 없으면 맨다리+양말 */
+  const pants: Color | undefined = st === 'baby' ? top1 : girl ? undefined : uni ? P.navy : st === 'tween' || st === 'casual' ? P.shorts : undefined;
+  /** 치마/반바지 (색, 길이) */
+  const skirt: [Color, number] | undefined = girl
+    ? (st === 'kinder' || st === 'kid' ? [P.smock, 2] : st === 'tween' ? [TWEEN_PLUM, 3] : uni ? [st === 'senior' ? SENIOR_SKIRT : P.navy, 4] : st === 'casual' ? [LONG_SKIRT, 6] : undefined)
+    : st === 'kinder' || st === 'kid' ? [P.shorts, 2] : undefined;
+  return { top1, top2, st, uni, pants, skirt, pack: st !== 'baby' && st !== 'casual' };
 }
 function outfitFront(look: Look): Grid {
   const g = blank();
   const b = body(look.age), cx = 12;
   const left = Math.round(cx - b.torsoW / 2), top = b.torsoTop;
-  const { top1, top2, teen } = outfitColors(look);
+  const { top1, top2, st, uni } = outfitColors(look);
   g.rect(left - 2, top + 1, 2, b.torsoH - 2, top1).rect(left + b.torsoW, top + 1, 2, b.torsoH - 2, top1);
   g.rect(left - 2, top + b.torsoH - 2, 2, 2, P.skin).rect(left + b.torsoW, top + b.torsoH - 2, 2, 2, P.skin);
   g.rect(left, top, b.torsoW, b.torsoH, top1);
   g.vline(left, top + 1, top + b.torsoH - 1, top2).vline(left + b.torsoW - 1, top + 1, top + b.torsoH - 1, top2);
-  if (teen) {
+  if (uni) {
+    if (st === 'senior') g.rect(cx - 1, top, 2, 5, P.collar); // 블레이저 안 흰 셔츠
     g.set(cx - 2, top, P.collar).set(cx - 1, top + 1, P.collar).set(cx + 1, top, P.collar).set(cx, top + 1, P.collar);
-    if (look.gender === 'boy') g.vline(cx - 1, top + 2, top + 5, P.tie).vline(cx, top + 2, top + 5, P.tie);
+    if (look.gender === 'boy' || st === 'senior') g.vline(cx - 1, top + 2, top + 5, P.tie).vline(cx, top + 2, top + 5, P.tie);
     else g.hline(cx - 2, cx + 1, top + 2, P.tie).set(cx - 1, top + 3, P.tie).set(cx, top + 3, P.tie);
     g.set(cx - 3, top + 6, P.collar);
-  } else g.vline(left + 2, top, top + b.torsoH - 2, P.pack).vline(left + b.torsoW - 3, top, top + b.torsoH - 2, P.pack);
+  } else if (st === 'baby') {
+    g.rect(cx - 2, top, 4, 2, P.white).set(cx - 1, top + 3, top2).set(cx, top + 3, top2); // 턱받이
+  } else if (st === 'kinder') {
+    g.rect(left + 7, top + 2, 3, 2, P.white).set(left + 8, top + 2, P.tomato); // 이름표
+  } else if (st === 'kid') {
+    g.vline(left + 2, top, top + b.torsoH - 2, P.pack).vline(left + b.torsoW - 3, top, top + b.torsoH - 2, P.pack);
+  } else if (st === 'tween') {
+    g.hline(left, left + b.torsoW - 1, top + 3, P.white).vline(left + 2, top, top + b.torsoH - 2, P.pack).vline(left + b.torsoW - 3, top, top + b.torsoH - 2, P.pack);
+  } else if (st === 'casual') {
+    if (look.gender === 'boy') g.set(cx - 2, top, P.white).set(cx - 1, top + 1, P.white).set(cx + 1, top, P.white).set(cx, top + 1, P.white);
+    else g.rect(cx - 1, top, 2, b.torsoH, P.cream).set(cx - 2, top + 3, P.mustard).set(cx - 2, top + 6, P.mustard);
+  }
   return g;
 }
 function legsFront(look: Look): Grid {
   const g = blank();
   const b = body(look.age), cx = 12;
-  const { teen } = outfitColors(look);
+  const { pants, skirt, st } = outfitColors(look);
   const lt = b.legTop, lh = b.legH, lx = cx - 4, rx = cx + 1;
-  if (teen && look.gender === 'boy') g.rect(lx, lt, 3, lh, P.navy).rect(rx, lt, 3, lh, P.navy);
-  else if (teen) {
-    g.rect(cx - 6, lt, 12, 4, P.navy);
-    g.rect(lx, lt + 4, 3, lh - 4, P.skin).rect(rx, lt + 4, 3, lh - 4, P.skin);
-    g.rect(lx, lt + lh - 3, 3, 3, P.sock).rect(rx, lt + lh - 3, 3, 3, P.sock);
-  } else {
-    if (look.gender === 'girl') g.rect(cx - 6, lt, 12, 2, P.smock); else g.rect(cx - 5, lt, 10, 2, P.shorts);
-    g.rect(lx, lt + 2, 3, lh - 2, P.skin).rect(rx, lt + 2, 3, lh - 2, P.skin);
-    g.rect(lx, lt + lh - 1, 3, 1, P.sock).rect(rx, lt + lh - 1, 3, 1, P.sock);
+  if (pants) g.rect(lx, lt, 3, lh, pants).rect(rx, lt, 3, lh, pants);
+  else {
+    g.rect(lx, lt, 3, lh, P.skin).rect(rx, lt, 3, lh, P.skin);
+    const sock = Math.max(1, Math.min(3, lh - 4));
+    g.rect(lx, lt + lh - sock, 3, sock, P.sock).rect(rx, lt + lh - sock, 3, sock, P.sock);
   }
-  g.rect(lx - 1, CHILD_H - 2, 4, 2, P.shoe).rect(rx, CHILD_H - 2, 4, 2, P.shoe);
+  if (st === 'baby') g.rect(cx - 5, lt, 10, 2, pants!);
+  if (skirt) g.rect(cx - 6, lt, 12, skirt[1], skirt[0]);
+  if (st === 'baby') g.rect(lx - 1, CHILD_H - 2, 4, 2, P.sock).rect(rx, CHILD_H - 2, 4, 2, P.sock);
+  else g.rect(lx - 1, CHILD_H - 2, 4, 2, P.shoe).rect(rx, CHILD_H - 2, 4, 2, P.shoe);
   return g;
 }
 
@@ -170,33 +220,31 @@ export function walkPose(frame: number) {
 function legsSide(look: Look, frame: number): Grid {
   const g = blank();
   const b = body(look.age), cx = 11;
-  const { teen } = outfitColors(look);
+  const { pants, skirt, st } = outfitColors(look);
   const w = walkPose(frame);
-  const legColor = teen && look.gender === 'boy' ? P.navy : P.skin;
+  const legColor = pants ?? P.skin;
   const legY = b.legTop;
   const legs = [{ x: cx - 2 - w.swing, lift: w.liftBack, back: true }, { x: cx - 1 + w.swing, lift: w.liftFront, back: false }];
   for (const leg of legs) {
     const lift = leg.lift ? 1 : 0;
     const bottom = CHILD_H - 1 - lift;
-    g.rect(leg.x, legY, 3, bottom - 1 - legY, leg.back && legColor === P.skin ? P.skinShade : legColor);
-    if (!(teen && look.gender === 'boy')) g.rect(leg.x, bottom - 2, 3, 1, P.sock);
-    g.rect(leg.x, bottom - 1, 4, 2, P.shoe);
+    g.rect(leg.x, legY, 3, Math.max(1, bottom - 1 - legY), leg.back && legColor === P.skin ? P.skinShade : legColor);
+    if (!pants) g.rect(leg.x, bottom - 2, 3, 1, P.sock);
+    g.rect(leg.x, bottom - 1, 4, 2, st === 'baby' ? P.sock : P.shoe);
   }
-  if (teen && look.gender === 'girl') g.rect(cx - 5, legY, 10, 4, P.navy);
-  else if (!teen && look.gender === 'girl') g.rect(cx - 5, legY, 10, 2, P.smock);
-  else if (!teen) g.rect(cx - 4, legY, 8, 2, P.shorts);
+  if (skirt) g.rect(cx - 5, legY, 10, skirt[1], skirt[0]);
   return g;
 }
 function outfitSide(look: Look, frame: number): Grid {
   const g = blank();
   const b = body(look.age), cx = 11;
-  const { top1, top2, teen } = outfitColors(look);
+  const { top1, top2, uni, pack } = outfitColors(look);
   const w = walkPose(frame);
   const top = b.torsoTop, left = cx - 4;
   g.rect(left, top, 8, b.torsoH, top1);
-  if (teen) g.set(cx + 2, top, P.collar).set(cx + 3, top + 1, look.gender === 'boy' ? P.tie : P.collar);
+  if (uni) g.set(cx + 2, top, P.collar).set(cx + 3, top + 1, look.gender === 'boy' ? P.tie : P.collar);
   const ph = Math.min(9, b.torsoH);
-  g.rect(left - 4, top + 1, 5, ph, P.pack).hline(left - 4, left, top + 1, P.packShade).vline(left - 4, top + 1, top + ph - 1, P.packShade);
+  if (pack) g.rect(left - 4, top + 1, 5, ph, P.pack).hline(left - 4, left, top + 1, P.packShade).vline(left - 4, top + 1, top + ph - 1, P.packShade);
   const armX = cx - 1 + w.arm;
   g.rect(armX, top + 1, 2, b.torsoH - 3, top2).rect(armX, top + b.torsoH - 2, 2, 2, P.skin);
   return g;
