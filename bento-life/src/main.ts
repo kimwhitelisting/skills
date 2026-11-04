@@ -853,7 +853,7 @@ function render(): void {
   else if (screen === 'game' && s) {
     const tip = currentTip();
     const inner = gameBody(s);
-    body = `<div class="day-px">${hud(s)}${tip ? inner.replace('<section class="px-panel">', `<section class="px-panel">${tipHtml(tip)}`) : inner}</div>`;
+    body = `<div class="day-px">${hud(s)}${tip ? inner.replace(/<section class="px-panel[^"]*">/, (m) => `${m}${tipHtml(tip)}`) : inner}</div>`;
   }
   else body = renderTitle();
   app.innerHTML = body + renderOverlay() + renderLightbox();
