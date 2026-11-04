@@ -100,6 +100,8 @@ export interface Evening {
 export interface Today {
   reqs: string[];
   forgot: boolean;
+  /** 아침에 띄울 알림 (할머니 찬스 등) */
+  notice?: string;
   phase: 'morning' | 'leave' | 'commute' | 'evening';
   pack?: PackResult;
   leave?: LeaveChoice;

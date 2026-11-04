@@ -17,7 +17,17 @@ export type Gender = 'boy' | 'girl';
 export type Expr = 'neutral' | 'happy' | 'yuck' | 'sad' | 'surprise';
 export type View = 'front' | 'side';
 export interface Look { age: PxAge; gender: Gender }
-export interface Dress { outfit?: OutfitId; hat?: HatId; tilt?: number }
+/** plain: 상점에서 고른 옷 색·모자를 쓰지 않는다 (친구 등 다른 아이) */
+export interface Dress { outfit?: OutfitId; hat?: HatId; tilt?: number; plain?: boolean }
+
+// ───────── 상점에서 고른 옷 색·모자 (주인공 아이에게만) ─────────
+let THEME: [Color, Color] | undefined;
+let DEFAULT_HAT: HatId = 'none';
+/** 윗옷 색 바꾸기 (교복 시기는 그대로) — undefined면 기본 옷 */
+export function setTheme(c: [Color, Color] | undefined): void { THEME = c; }
+/** 장면이 따로 모자를 씌우지 않을 때 쓰는 모자 */
+export function setDefaultHat(h: HatId): void { DEFAULT_HAT = h; }
+let plainNow = false;
 
 export const CHILD_W = 24;
 export const CHILD_H = 40;
@@ -154,7 +164,7 @@ function outfitColors(look: Look) {
     senior: [SENIOR, SENIOR_D],
     casual: girl ? [CASUAL_GIRL, CASUAL_GIRL_D] : [CASUAL_BOY, CASUAL_BOY_D],
   };
-  const [top1, top2] = c[st];
+  const [top1, top2] = THEME && !uni && !plainNow ? THEME : c[st];
   /** 바지(다리 전체를 덮는 색) — 없으면 맨다리+양말 */
   const pants: Color | undefined = st === 'baby' ? top1 : st === 'toddler' && !girl ? P.shorts : girl ? undefined : uni ? P.navy : st === 'tween' || st === 'casual' ? P.shorts : undefined;
   /** 치마/반바지 (색, 길이) */
@@ -305,6 +315,7 @@ function compose(layers: Grid[], o: { bob: number; tiltDeg?: number; tiltPivot?:
 
 /** 정면 (부엌·현관·결산) */
 export function childFront(look: Look, expr: Expr = 'neutral', o: { blink?: boolean; bob?: 0 | 1 } & Dress = {}): Grid {
+  plainNow = !!o.plain;
   const full = headFull(look, 'front');
   const layers = [
     part('front', look, 'legs', () => legsFront(look)),
@@ -312,7 +323,9 @@ export function childFront(look: Look, expr: Expr = 'neutral', o: { blink?: bool
     part('front', look, 'head', () => splitHead(full, false)),
     part('front', look, 'hair', () => splitHead(full, true)),
     part('front', look, `face-${expr}${o.blink ? '-blink' : ''}`, () => face(look, 'front', expr, !!o.blink)),
-    hat(o.hat ?? 'none', look, 'front'),
+    hat(o.hat ?? (o.plain ? 'none' : DEFAULT_HAT), look, 'front'),
+    // 선글라스는 얼굴에 쓰니까 장면이 씌운 모자와 같이 보인다
+    hat(!o.plain && DEFAULT_HAT === 'shades' && o.hat && o.hat !== 'shades' ? 'shades' : 'none', look, 'front'),
   ];
   const { cx, cy, ry } = headCenter(look, 'front');
   let g = compose(layers, { bob: o.bob ?? 0, upperFrom: 1, tiltDeg: o.tilt, tiltPivot: { x: cx, y: cy + ry } });
@@ -322,6 +335,7 @@ export function childFront(look: Look, expr: Expr = 'neutral', o: { blink?: bool
 
 /** 옆모습 걷기 (오른쪽을 본다), frame 0~7 */
 export function childSide(look: Look, frame: number, expr: Expr = 'neutral', o: Dress = {}): Grid {
+  plainNow = !!o.plain;
   const f = ((frame % WALK_FRAMES) + WALK_FRAMES) % WALK_FRAMES;
   const full = headFull(look, 'side');
   const layers = [
@@ -330,7 +344,9 @@ export function childSide(look: Look, frame: number, expr: Expr = 'neutral', o: 
     part('side', look, 'head', () => splitHead(full, false)),
     part('side', look, 'hair', () => splitHead(full, true)),
     part('side', look, `face-${expr}`, () => face(look, 'side', expr, false)),
-    hat(o.hat ?? 'none', look, 'side'),
+    hat(o.hat ?? (o.plain ? 'none' : DEFAULT_HAT), look, 'side'),
+    // 선글라스는 얼굴에 쓰니까 장면이 씌운 모자와 같이 보인다
+    hat(!o.plain && DEFAULT_HAT === 'shades' && o.hat && o.hat !== 'shades' ? 'shades' : 'none', look, 'side'),
   ];
   let g = compose(layers, { bob: walkPose(f).bob, upperFrom: 1 });
   if (o.outfit && o.outfit !== 'default') g = recolor(g, OUTFIT_SWAPS[o.outfit]);

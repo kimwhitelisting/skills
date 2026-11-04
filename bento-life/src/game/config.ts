@@ -14,7 +14,7 @@ export interface Tuning {
   priceMult: number;
 }
 
-export const DEFAULT_TUNING: Tuning = { daysPerYear: 1, incomeBase: 2, incomePerDay: 6, priceMult: 1 };
+export const DEFAULT_TUNING: Tuning = { daysPerYear: 1, incomeBase: 0, incomePerDay: 6, priceMult: 1 };
 
 export const tuningOf = (s: GameState): Tuning => ({ ...DEFAULT_TUNING, ...s.tuning });
 

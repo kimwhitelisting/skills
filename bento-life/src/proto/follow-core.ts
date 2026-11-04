@@ -65,7 +65,8 @@ const TOOLS = [
 function loadSaved(): Saved { try { return { total: 0, best: 0, runs: 0, ...JSON.parse(localStorage.getItem(SAVE_KEY) ?? '{}') }; } catch { return { total: 0, best: 0, runs: 0 }; } }
 function save(s: Saved) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(s)); } catch { /* 저장 불가 */ } }
 let saved = loadSaved();
-const hasTool = (id: string) => saved.total >= TOOLS.find((t) => t.id === id)!.need;
+/** 본 게임은 하트 상점에서 산 도구를 넘겨준다 (opts.tools). 맛보기는 누적 하트로 해금 */
+const hasTool = (id: string) => (opts.tools ? opts.tools.includes(id) : saved.total >= TOOLS.find((t) => t.id === id)!.need);
 
 // ───────── 상태 ─────────
 type Moment = { rank: number; kind: string; text: string };
@@ -97,6 +98,8 @@ export interface FollowOpts {
   /** 도시락을 두고 간 날이면 학교에서 몰래 넣기까지 */
   forgot?: boolean;
   onEnd?: (r: FollowResult) => void;
+  /** 본 게임: 하트 상점에서 산 변장 도구 id (있으면 누적 해금 대신 이걸 쓴다) */
+  tools?: string[];
   /** 도트 캐릭터 생김새 (없으면 나이에 맞춰 기본) */
   look?: Look;
 }
@@ -328,7 +331,7 @@ function end(how: 'school' | 'caught' | 'lost'): void {
   const before = saved.total;
   saved = { total: saved.total + st.score, best: Math.max(saved.best, st.score), runs: saved.runs + 1 };
   save(saved);
-  const unlocked = TOOLS.filter((t) => before < t.need && saved.total >= t.need);
+  const unlocked = opts.tools ? [] : TOOLS.filter((t) => before < t.need && saved.total >= t.need);
   if (unlocked.length) st.log.push(...unlocked.map((t) => `🎁 새 변장 도구: ${t.emoji} ${t.name} — ${t.desc}`));
   sfx(how === 'school' ? 'chime' : 'tap'); haptic(how === 'caught' ? 60 : 20);
   render();
@@ -406,7 +409,7 @@ function introCard(): string {
         <li>💗 들키지 않고 <b>가까이</b> 있을수록 빨리 쌓여요</li>
       </ul>
       ${opts.standalone ? `<div class="pick-row"><span>누구를 따라갈까?</span><div class="age-pick">${([6, 10, 15] as Age[]).map((a) => `<button class="${a === age ? 'on' : ''}" data-age="${a}">${TUNE[a].label}</button>`).join('')}</div></div>` : ''}
-      <p class="sub center">누적 💗 ${saved.total}${next ? ` · 다음 변장 도구 ${next.emoji}까지 ${next.need - saved.total}` : ' · 변장 도구 모두 해금!'}</p>
+      ${opts.tools ? `<p class="sub center">${opts.tools.length ? `가져온 변장 도구 ${TOOLS.filter((t) => opts.tools!.includes(t.id)).map((t) => t.emoji).join(' ')}` : '변장 도구는 ♥ 하트 상점에서'}</p>` : `<p class="sub center">누적 💗 ${saved.total}${next ? ` · 다음 변장 도구 ${next.emoji}까지 ${next.need - saved.total}` : ' · 변장 도구 모두 해금!'}</p>`}
       <button class="btn primary wide" data-act="start">출발!</button>
     </article>
   </div>`;
@@ -449,7 +452,7 @@ function resultCard(): string {
       <p class="story center">${line}</p>
       <ul class="result-list">${st.log.map((l) => `<li>${l}</li>`).join('')}</ul>
       <div class="chips">${fx}</div>
-      <p class="sub center">누적 💗 ${saved.total}${next ? ` · ${next.emoji} ${next.name}까지 ${next.need - saved.total}` : ''}</p>
+      ${opts.tools ? '' : `<p class="sub center">누적 💗 ${saved.total}${next ? ` · ${next.emoji} ${next.name}까지 ${next.need - saved.total}` : ''}</p>`}
       ${opts.standalone ? `<div class="row"><button class="btn primary" data-act="again">다시</button>${age !== 15 ? `<button class="btn paper" data-age="${age === 6 ? 10 : 15}">더 큰 아이로</button>` : ''}</div>` : '<button class="btn primary wide" data-act="evening">🌙 저녁으로</button>'}
     </article>
   </div>`;
@@ -501,7 +504,7 @@ function draw(): void {
     const fl = friendLook();
     const fLook = st.friend.state === 'look';
     const ff = Math.floor(st.friend.x / 7) % 8;
-    const fs = fLook ? sprite(`ff-${fl.age}${fl.gender}`, () => childFront(fl, 'neutral', { outfit: 'berry' })) : sprite(`fs-${fl.age}${fl.gender}-${ff}`, () => childSide(fl, ff, 'neutral', { outfit: 'berry' }));
+    const fs = fLook ? sprite(`ff-${fl.age}${fl.gender}`, () => childFront(fl, 'neutral', { outfit: 'berry', plain: true })) : sprite(`fs-${fl.age}${fl.gender}-${ff}`, () => childSide(fl, ff, 'neutral', { outfit: 'berry', plain: true }));
     blit(ctx, fs, cx(st.friend.x) - 12, G - fs.height);
     if (st.friend.state !== 'walk') bubble(ctx, Math.round(cx(st.friend.x) - 5), G - fs.height - 13, 1, fLook && seen ? '!' : '…');
   }

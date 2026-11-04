@@ -4,7 +4,8 @@ import type { GameState } from './types.ts';
 const RUN_KEY = 'bento-life:run:v2';
 const DEX_KEY = 'bento-life:dex:v1';
 
-export interface Dex { menus: string[]; endings: string[]; plays: number }
+/** 도감 + 하트 지갑 (판이 끝나도 남는 것) */
+export interface Dex { menus: string[]; endings: string[]; plays: number; hearts: number; owned: string[]; equip: { theme?: string; hat?: string } }
 
 function read<T>(key: string): T | undefined {
   try {
@@ -25,5 +26,5 @@ export const loadRun = () => {
 export const saveRun = (s: GameState) => write(RUN_KEY, s);
 export const clearRun = () => { try { localStorage.removeItem(RUN_KEY); } catch { /* */ } };
 
-export const loadDex = (): Dex => ({ menus: [], endings: [], plays: 0, ...read<Dex>(DEX_KEY) });
+export const loadDex = (): Dex => ({ menus: [], endings: [], plays: 0, hearts: 0, owned: [], equip: {}, ...read<Dex>(DEX_KEY) });
 export const saveDex = (d: Dex) => write(DEX_KEY, d);

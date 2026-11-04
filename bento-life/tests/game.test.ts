@@ -204,6 +204,27 @@ describe('endings', () => {
   });
 });
 
+describe('money and hearts', () => {
+  it('grandma bails you out when you cannot afford a lunchbox, and it counts', async () => {
+    const { advanceYear } = await import('../src/game/engine.ts');
+    const s = startGame(newGame(41));
+    s.step = 'summary'; s.active = undefined; s.age = 5; s.money = 0;
+    s.tuning = { ...s.tuning, incomeBase: 0, incomePerDay: 0 };
+    advanceYear(s);
+    while (s.active) { const { chooseEventOption, continueAfterEvent } = await import('../src/game/engine.ts'); chooseEventOption(s, s.active.choices.findIndex((c) => c.enabled)); continueAfterEvent(s); }
+    expect(s.step).toBe('day');
+    expect(s.flags.grandma).toBe(1);
+    expect(s.today?.notice).toContain('할머니');
+    expect(s.money).toBeGreaterThanOrEqual(15);
+  });
+  it('shop items are unique and tools map to the commute tools', async () => {
+    const { SHOP, toolIds } = await import('../src/game/shop.ts');
+    expect(new Set(SHOP.map((i) => i.id)).size).toBe(SHOP.length);
+    expect(toolIds(['tool-news', 'hat-cap', 'tool-pot'])).toEqual(['news', 'pot']);
+    for (const i of SHOP) expect(i.price, i.id).toBeGreaterThan(0);
+  });
+});
+
 describe('music', () => {
   it('every track parses and its parts line up bar for bar', async () => {
     const { TRACK_IDS, trackOf, parse, stepsOf, freq } = await import('../src/ui/music.ts');

@@ -286,6 +286,17 @@ export const MORE_EVENTS: GameEvent[] = [
     ],
   },
 
+  {
+    id: 'grandma_nag', kind: 'random', emoji: '🧓', ageMin: 1, ageMax: 19, weight: 8, once: true, title: '할머니의 잔소리',
+    when: (s) => f(s, 'grandma') >= 2,
+    text: '할머니: "반찬값은 아끼고 있는 거냐? 애 도시락은 내가 싸 주랴?"',
+    choices: [
+      { label: '가계부를 쓰기 시작한다', outcome: { text: '가계부 첫 줄: 「계란 한 판」. 할머니가 흐뭇해하신다.', money: 4, stats: { indep: 1 }, flags: { thrift: 1 } } },
+      { label: '할머니께 반찬 비법을 배운다', outcome: { text: '{c}도 옆에서 같이 배웠다. 할머니 장조림 맛이 집에 생겼다.', stats: { bond: 2, happy: 2 }, flags: { cook: 1, grandmaLove: 1 } } },
+      { label: '"이제 제가 알아서 할게요"', outcome: { text: '할머니가 서운한 얼굴로 돌아가셨다. 그래도 봉투는 두고 가셨다.', money: 6, stats: { bond: -1 } } },
+    ],
+  },
+
   // ───────── 학교 ─────────
   {
     id: 'trip', kind: 'random', emoji: '🚌', ageMin: 12, ageMax: 17, weight: 2, once: true, title: '수학여행',

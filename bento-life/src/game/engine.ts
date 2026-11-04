@@ -120,9 +120,15 @@ export const hasLeave = (age: number) => age >= 2;
 const FORGOT_CHANCE = 0.3;
 
 function startDay(s: GameState): void {
+  // 할머니 찬스: 반찬값이 바닥나면 보내 주신다 — 공짜는 아니다 (잔소리 이벤트, 엔딩 「할머니가 키운 아이」)
+  let notice: string | undefined;
   if (s.money < cheapestCost(s)) {
     s.money += 15;
-    s.log.push({ age: s.age, text: '반찬값이 바닥났다. 할머니가 15를 보내 주셨다.' });
+    const n = (s.flags.grandma = (s.flags.grandma ?? 0) + 1);
+    notice = n === 1 ? '반찬값이 바닥났다… 할머니가 15를 보내 주셨다.'
+      : n === 2 ? '또 할머니 찬스. "애 굶기면 안 된다" 하시며 15를 보내셨다.'
+        : `할머니가 아예 반찬통을 들고 오셨다. (할머니 찬스 ${n}번째)`;
+    s.log.push({ age: s.age, text: `🧓 ${notice}` });
   }
   let reqs: string[] = [];
   if (s.age >= 2) {
@@ -134,7 +140,7 @@ function startDay(s: GameState): void {
       if (s.age >= 9 && !['again', 'picnic'].includes(first.id) && other && chance(s, 0.5)) reqs.push(other.id);
     }
   }
-  s.today = { reqs, forgot: canCommute(s.age) && chance(s, FORGOT_CHANCE), phase: 'morning' };
+  s.today = { reqs, forgot: canCommute(s.age) && chance(s, FORGOT_CHANCE), phase: 'morning', notice };
 }
 
 export const todayRequests = (s: GameState): Request[] => (s.today?.reqs ?? []).map((id) => REQUEST_BY_ID[id]);

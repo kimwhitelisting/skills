@@ -13,7 +13,7 @@ import './proto/day-px.css';
 import './game.css';
 import { INGREDIENTS, ing } from './data/ingredients.ts';
 import { voiceAge } from './data/requests.ts';
-import { displayDelta } from './game/apply.ts';
+import { applyDelta, displayDelta } from './game/apply.ts';
 import { ALL_MENUS, available, getMenu, ingredientCost, selectionCost } from './game/bento.ts';
 import { DEFAULT_TUNING, tuningOf, yearlyIncome, type Tuning } from './game/config.ts';
 import { FINAL_AGE, STAT_INFO, STAT_KEYS, TALENT_INFO, stageOf } from './game/constants.ts';
@@ -28,7 +28,8 @@ import { clearRun, loadDex, loadRun, saveDex, saveRun, type Dex } from './game/s
 import { newGame } from './game/state.ts';
 import { fmt } from './game/text.ts';
 import type { Delta, GameState, LeaveChoice, Slot, StatKey } from './game/types.ts';
-import { CHILD_H, childFront, headTop, parentSide, pxAgeOf, type Expr, type HatId, type Look } from './pixel/child.ts';
+import { CHILD_H, childFront, headTop, parentSide, pxAgeOf, setDefaultHat, setTheme, type Expr, type HatId, type Look } from './pixel/child.ts';
+import { SHOP, SHOP_BY_ID, toolIds, type ShopItem, type ShopKind } from './game/shop.ts';
 import { endingScene, eventExpr, eventScene } from './pixel/event-scenes.ts';
 import { entryFloor, entryWall, GIRAFFE_X, growthWall, miniLunch } from './pixel/extras.ts';
 import { loadPixelFont } from './pixel/font.ts';
@@ -47,7 +48,7 @@ import { loadPrefs, savePrefs } from './ui/prefs.ts';
 
 // ───────────────────────── 상태 ─────────────────────────
 type Screen = 'title' | 'intro' | 'game';
-type Overlay = 'stats' | 'menu' | 'notebook' | 'dex' | 'settings';
+type Overlay = 'stats' | 'menu' | 'notebook' | 'dex' | 'settings' | 'shop';
 /** 방금 고른 이벤트 선택지의 결과 (엔진은 이미 다음으로 넘어가 있고, 화면만 한 번 더 보여 준다) */
 interface EventResult { id: string; emoji: string; title: string; text: string; delta: Delta; money: number; kind: string }
 
@@ -268,7 +269,7 @@ function hud(s: GameState): string {
       <span><b>${esc(s.child.name)}</b> ${shown(s.age)}살 <small>${stageOf(s.age).name}</small></span>
     </button>
     <span class="px-pill" title="반찬값">₩ <b>${s.money}</b></span>
-    <span class="px-pill heart" title="등굣길 하트">♥ <b>${s.hearts}</b></span>
+    <button class="px-pill heart" data-act="shop" title="하트 상점">♥ <b>${dex.hearts}</b></button>
     <button class="px-icon" data-act="menu" aria-label="메뉴">≡</button>
   </header>
   <div class="px-life" aria-label="스무 살까지"><i style="width:${(s.age / FINAL_AGE) * 100}%"></i>${[0, 2, 6, 10, 13, 16, 19].map((a) => `<b class="${s.age >= a ? 'on' : ''}" style="left:${(a / FINAL_AGE) * 100}%"></b>`).join('')}</div>`;
@@ -286,6 +287,7 @@ function renderTitle(): string {
       <button class="btn ${canContinue ? '' : 'primary'} wide" data-act="new">새로 키우기</button>
       <div class="px-row">
         <button class="btn" data-act="dex">도감 <small>메뉴 ${dex.menus.length}/${ALL_MENUS.length} · 엔딩 ${dex.endings.length}/${ENDINGS.length}</small></button>
+        <button class="btn" data-act="shop">♥ 상점<small>${dex.hearts}</small></button>
         <button class="btn" data-act="settings">설정</button>
       </div>
     </section>
@@ -377,6 +379,7 @@ function morningView(s: GameState): string {
   return `
   ${stage('kitchen', say, tag)}
   <section class="px-panel">
+    ${s.today?.notice ? `<p class="px-notice">🧓 ${esc(s.today.notice)}</p>` : ''}
     ${hasLeave(s.age) ? `<div class="px-clock"><span>${canCommute(s.age) ? '등교까지' : '등원까지'}</span><div class="bar"><i id="clock" class="${timer < 10 ? 'low' : ''}" style="width:${(timer / MORNING_TIME) * 100}%"></i></div></div>` : ''}
     <div class="px-menu ${full ? '' : 'pending'}">${menu?.signature && !isNew ? '✨ ' : ''}${esc(menuLabel(draft))}${isNew ? ' <span class="new">NEW</span>' : ''}</div>
     <nav class="px-tabs">${SLOTS.map((sl) => `<button class="px-tab ${tab === sl ? 'on' : ''}" data-tab="${sl}">${SLOT_LABEL[sl]}${draft[sl] ? ' ✓' : ''}</button>`).join('')}</nav>
@@ -549,7 +552,7 @@ function renderEnding(s: GameState): string {
       <div>재능 <b>${TALENT_INFO[s.child.talent].label}</b></div>
       <div>점심 별 <b>${stars}</b></div>
       <div>메뉴 <b>${s.runMenus.length}</b>가지</div>
-      <div>♥ <b>${s.hearts}</b></div>
+      <div>이번 판 ♥ <b>${s.hearts}</b></div>
       <div>따라간 날 <b>${follows}</b>${caught ? ` (들킴 ${caught})` : ''}</div>
     </div>
     <div class="px-row"><button class="btn" data-act="dex">도감</button><button class="btn primary" data-act="new">다시 키우기</button></div>
@@ -580,6 +583,7 @@ function renderStats(s: GameState): string {
 
 function renderMenu(): string {
   return sheet('메뉴', `<div class="stack">
+    <button class="btn option" data-act="shop"><span><b>♥ 하트 상점</b><small>옷 색·모자·변장 도구·선물 — 지갑 ♥${dex.hearts}</small></span></button>
     <button class="btn option" data-act="notebook"><span><b>육아 수첩</b><small>알아낸 취향과 지난 기록</small></span></button>
     <button class="btn option" data-act="dex"><span><b>도감</b><small>메뉴 ${dex.menus.length}/${ALL_MENUS.length} · 엔딩 ${dex.endings.length}/${ENDINGS.length}</small></span></button>
     <button class="btn option" data-act="settings"><span><b>설정</b><small>소리, 진동, 실험 설정</small></span></button>
@@ -646,9 +650,61 @@ function renderSettings(): string {
     <button class="btn wide" data-act="tips-reset">처음 안내 다시 보기</button>`);
 }
 
+// ───────────────────────── 하트 상점 ─────────────────────────
+let shopMsg = '';
+/** 상점에서 고른 옷 색·모자를 아이 그림에 입힌다 */
+function applyEquip(): void {
+  setTheme(dex.equip.theme ? SHOP_BY_ID[dex.equip.theme]?.theme as [string, string] | undefined : undefined);
+  setDefaultHat((dex.equip.hat ? SHOP_BY_ID[dex.equip.hat]?.hat : undefined) ?? 'none');
+  clearSprites();
+}
+const giftOk = (s: GameState, id: string) => s.step !== 'ending' && !s.flags[`gift-${id}-${s.age}`];
+const previewCache = new Map<string, string>();
+function itemPreview(it: ShopItem, look: Look): string {
+  const key = `${it.id}-${look.age}${look.gender}`;
+  let u = previewCache.get(key);
+  if (!u) {
+    if (it.kind === 'theme' || it.kind === 'hat') {
+      setTheme(it.kind === 'theme' ? it.theme as [string, string] : undefined);
+      const top = headTop(look).y;
+      const g = new Grid(24, 30).draw(childFront(look, 'happy', { hat: it.kind === 'hat' ? it.hat : 'none' }), 0, -(top - 8));
+      u = toDataURL(g, 2);
+      applyEquip();
+    } else u = '';
+    previewCache.set(key, u);
+  }
+  return u ? `<img src="${u}" alt="">` : `<span class="emo">${it.emoji}</span>`;
+}
+function renderShop(): string {
+  const s = screen === 'game' ? game : undefined;
+  const look: Look = s ? lookOf(s) : { age: 7, gender: titleLook.gender };
+  const group = (kind: ShopKind, title: string, note = '') => {
+    const items = SHOP.filter((i) => i.kind === kind);
+    return `<h3>${title}${note ? ` <small>${note}</small>` : ''}</h3><div class="px-shop">${items.map((it) => {
+      const owned = dex.owned.includes(it.id);
+      const worn = dex.equip.theme === it.id || dex.equip.hat === it.id;
+      let btn: string;
+      if (kind === 'gift') {
+        const ok = !!s && giftOk(s, it.id);
+        btn = `<button class="btn" data-act="buy" data-id="${it.id}" ${ok && dex.hearts >= it.price ? '' : 'disabled'}>${!s ? '게임 중에만' : !ok ? '올해는 줬어요' : `♥${it.price}`}</button>`;
+      } else if (owned) btn = kind === 'tool' ? '<button class="btn" disabled>가지고 있음</button>' : `<button class="btn ${worn ? 'primary' : ''}" data-act="wear" data-id="${it.id}">${worn ? '입는 중' : '입기'}</button>`;
+      else btn = `<button class="btn" data-act="buy" data-id="${it.id}" ${dex.hearts >= it.price ? '' : 'disabled'}>♥${it.price}</button>`;
+      return `<div class="px-item ${worn ? 'on' : ''}">${itemPreview(it, look)}<b>${esc(it.name)}</b><small>${esc(it.desc)}</small>${btn}</div>`;
+    }).join('')}</div>`;
+  };
+  return sheet('♥ 하트 상점', `
+    <p class="px-wallet">지갑 <b>♥ ${dex.hearts}</b> <small>등굣길에서 모은 하트 · 판이 끝나도 남아요</small></p>
+    ${shopMsg ? `<p class="px-shop-msg">${shopMsg}</p>` : ''}
+    ${group('gift', '선물', s ? `${esc(s.child.name)}에게 · 한 해에 한 번` : '')}
+    ${group('theme', '옷 색', '한 번 사면 계속')}
+    ${group('hat', '모자')}
+    ${group('tool', '변장 도구', '등굣길에 들고 가요')}`);
+}
+
 function renderOverlay(): string {
   if (!overlay) return '';
   if (overlay === 'dex') return renderDex();
+  if (overlay === 'shop') return renderShop();
   if (overlay === 'settings') return renderSettings();
   if (!game) return '';
   if (overlay === 'stats') return renderStats(game);
@@ -785,12 +841,13 @@ function startCommute(s: GameState): void {
   const p = commuteParams(s);
   setTrack('commute');
   mountFollow(app, {
-    age: p.level, standalone: false, label: `${shown(s.age)}살`, title: `${shown(s.age)}살 등굣길`, look: lookOf(s),
+    age: p.level, standalone: false, tools: toolIds(dex.owned), label: `${shown(s.age)}살`, title: `${shown(s.age)}살 등굣길`, look: lookOf(s),
     mood: p.mood, lookMult: p.lookMult, forgot: p.forgot,
     onEnd: (r) => {
       unmountFollow();
       commuteOn = false;
       if (!game || game !== s || s.today?.phase !== 'commute') return;
+      dex.hearts += Math.max(0, Math.round(r.score));
       finishCommute(s, { over: r.over, delivered: r.delivered, score: r.score, bond: r.bond, indep: r.indep, happy: r.happy, moment: r.moment, log: r.log });
       persist();
       render();
@@ -862,6 +919,34 @@ function onAct(el: HTMLElement): void {
     case 'menu': openOverlay('menu'); break;
     case 'stats': openOverlay('stats'); break;
     case 'notebook': openOverlay('notebook'); break;
+    case 'shop': shopMsg = ''; openOverlay('shop'); break;
+    case 'buy': {
+      const it = SHOP_BY_ID[el.dataset.id!];
+      if (!it || dex.hearts < it.price) return;
+      if (it.kind === 'gift') {
+        if (!s || screen !== 'game' || !giftOk(s, it.id)) return;
+        dex.hearts -= it.price;
+        s.flags[`gift-${it.id}-${s.age}`] = 1;
+        applyDelta(s, it.gift!);
+        s.log.push({ age: s.age, text: `${it.emoji} ${it.name} 선물 — ${it.desc.split(' · ')[0]}` });
+        shopMsg = `${it.emoji} ${it.name}! ${esc(s.child.name)}가 신났다.`;
+      } else {
+        dex.hearts -= it.price;
+        dex.owned = [...dex.owned, it.id];
+        if (it.kind === 'theme') dex.equip.theme = it.id;
+        if (it.kind === 'hat') dex.equip.hat = it.id;
+        applyEquip();
+        shopMsg = `${it.emoji} ${it.name}을(를) 샀어요.`;
+      }
+      sfx('chime'); haptic(15); top = false; break;
+    }
+    case 'wear': {
+      const it = SHOP_BY_ID[el.dataset.id!];
+      if (!it || !dex.owned.includes(it.id)) return;
+      const slot = it.kind === 'theme' ? 'theme' : 'hat';
+      dex.equip[slot] = dex.equip[slot] === it.id ? undefined : it.id;
+      applyEquip(); sfx('pop'); top = false; break;
+    }
     case 'close': history.back(); return;
     case 'home': overlay = undefined; screen = 'title'; history.replaceState(null, ''); break;
     case 'event-ok': eventResult = undefined; sfx('tap'); break;
@@ -958,4 +1043,4 @@ window.addEventListener('resize', () => { if (sceneCanvas) fitScene(sceneCanvas,
 // 자동 테스트용 (게임 진행에는 영향 없음)
 (window as unknown as { __game: () => unknown }).__game = () => game && { music: nowPlaying(), tip: currentTip(), result: !!eventResult, step: game.step, age: game.age, phase: game.today?.phase, active: !!game.active, money: game.money, ending: game.endingId, opts: game.today ? leaveOptions(game) : [] };
 
-void loadPartOverrides().catch(() => 0).then(() => { clearSprites(); render(); requestAnimationFrame(loop); });
+void loadPartOverrides().catch(() => 0).then(() => { applyEquip(); render(); requestAnimationFrame(loop); });
