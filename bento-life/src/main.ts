@@ -11,7 +11,6 @@ import './proto/follow.css';
 import './proto/pixel-ui.css';
 import './proto/day-px.css';
 import './game.css';
-import { EVENTS } from './data/events.ts';
 import { INGREDIENTS, ing } from './data/ingredients.ts';
 import { voiceAge } from './data/requests.ts';
 import { displayDelta } from './game/apply.ts';
@@ -483,14 +482,16 @@ function renderSummary(s: GameState): string {
   ];
   const events = s.log.filter((l) => l.age === s.age && l.text.includes(' — ')).map((l) => l.text.split(' — ')[0]);
   const moment = days.map((a) => a.moment).filter(Boolean).pop();
-  const next = s.age < FINAL_AGE ? EVENTS.find((e) => e.kind === 'milestone' && e.age === s.age + 1) : undefined;
+  // 내년 예고는 스포일러 없이: 학교급이 바뀌는 해에만 (누구나 아는 것)
+  const nextStage = s.age < FINAL_AGE && stageOf(s.age + 1).id !== stageOf(s.age).id ? stageOf(s.age + 1) : undefined;
+  const STAGE_EMOJI: Record<string, string> = { toddler: '🧸', child: '🎒', teen: '🏫', high: '📚', adult: '🎓' };
   const bars = STAT_KEYS.map((k) => {
     const v = Math.round(s.stats[k]), was = Math.round(s.yearStart[k]), dd = v - was;
     const lo = Math.min(v, was), hi = Math.max(v, was);
     return `<div class="px-bar"><span>${STAT_INFO[k].label}</span><div class="track"><i style="width:${lo}%"></i>${dd ? `<b class="${dd > 0 ? 'up' : 'down'}" style="left:${lo}%;width:${hi - lo}%"></b>` : ''}</div><em class="${dd > 0 ? 'up' : dd < 0 ? 'down' : ''}">${v}${dd ? `<small>${dd > 0 ? '+' : ''}${dd}</small>` : ''}</em></div>`;
   }).join('');
   return `
-  ${stage('growth', '', `${s.age}살 → ${s.age + 1}살`, next ? `<span class="px-tag right">내년엔 ${next.emoji} ${esc(fmt(next.title, s))}</span>` : '')}
+  ${stage('growth', '', `${s.age}살 → ${s.age + 1}살`, nextStage ? `<span class="px-tag right">내년엔 ${STAGE_EMOJI[nextStage.id] ?? ''} ${nextStage.name}!</span>` : '')}
   <section class="px-panel">
     <div class="px-sub">${esc(s.child.name)}의 ${s.age}살 · ${stageOf(s.age).name}</div>
     <h2 class="px-h">${word}</h2>
