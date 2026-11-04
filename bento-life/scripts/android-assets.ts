@@ -1,6 +1,6 @@
-// 안드로이드 앱 아이콘·시작 화면·세로 고정을 android/ 폴더에 넣는다:  npm run android:assets
+// 안드로이드 앱 아이콘·시작 화면·세로 고정·글자 배율 고정을 android/ 폴더에 넣는다:  npm run android:assets
 // (android 폴더를 새로 만든 뒤에도 이것만 다시 돌리면 같은 모습이 된다 — npm run android:reset 이 같이 돌린다)
-import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { childFront } from '../src/pixel/child.ts';
 import { Grid } from '../src/pixel/grid.ts';
 import { P } from '../src/pixel/palette.ts';
@@ -74,4 +74,28 @@ const manifest = new URL('../AndroidManifest.xml', RES);
 let m = readFileSync(manifest, 'utf8');
 if (!m.includes('android:screenOrientation')) m = m.replace('android:name=".MainActivity"', 'android:name=".MainActivity"\n            android:screenOrientation="portrait"');
 writeFileSync(manifest, m);
-console.log('android 아이콘·시작 화면·세로 고정 완료');
+// 5) 휴대폰 글자 크기 설정을 키워도 화면이 깨지지 않게 — 웹뷰 글자 배율 100% 고정
+const findMain = (dir: URL): URL | undefined => {
+  for (const f of readdirSync(dir)) {
+    const u = new URL(f, dir);
+    if (statSync(u).isDirectory()) { const r = findMain(new URL(`${f}/`, dir)); if (r) return r; }
+    else if (f === 'MainActivity.java') return u;
+  }
+};
+const main = findMain(new URL('../java/', RES));
+if (!main) throw new Error('MainActivity.java를 못 찾았습니다');
+const pkg = /package ([\w.]+);/.exec(readFileSync(main, 'utf8'))![1];
+writeFileSync(main, `package ${pkg};
+
+import com.getcapacitor.BridgeActivity;
+
+public class MainActivity extends BridgeActivity {
+    @Override
+    public void onStart() {
+        super.onStart();
+        // 기기 글자 크기 설정과 상관없이 게임 화면은 같은 크기로 (도트 화면이 넘치지 않게)
+        if (getBridge() != null) getBridge().getWebView().getSettings().setTextZoom(100);
+    }
+}
+`);
+console.log('android 아이콘·시작 화면·세로 고정·글자 배율 완료');

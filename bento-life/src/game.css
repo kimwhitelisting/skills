@@ -30,8 +30,6 @@
 .px-panel .btn.choice { text-align: left; }
 .px-panel .btn.choice small { color: #8f6e58; }
 
-/* 재료 가격 */
-.px-food .price { position: absolute; left: 2px; top: 1px; font-style: normal; font-size: 10px; font-weight: 700; color: #8f6e58; }
 
 /* 타이틀 */
 .px-screen.title .px-sign { padding: calc(18px + env(safe-area-inset-top)) 12px 12px; text-align: center; background: var(--pane2); border-bottom: 3px solid var(--ink); }
@@ -137,3 +135,57 @@
 .px-lightbox > .px-sub { color: #f3e2c6; }
 .px-panel.summary { gap: 7px; padding-top: 10px; }
 .px-panel.summary .px-bars { box-shadow: 0 3px 0 var(--ink); }
+/* ═════════ 한 화면에 딱 — 페이지는 스크롤되지 않는다 ═════════
+   main.ts fitToScreen()이 장면 배율을 줄이고, 그래도 넘치면 #app.tight(촘촘하게)로 바꾼다.
+   그래도 넘치면 마지막으로 아래 패널 안에서만 스크롤 */
+html:has(#app.fit), html:has(#app.fit) body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+#app.fit { height: 100dvh; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+#app.fit > .day-px, #app.fit > .px-screen, #app.fit > .proto { flex: 1; min-height: 0; }
+#app.pixel-ui .px-hud { position: relative; flex: none; }
+#app.pixel-ui .px-life, #app.pixel-ui .px-stage, #app.pixel-ui .px-sign { flex: none; }
+#app.pixel-ui .px-panel { min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+#app.pixel-ui .px-panel > * { flex-shrink: 0; }
+#app.pixel-ui .px-panel::-webkit-scrollbar { display: none; }
+#app.tight .px-hud { padding-top: calc(5px + env(safe-area-inset-top)); padding-bottom: 5px; }
+#app.tight .px-panel { gap: 6px; padding-top: 8px; padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
+#app.tight .px-panel.summary { gap: 5px; padding-top: 6px; }
+#app.tight .btn { min-height: 42px; padding-block: 5px; }
+#app.tight .btn.primary { font-size: 1.35rem; padding-block: 3px; }
+#app.tight .btn small { font-size: 11px; }
+#app.tight .px-tab { min-height: 34px; }
+#app.pixel-ui.tight .px-food { padding-top: 13px; }
+#app.tight .px-food img { width: 40px; height: 40px; }
+#app.tight .px-story { font-size: 13px; line-height: 1.45; }
+#app.tight .px-lines li { padding: 1px 0 2px; }
+#app.tight .px-report { padding: 5px 8px; gap: 2px 12px; }
+#app.tight .px-later { padding: 4px 8px; }
+#app.tight .px-photo-card .btn { min-height: 28px; }
+#app.tight .px-screen.title .px-sign { padding-top: calc(10px + env(safe-area-inset-top)); padding-bottom: 8px; }
+#app.tight .px-sign h1 { font-size: 26px !important; margin-bottom: 3px; }
+#app.tight .px-alert { padding: 6px; }
+
+/* 재료 칸: 값과 좋아/싫어 표시는 그림 위 띠에 — 그림을 가리지 않게 */
+#app.pixel-ui .px-food { padding-top: 14px; }
+.px-food .price { position: absolute; left: 3px; top: 1px; right: auto; min-width: 0; height: auto; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; z-index: auto; font-style: normal; font-size: 10px; font-weight: 700; line-height: 12px; color: #8f6e58; }
+.px-food .price::before { content: '₩'; display: inline; font-size: 9px; margin: 0; }
+.px-food.on .price { color: var(--ink); }
+.px-food .mark { top: 1px; right: 2px; padding: 0 2px; border-width: 1px; font-size: 9px; line-height: 11px; }
+/* 장면을 줄였을 때: 양옆 검은 띠 대신 벽지 위에 액자처럼 */
+#app.pixel-ui .px-stage.framed { background: repeating-linear-gradient(45deg, #efd9b8 0 8px, #f3e2c6 8px 16px); }
+#app.pixel-ui .px-stage.framed canvas { box-shadow: -3px 0 0 var(--ink), 3px 0 0 var(--ink); }
+/* 처음 하는 사람 안내: 장면 아래쪽에 겹쳐서 */
+.px-stage > .px-tip { position: absolute; left: 8px; right: 8px; bottom: 8px; z-index: 4; padding: 6px 8px; gap: 4px; }
+.px-stage > .px-tip p { font-size: 12px; line-height: 1.5; }
+.px-stage > .px-tip .btn { min-height: 32px; padding: 2px 12px; font-size: 13px; }
+.px-stage:has(> .px-tip) .px-say { top: 30px; }
+/* 촘촘한 결산 */
+#app.tight .px-panel.summary .px-h { font-size: 17px; }
+#app.tight .px-photo-card { padding: 3px 5px; gap: 8px; box-shadow: 0 3px 0 var(--ink); }
+#app.tight .px-polaroid { padding: 3px 3px 7px; }
+#app.tight .px-polaroid img { width: 88px; height: 58px; }
+#app.tight .px-photo-card p { font-size: 12px; line-height: 1.35; }
+#app.tight .px-photo-card .btn { min-height: 26px; font-size: 12px; margin-top: 0; }
+#app.tight .px-omen { padding: 3px 6px; font-size: 12px; }
+#app.tight .px-bars { padding: 4px 8px; gap: 2px 10px; }
+#app.tight .px-found { font-size: 11px; }
+#app.pixel-ui .px-stage { overflow: hidden; }

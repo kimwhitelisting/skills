@@ -33,6 +33,7 @@ npx tsc --noEmit -p .  # 타입 검사
 | 이벤트 91개 | 나이별 20 + 랜덤 50 + 상점 이야기 21. 플래그로 이어짐 (캐스팅 → 월말 평가 → 데뷔 등) | `src/data/events.ts`, `events-more.ts`, `events-shop.ts` |
 | 엔딩 52개 | 해피 26 · 씁쓸 9 · 삐딱 12 · 배드 5, "10년 후…" 한 줄, 스무 살 전 엔딩 6개 + 한 해 전 붉은 경고 | `src/game/endings.ts` |
 | 화면 | 타이틀·소개·이벤트(결과 화면)·아침·배웅·저녁·결산·엔딩·시트(상태·수첩·도감·설정)·안드로이드 뒤로가기·자동 저장 | `src/main.ts`, `src/game.css` |
+| 한 화면에 딱 | 페이지는 스크롤되지 않는다. 장면 배율을 폭에 맞췄다가 넘치면 → 기기 픽셀로 딱 떨어지는 배율로 조금씩 줄이고(80%까지) → 촘촘한 배치 `#app.tight` + 2배까지 → 장면 위쪽을 1/5까지 잘라 냄 → 마지막엔 아래 패널 안에서만 스크롤. 같은 화면 안(탭 바꾸기)에서는 장면이 다시 커지지 않는다. 처음 안내는 장면 아래쪽에 겹쳐 뜬다. 360×640에서도 스크롤 없음 | `main.ts` `fitToScreen`, `game.css` 끝 |
 | 그림 | 전부 코드 도트. 아이 8단계, 재료 28, 이벤트·엔딩 장면 107개 | `src/pixel/` → [`PIXEL.md`](PIXEL.md) |
 | 저장 | localStorage `bento-life:run:v2` (형식을 바꾸면 버전을 올린다), 도감 `bento-life:dex:v1` | `src/game/save.ts` |
 | 실험 설정 | 1년 하루 수 1~3, 반찬값 수입, 재료 가격 (새 게임부터) | `src/game/config.ts` |
@@ -47,7 +48,7 @@ npx tsc --noEmit -p .  # 타입 검사
 화면에는 **세는 나이** (갓난아기 1살 → 20살)로 보이고, 코드의 `s.age`는 0~19다. 화면에 나이를 쓸 땐 `main.ts`의 `shown(age)`를 거친다. 문서·코드 주석의 나이는 코드 나이.
 
 ## 안드로이드
-Capacitor로 감쌌다 (`capacitor.config.ts`, 패키지 이름은 **임시** `com.bentolife.app`). 빌드·서명·Play 등록은 [`ANDROID.md`](ANDROID.md), 스토어 문구·설문 초안은 [`STORE.md`](STORE.md), 개인정보처리방침 초안은 [`privacy-policy.md`](privacy-policy.md). 스토어 그래픽은 `npm run store:art`, 스크린샷은 `npm run store:shots` → `art-src/store/`.
+Capacitor로 감쌌다 (`capacitor.config.ts`, 패키지 이름은 **임시** `com.bentolife.app`). 휴대폰 글자 크기 설정은 무시한다(웹뷰 글자 배율 100% 고정, `scripts/android-assets.ts`가 MainActivity에 넣는다). 빌드·서명·Play 등록은 [`ANDROID.md`](ANDROID.md), 스토어 문구·설문 초안은 [`STORE.md`](STORE.md), 개인정보처리방침 초안은 [`privacy-policy.md`](privacy-policy.md). 스토어 그래픽은 `npm run store:art`, 스크린샷은 `npm run store:shots` → `art-src/store/`.
 
 ## 규칙 (깨지면 테스트가 실패)
 - 이벤트·엔딩을 추가하면 `src/pixel/event-scenes.ts`의 `SCENES` / `ENDING_SCENES`에 장면을 꼭 넣는다

@@ -12,11 +12,12 @@
 | 아이콘 | 보자기 도시락 뒤로 빼꼼 보는 아이 (도트). 적응형 아이콘 + 예전 방식 네모·동그라미 | `scripts/android-assets.ts` |
 | 시작 화면 | 크림색 바탕 + 두 아이와 보자기 도시락 | 〃 |
 | 화면 방향 | 세로 고정 | 〃 (AndroidManifest 수정) |
+| 글자 크기 | 휴대폰 설정에서 글자를 키워도 게임 화면은 그대로 (웹뷰 글자 배율 100%) — 화면이 넘치지 않게 | 〃 (MainActivity 수정) |
 | 글꼴 | 갈무리11이 앱 안에 들어 있어 오프라인에서도 같다 | — |
 
 ## android 폴더
 지금은 **깃에 올리지 않는다** (`.gitignore`). 패키지 이름이 임시라서, 정해지면 그때 새로 만들어 올린다.
-아이콘·시작 화면·세로 고정은 `scripts/android-assets.ts`에 있어서, 저장소를 새로 받은 곳에서는 `npm run android:reset` 한 번이면 같은 android 폴더가 만들어진다.
+아이콘·시작 화면·세로 고정·글자 배율은 `scripts/android-assets.ts`에 있어서, 저장소를 새로 받은 곳에서는 `npm run android:reset` 한 번이면 같은 android 폴더가 만들어진다.
 패키지 이름을 확정한 뒤에는 `.gitignore`에서 `android`를 빼고 폴더째 올린다 (서명 설정 같은 손수정이 생기기 때문).
 
 ## 명령
@@ -24,7 +25,7 @@
 npm run android:sync     # 웹 빌드 → android 폴더로 복사 (코드를 고칠 때마다)
 npm run android:open     # Android Studio로 열기 (PC에서)
 npm run android:bundle   # 출시용 AAB 빌드 (서명 설정이 있어야 함)
-npm run android:assets   # 아이콘·시작 화면·세로 고정 다시 넣기
+npm run android:assets   # 아이콘·시작 화면·세로 고정·글자 배율 다시 넣기
 npm run android:reset    # android 폴더를 새로 만든다 (패키지 이름을 바꿀 때)
 ```
 

@@ -54,7 +54,7 @@ type Overlay = 'stats' | 'menu' | 'notebook' | 'dex' | 'settings' | 'shop' | 'al
 interface EventResult { id: string; emoji: string; title: string; text: string; delta: Delta; money: number; kind: string }
 
 const app = document.getElementById('app')!;
-app.classList.add('pixel-ui');
+app.classList.add('pixel-ui', 'fit'); // fit = 한 화면에 딱 (game.css)
 loadPixelFont();
 const prefs = loadPrefs();
 setFeedbackPrefs(prefs);
@@ -117,11 +117,44 @@ let shake = 0;
 let lidT = -1;
 let titleLook: Look = { age: 7, gender: Math.random() < 0.5 ? 'boy' : 'girl' };
 
-function fitScene(c: HTMLCanvasElement, h: number): void {
-  const availW = Math.min(c.parentElement!.clientWidth || 360, 520);
-  const s = Math.max(1, Math.floor(availW / KW));
-  c.width = KW; c.height = h;
+function sizeScene(c: HTMLCanvasElement, h: number, s: number): void {
+  c.width = KW; c.height = h; c.style.marginTop = '';
   c.style.width = `${KW * s}px`; c.style.height = `${h * s}px`;
+}
+
+/** 한 화면에 딱 맞추기 — 페이지 스크롤 없이.
+ *  ① 장면을 폭에 맞춘 배율로 → ② 넘치면 장면을 조금씩 줄인다(기기 픽셀로 딱 떨어지는 배율만, 도트가 뭉개지지 않게)
+ *  → ③ 그래도 넘치면 촘촘한 배치(.tight)로 다시 → ④ 마지막엔 아래 패널 안에서만 스크롤.
+ *  같은 화면 안에서는(탭 바꾸기 등) 장면 크기가 들쭉날쭉하지 않게, 줄인 배율을 기억해 다시 키우지 않는다 */
+let fitMemo: { key: string; k: number; tight: boolean } | undefined;
+function fitToScreen(): void {
+  const c = sceneCanvas;
+  if (!c) { app.classList.remove('tight'); return; }
+  const h = Number(c.dataset.h), dpr = window.devicePixelRatio || 1;
+  const availW = Math.min(c.parentElement!.clientWidth || innerWidth || 360, 520);
+  const kMax = Math.max(1, Math.floor((availW * dpr) / KW));
+  // 넓은 배치에서는 장면을 80%까지만, 촘촘한 배치에서는 2배까지 줄인다
+  const kFloor = (r: number) => Math.min(kMax, Math.max(Math.ceil(2 * dpr), Math.ceil(kMax * r)));
+  const key = `${sceneKind}|${screen}|${game?.step}|${game?.today?.phase}|${eventResult ? 1 : 0}|${innerWidth}x${innerHeight}`;
+  const memo = fitMemo?.key === key ? fitMemo : undefined;
+  const panel = () => app.querySelector<HTMLElement>('.px-panel');
+  const fits = () => { const p = panel(); return !p || p.scrollHeight - p.clientHeight <= 1; };
+  for (const tight of [false, true]) {
+    if (memo?.tight && !tight) continue;
+    app.classList.toggle('tight', tight);
+    const kMin = kFloor(tight ? 0 : 0.8);
+    for (let k = memo && memo.tight === tight ? memo.k : kMax; k >= kMin; k--) {
+      sizeScene(c, h, k / dpr);
+      if (fits() || (tight && k === kMin)) {
+        fitMemo = { key, k, tight };
+        c.parentElement!.classList.toggle('framed', (KW * k) / dpr < availW - 8);
+        // ⑤ 그래도 넘치면 장면 위쪽(천장·벽)을 최대 1/5까지 잘라 낸다
+        const p = panel(), over = p ? p.scrollHeight - p.clientHeight : 0;
+        if (over > 1) c.style.marginTop = `${-Math.min(Math.ceil(over), Math.floor((h * k) / dpr / 5))}px`;
+        return;
+      }
+    }
+  }
 }
 
 /** 큰 아이 (2배) — 키 재기·엔딩 */
@@ -856,12 +889,14 @@ function render(): void {
   else if (screen === 'game' && s) {
     const tip = currentTip();
     const inner = gameBody(s);
-    body = `<div class="day-px">${hud(s)}${tip ? inner.replace(/<section class="px-panel[^"]*">/, (m) => `${m}${tipHtml(tip)}`) : inner}</div>`;
+    // 안내는 장면 아래쪽에 겹쳐 띄운다 (아래 패널을 밀어내 화면이 넘치지 않게). 장면이 없으면 패널 맨 위에
+    const withTip = !tip ? inner : inner.includes('<div class="px-stage">') ? inner.replace('<div class="px-stage">', (m) => `${m}${tipHtml(tip)}`) : inner.replace(/<section class="px-panel[^"]*">/, (m) => `${m}${tipHtml(tip)}`);
+    body = `<div class="day-px">${hud(s)}${withTip}</div>`;
   }
   else body = renderTitle();
   app.innerHTML = body + renderOverlay() + renderLightbox();
   sceneCanvas = document.getElementById('scene') as HTMLCanvasElement | null;
-  if (sceneCanvas) fitScene(sceneCanvas, Number(sceneCanvas.dataset.h));
+  fitToScreen();
   syncTimer();
   setTrack(musicFor());
 }
@@ -1156,7 +1191,8 @@ function loop(now: number) {
   if (!commuteOn) drawScene(now, dt);
   requestAnimationFrame(loop);
 }
-window.addEventListener('resize', () => { if (sceneCanvas) fitScene(sceneCanvas, Number(sceneCanvas.dataset.h)); });
+window.addEventListener('resize', () => { if (!commuteOn) fitToScreen(); });
+void document.fonts?.ready.then(() => { fitMemo = undefined; if (!commuteOn) fitToScreen(); });
 
 // 자동 테스트용 (게임 진행에는 영향 없음)
 (window as unknown as { __game: () => unknown }).__game = () => game && { music: nowPlaying(), tip: currentTip(), result: !!eventResult, step: game.step, age: game.age, phase: game.today?.phase, active: !!game.active, money: game.money, ending: game.endingId, opts: game.today ? leaveOptions(game) : [] };
