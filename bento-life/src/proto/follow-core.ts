@@ -15,7 +15,16 @@
 import '../style.css';
 import './proto.css';
 import './follow.css';
+import './pixel-ui.css';
+import { loadPixelFont } from '../pixel/font.ts';
 import { haptic, sfx } from '../ui/feedback.ts';
+import { childFront, childSide, parentSide, type Look } from '../pixel/child.ts';
+import { dog as dogSprite, neighbor as neighborSprite, school as schoolSprite } from '../pixel/extras.ts';
+import { bubble } from '../pixel/fx.ts';
+import { Grid, toDataURL } from '../pixel/grid.ts';
+import { P } from '../pixel/palette.ts';
+import { pole, streetTile, tree } from '../pixel/scenes.ts';
+import { blit, sprite } from '../pixel/sprite-cache.ts';
 
 export type Age = 6 | 10 | 15;
 interface Tune { speed: number; look: [number, number]; tele: number; lookDur: number; fake: number; rate: number; sight: number; kid: string; label: string }
@@ -88,10 +97,17 @@ export interface FollowOpts {
   /** 도시락을 두고 간 날이면 학교에서 몰래 넣기까지 */
   forgot?: boolean;
   onEnd?: (r: FollowResult) => void;
+  /** 도트 캐릭터 생김새 (없으면 나이에 맞춰 기본) */
+  look?: Look;
 }
 export interface FollowResult { over: 'school' | 'caught' | 'lost'; delivered: boolean; score: number; nearMiss: number; log: string[]; bond: number; indep: number; happy: number; moment: string }
 let opts: FollowOpts = { age: 10, standalone: true, forgot: true };
 const label = () => opts.label ?? TUNE[age].label;
+const kidLook = (): Look => opts.look ?? { age: age === 15 ? 15 : 7, gender: 'girl' };
+const friendLook = (): Look => ({ age: kidLook().age, gender: kidLook().gender === 'girl' ? 'boy' : 'girl' });
+/** 도트 한 칸 = 화면 3px. 게임 좌표(px)를 도트 칸으로 바꿀 때 나눈다 */
+const S = 3;
+const GROUND = 92;
 let st: State;
 let raf = 0;
 let app: HTMLElement = document.body;
@@ -333,16 +349,10 @@ function render(): void {
       <div class="score-badge">💗 <b id="score">0</b></div>
     </div>
     <div class="street" id="street">
-      <div class="sky"></div>
+      <canvas id="streetc"></canvas>
       <div class="world" id="world">
-        <div class="houses"></div>
-        ${st.covers.map((c) => `<span class="cover" style="left:${c.x - 30}px">${c.e}</span>`).join('')}
-        <span class="school" style="left:${ROUTE - 10}px">🏫</span>
-        <div class="kid-walker" id="kid"><span class="kid-bubble" id="kb"></span><span class="kid-emoji">${T.kid}</span><span class="pack">🎒</span></div>
-        <div class="kid-walker friend ${st.friend ? '' : 'gone'}" id="friend"><span class="kid-bubble" id="fb"></span><span class="kid-emoji">${age === 6 ? '👧' : age === 10 ? '👧' : '👩'}</span></div>
-        <div class="parent" id="parent"><i class="head"></i><i class="body"></i><span class="bag">🍱</span><span class="hat">${hasTool('pot') ? '🪴' : ''}</span><span class="paper">📰</span></div>
-        ${st.dog ? '<button class="sprite dog" data-tap="dog" id="dog">🐶</button>' : ''}
-        ${st.neighbor ? `<button class="sprite neighbor" data-tap="neighbor" style="left:${st.neighbor.x}px">👵<span class="say">어머~?! <b>쉿!</b></span></button>` : ''}
+        ${st.dog ? '<button class="sprite dog hit" data-tap="dog" id="dog" aria-label="강아지에게 간식"></button>' : ''}
+        ${st.neighbor ? `<button class="sprite neighbor hit" data-tap="neighbor" style="left:${st.neighbor.x}px" aria-label="이웃에게 쉿"><span class="say">어머~?! <b>쉿!</b></span></button>` : ''}
       </div>
       <div class="gap-warn" id="warn"></div>
       <div class="slowmo" id="slowmo"></div>
@@ -402,18 +412,23 @@ function introCard(): string {
   </div>`;
 }
 
+/** 그날의 한 장면을 도트로 조립한 폴라로이드 */
 function polaroid(): string {
-  const T = TUNE[age];
   const k = st.moment.kind;
-  const scene =
-    k === 'caught' ? `<span class="p-kid">${T.kid}💢</span><span class="p-parent">😳</span>`
-      : k === 'nearmiss' ? `<span class="p-cover">🌳</span><span class="p-kid">👀${T.kid}</span><span class="p-sweat">💦</span>`
-        : k === 'neighbor-fail' ? `<span class="p-kid">${T.kid}❓</span><span class="p-other">👵📢</span>`
-          : k === 'dog' ? `<span class="p-kid">${T.kid}</span><span class="p-other">🐶❤️</span>`
-            : k.startsWith('crisis') ? `<span class="p-kid">${T.kid}</span><span class="p-other">${st.log.find((l) => l.includes('—'))?.slice(0, 2) ?? '✨'}</span>`
-              : k === 'deliver' ? `<span class="p-other">🏫</span><span class="p-kid">🍱✨</span>`
-                : k === 'lost' ? `<span class="p-other">❓❓</span>` : `<span class="p-kid">${T.kid}🎒</span><span class="p-other">☀️</span>`;
-  return `<figure class="polaroid"><div class="p-scene">${scene}</div><figcaption>${st.moment.text}</figcaption></figure>`;
+  const g = new Grid(64, 46).rect(0, 0, 64, 30, P.sky).rect(0, 30, 64, 16, P.grass).hline(0, 63, 30, P.grassDark).rect(0, 38, 64, 8, P.road);
+  const kid = kidLook();
+  const put = (src: Grid, x: number) => g.draw(src, x, 44 - src.h);
+  if (k === 'caught') { put(parentSide(2), 14); put(childFront(kid, 'yuck'), 32); }
+  else if (k === 'nearmiss') { put(parentSide(0), 10); put(tree(), 6); put(childFront(kid, 'surprise'), 36); }
+  else if (k === 'neighbor-fail' || k === 'neighbor-ok') { put(neighborSprite(), 8); put(childFront(kid, k === 'neighbor-ok' ? 'neutral' : 'surprise'), 34); }
+  else if (k === 'dog') { put(dogSprite(0), 10); put(childSide(kid, 2), 34); }
+  else if (k === 'deliver') { put(schoolSprite(), -4); put(childFront(kid, 'happy'), 38); }
+  else if (k === 'crisis-run') { put(parentSide(4), 18); put(childFront(kid, 'happy'), 32); }
+  else if (k === 'crisis-alone') { put(tree(), 4); put(childFront(kid, 'happy'), 34); }
+  else if (k === 'crisis-hurt') { put(tree(), 4); put(childFront(kid, 'sad'), 34); }
+  else if (k === 'lost') { put(parentSide(0), 26); }
+  else { put(childSide(kid, 1), 22); }
+  return `<figure class="polaroid"><img class="p-img" src="${toDataURL(g, 3)}" alt=""><figcaption>${st.moment.text}</figcaption></figure>`;
 }
 
 function resultCard(): string {
@@ -441,38 +456,83 @@ function resultCard(): string {
 }
 
 function draw(): void {
-  const T = TUNE[age];
-  const world = document.getElementById('world');
   const street = document.getElementById('street');
-  if (!world || !street) return;
+  const canvas = document.getElementById('streetc') as HTMLCanvasElement | null;
+  const world = document.getElementById('world');
+  if (!street || !canvas || !world) return;
   const w = street.clientWidth;
-  world.style.transform = `translateX(${-Math.max(0, st.px - w * 0.28)}px)`;
-  const kid = document.getElementById('kid')!;
+  // 화면 높이에 맞춰 하늘을 늘린다 (아래 조작 영역 약 170px을 남기고)
+  const avail = window.innerHeight - street.getBoundingClientRect().top - 176;
+  const LW = Math.ceil(w / S), LH = Math.max(100, Math.min(170, Math.floor(avail / S)));
+  if (canvas.width !== LW || canvas.height !== LH) { canvas.width = LW; canvas.height = LH; canvas.style.width = `${LW * S}px`; canvas.style.height = `${LH * S}px`; }
+  const Y = LH - 100, G = GROUND + Y;
+  const cam = Math.max(0, st.px - w * 0.28);
+  world.style.transform = `translateX(${-cam}px)`;
+  const ctx = canvas.getContext('2d')!;
+  const cx = (x: number) => x / S - cam / S;
+  ctx.fillStyle = P.sky; ctx.fillRect(0, 0, LW, LH);
+  ctx.drawImage(sprite(`street-${ROUTE}`, () => streetTile(Math.ceil((ROUTE + 800) / S))), -Math.round(cam / S), Y);
+  const sch = sprite('school', schoolSprite);
+  blit(ctx, sch, cx(ROUTE) - 10, G - sch.height);
+  // 부모 (숨을 곳보다 먼저 그려서 가려지게)
+  const moving = st.walking || st.dashTo !== undefined;
+  const pf = Math.floor(st.px / 7) % 8;
+  const par = sprite(`parent-${pf}-${st.dashTo !== undefined}`, () => parentSide(pf, { dash: st.dashTo !== undefined }));
+  const hid = hidden();
+  blit(ctx, par, cx(st.px) - 10, G - par.height, hid ? 0.5 : 1);
+  if (hasTool('pot')) blit(ctx, sprite('pot', potHat), cx(st.px) - 5, G - par.height - 5, hid ? 0.5 : 1);
+  for (const c of st.covers) {
+    const cov = c.e === '🌳' || c.e === '🌲' ? sprite('tree', tree) : sprite('pole', pole);
+    blit(ctx, cov, cx(c.x) - cov.width / 2, G - cov.height);
+  }
+  if (st.newsLeft > 0) blit(ctx, sprite('news', newspaper), cx(st.px) - 9, G - 40);
+  // 아이 (걸음 프레임은 실제로 간 거리에 맞춰 넘어간다 → 미끄러지지 않음)
+  const kid = kidLook();
   const looking = st.kidState === 'look';
-  kid.style.left = `${st.kx}px`;
-  kid.className = `kid-walker ${looking ? 'looking' : ''} ${st.kidState === 'walk' ? 'stepping' : ''}`;
-  document.getElementById('kb')!.textContent = st.kidState === 'tele' ? '…?' : looking ? '👀' : st.kidState === 'pause' && !st.crisis ? '🎀'
-    : opts.mood === 'happy' && Math.floor(st.t) % 3 === 0 ? '♪' : opts.mood === 'grumpy' && Math.floor(st.t) % 4 === 0 ? '😤' : '';
-  const fr = document.getElementById('friend')!;
+  const seen = watchedBy() > 0;
+  const kf = Math.floor(st.kx / 7) % 8;
+  const kidS = looking ? sprite(`kf-${kid.age}${kid.gender}-${seen}`, () => childFront(kid, seen ? 'surprise' : 'neutral'))
+    : sprite(`ks-${kid.age}${kid.gender}-${kf}`, () => childSide(kid, kf));
+  const kx = cx(st.kx) - 12, ky = G - kidS.height;
+  blit(ctx, kidS, kx, ky);
+  const mark = st.kidState === 'tele' ? '…' : looking ? (seen ? '!' : '…') : opts.mood === 'happy' && Math.floor(st.t) % 3 === 0 && !st.crisis ? '♪' : null;
+  if (mark) bubble(ctx, Math.round(kx + 7), ky - 13, 1, mark);
   if (st.friend) {
-    fr.style.left = `${st.friend.x}px`;
-    fr.className = `kid-walker friend ${st.friend.state === 'look' ? 'looking' : ''} ${st.friend.state === 'walk' ? 'stepping' : ''}`;
-    document.getElementById('fb')!.textContent = st.friend.state === 'tele' ? '?' : st.friend.state === 'look' ? '👀' : '';
-  } else fr.className = 'kid-walker friend gone';
-  const parent = document.getElementById('parent')!;
-  parent.style.left = `${st.px}px`;
-  parent.className = `parent ${hidden() ? 'hidden' : ''} ${st.newsLeft > 0 ? 'newspaper' : ''} ${st.walking || st.dashTo !== undefined ? 'stepping' : ''} ${st.dashTo !== undefined ? 'dashing' : ''} ${watchedBy() > 0 ? 'seen' : ''}`;
-  const dog = document.getElementById('dog');
-  if (dog) dog.style.left = `${st.px - 44}px`;
+    const fl = friendLook();
+    const fLook = st.friend.state === 'look';
+    const ff = Math.floor(st.friend.x / 7) % 8;
+    const fs = fLook ? sprite(`ff-${fl.age}${fl.gender}`, () => childFront(fl, 'neutral', { outfit: 'berry' })) : sprite(`fs-${fl.age}${fl.gender}-${ff}`, () => childSide(fl, ff, 'neutral', { outfit: 'berry' }));
+    blit(ctx, fs, cx(st.friend.x) - 12, G - fs.height);
+    if (st.friend.state !== 'walk') bubble(ctx, Math.round(cx(st.friend.x) - 5), G - fs.height - 13, 1, fLook && seen ? '!' : '…');
+  }
+  if (st.dog) {
+    const d = sprite(`dog-${Math.floor(st.t * 6) % 2}`, () => dogSprite(Math.floor(st.t * 6) % 2));
+    blit(ctx, d, cx(st.px - 44) - 10, G - d.height);
+    const btn = document.getElementById('dog');
+    if (btn) btn.style.left = `${st.px - 44 - 30}px`;
+  }
+  if (st.neighbor) { const n = sprite('neighbor', neighborSprite); blit(ctx, n, cx(st.neighbor.x) - 11, G - n.height); }
+  void moving;
   (document.getElementById('sus') as HTMLElement).style.width = `${Math.min(100, st.sus)}%`;
   (document.getElementById('prog') as HTMLElement).style.width = `${Math.min(100, (st.kx / ROUTE) * 100)}%`;
   document.getElementById('score')!.textContent = String(Math.round(st.score));
   const gap = st.kx - st.px;
-  document.getElementById('warn')!.textContent = gap > LOSE_DIST * 0.8 ? '💨 너무 멀어요! 놓치겠어요' : gap < 60 ? '⚠️ 너무 가까워요!' : gap < 140 && watchedBy() === 0 ? '💗💗 딱 좋은 거리' : '';
+  document.getElementById('warn')!.textContent = gap > LOSE_DIST * 0.8 ? '너무 멀어요! 놓치겠어요' : gap < 60 ? '너무 가까워요!' : gap < 140 && watchedBy() === 0 ? '♥♥ 딱 좋은 거리' : '';
   document.getElementById('slowmo')!.className = `slowmo ${st.slow > 0 ? 'on' : ''}`;
   const ct = document.getElementById('ctime');
   if (ct && st.crisis) ct.style.width = `${(st.crisisLeft / 2.6) * 100}%`;
   if (ct && st.phase === 'deliver') ct.style.width = `${(st.deliverLeft / 2.2) * 100}%`;
+}
+
+function potHat(): Grid {
+  const g = new Grid(12, 9).rect(2, 4, 8, 5, P.tomato).hline(1, 10, 4, P.tomatoDark).set(5, 2, P.green).set(6, 1, P.green).set(7, 2, P.green).vline(6, 2, 3, P.greenDark);
+  return g.outline(P.ink);
+}
+function newspaper(): Grid {
+  const g = new Grid(20, 28).rect(0, 0, 20, 28, P.cream);
+  for (let y = 3; y < 26; y += 3) g.hline(2, 17, y, P.greyDark);
+  g.rect(2, 3, 8, 6, P.grey);
+  return g.outline(P.ink);
 }
 
 // ───────── 입력 ─────────
@@ -540,6 +600,8 @@ const result = (): FollowResult => ({
 /** 화면(root)에 따라가기 한 판을 띄운다 */
 export function mountFollow(root: HTMLElement, o: FollowOpts): void {
   app = root;
+  app.classList.add('pixel-ui');
+  loadPixelFont();
   opts = o;
   age = o.age;
   saved = loadSaved();

@@ -7,8 +7,9 @@
 import './pixel-demo.css';
 import g11 from 'galmuri/dist/Galmuri11.woff2?url';
 import g11b from 'galmuri/dist/Galmuri11-Bold.woff2?url';
-import { childFront, childSide, parentSide, CHILD_H, type Expr, type Look } from '../pixel/child.ts';
+import { childFront, childSide, parentSide, CHILD_H, WALK_FRAMES, type Expr, type Look } from '../pixel/child.ts';
 import { food } from '../pixel/foods.ts';
+import { loadPartOverrides } from '../pixel/parts-loader.ts';
 import { draw as drawFx, spawn, step, bubble, type Fx } from '../pixel/fx.ts';
 import { paint, toDataURL, type Grid } from '../pixel/grid.ts';
 import { bentoBox, bentoLid, kitchenCounter, kitchenWall, pole, SCENE_W, streetTile, tree } from '../pixel/scenes.ts';
@@ -203,7 +204,7 @@ function stepStreet(dt: number) {
     if (Math.abs(st.dashTo - st.px) < 2) { st.px = st.dashTo; st.dashTo = -1; }
   } else if (st.kid === 'walk' && st.kx - st.px > 46) st.px += 24 * dt;
   st.ft += dt;
-  if (st.ft > 0.16) { st.ft = 0; if (st.kid === 'walk') st.frame++; if (st.dashTo >= 0 || (st.kid === 'walk' && st.kx - st.px > 46)) st.pf++; }
+  if (st.ft > 0.1) { st.ft = 0; if (st.kid === 'walk') st.frame++; if (st.dashTo >= 0 || (st.kid === 'walk' && st.kx - st.px > 46)) st.pf++; }
   if (st.kx > WORLD - 60) { st.kx = 60; st.px = 20; st.dashTo = -1; }
   step(st.sfx, dt);
 }
@@ -214,7 +215,7 @@ function drawStreet(now: number) {
   sctx.drawImage(sprite('street', () => streetTile(WORLD)), -Math.round(cam), 0);
   const hidden = covers.some((c) => Math.abs(c.x - st.px) < 5);
   // 부모 (숨을 곳보다 뒤에 그려서 가려지게)
-  const pSprite = sprite(`parent-${st.pf % 4}-${st.dashTo >= 0}`, () => parentSide(st.pf % 4, { dash: st.dashTo >= 0 }));
+  const pSprite = sprite(`parent-${st.pf % WALK_FRAMES}-${st.dashTo >= 0}`, () => parentSide(st.pf % WALK_FRAMES, { dash: st.dashTo >= 0 }));
   sctx.globalAlpha = hidden ? 0.55 : 1;
   blit(sctx, pSprite, st.px - 10 - cam, 92 - 46);
   sctx.globalAlpha = 1;
@@ -225,7 +226,7 @@ function drawStreet(now: number) {
   // 아이
   const kx = st.kx - 12 - cam, ky = 92 - CHILD_H;
   if (st.kid === 'look') blit(sctx, sprite(`walk-look`, () => childFront(walker, hidden ? 'neutral' : 'surprise')), kx, ky);
-  else blit(sctx, sprite(`walk-${st.frame % 4}`, () => childSide(walker, st.frame % 4)), kx, ky);
+  else blit(sctx, sprite(`walk-${st.frame % WALK_FRAMES}`, () => childSide(walker, st.frame % WALK_FRAMES)), kx, ky);
   if (st.kid === 'tele') bubble(sctx, Math.round(kx + 8), ky - 4, 1, '…');
   if (st.kid === 'look') bubble(sctx, Math.round(kx + 8), ky - 4, 1, hidden ? '…' : '!');
   if (st.kid === 'walk' && Math.floor(now / 900) % 4 === 0) bubble(sctx, Math.round(kx + 8), ky - 4, 1, '♪');
@@ -267,6 +268,7 @@ function loop(now: number) {
   drawKids(now);
   requestAnimationFrame(loop);
 }
-requestAnimationFrame(loop);
+// 사람이 고친 부품 PNG가 있으면 먼저 읽고 시작
+void loadPartOverrides().then((n) => { if (n) console.info(`부품 ${n}개를 손그림으로 교체`); cache.clear(); requestAnimationFrame(loop); });
 window.addEventListener('resize', () => { ks = fitCanvas(kc, KW, KH); fitCanvas(sc, SCENE_W, SH); fitCanvas(kidc, SCENE_W, 56); });
 void ks;

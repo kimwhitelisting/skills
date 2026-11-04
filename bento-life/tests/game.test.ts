@@ -129,3 +129,20 @@ describe('simulation', () => {
     expect(k).toBeGreaterThan(100);
   });
 });
+
+describe('pixel parts', () => {
+  it('every layer the generator draws can be overridden by a part with the same key', async () => {
+    const { childFront, childLayers, partKey, PART_OVERRIDES } = await import('../src/pixel/child.ts');
+    const look = { age: 7 as const, gender: 'girl' as const };
+    const layers = childLayers('front', look);
+    expect(Object.keys(layers)).toContain('hair');
+    const before = childFront(look).px.join();
+    const hair = layers.hair.clone();
+    hair.px.forEach((c, i) => { if (c) hair.px[i] = '#00ff00'; });
+    PART_OVERRIDES.set(partKey('front', look, 'hair'), hair);
+    const after = childFront(look);
+    PART_OVERRIDES.clear();
+    expect(after.px.join()).not.toBe(before);
+    expect(after.px).toContain('#00ff00');
+  });
+});
