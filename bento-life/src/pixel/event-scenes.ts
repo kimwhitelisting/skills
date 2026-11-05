@@ -3,7 +3,7 @@
  * 아이는 지금 나이의 모습으로 들어가고, 고른 결과에 따라 표정만 바뀐다.
  * 새 이벤트를 추가하면 SCENES에 한 줄 (없으면 현관 기본 장면).
  */
-import { childFront, headTop, parentSide, type Expr, type HatId, type Look } from './child.ts';
+import { childFront, childSide, headTop, parentSide, type Expr, type HatId, type Look } from './child.ts';
 import { dog, entryFloor, entryWall, miniLunch, neighbor, school } from './extras.ts';
 import { food } from './foods.ts';
 import { Grid, recolor } from './grid.ts';
@@ -21,7 +21,7 @@ const g0 = () => new Grid(EV_W, EV_H);
 const put = (g: Grid, src: Grid, x: number, footY = FEET, flip = false) => g.draw(src, Math.round(x), Math.round(footY - src.h), flip);
 const friendLook = (l: Look): Look => ({ age: l.age, gender: l.gender === 'girl' ? 'boy' : 'girl' });
 const kid = (l: Look, e: Expr, hat?: HatId) => childFront(l, e, { hat });
-const friend = (l: Look, e: Expr = 'neutral') => childFront(friendLook(l), e, { outfit: 'mint' });
+const friend = (l: Look, e: Expr = 'neutral') => childFront(friendLook(l), e, { outfit: 'mint', plain: true });
 /** 부모 (얼굴 없는 실루엣, 오른쪽을 봄 — flip이면 왼쪽) */
 const parent = (frame = 0) => parentSide(frame);
 /** 아이 얼굴만 (베개·보자기용) */
@@ -166,8 +166,8 @@ function kitchen(): Grid {
 }
 const counterFront = (g: Grid) => g.draw(kitchenCounter(EV_W, EV_H - 50), 0, 50);
 /** 조리대 너머 아이: 어느 나이든 머리와 어깨가 조리대 위로 보이게 */
-function kidBehind(g: Grid, l: Look, e: Expr, x: number): Grid {
-  const k = kid(l, e);
+function kidBehind(g: Grid, l: Look, e: Expr, x: number, hat?: HatId): Grid {
+  const k = kid(l, e, hat);
   return g.draw(k, x, 30 - headTop(l).y);
 }
 
@@ -431,6 +431,82 @@ function bigHeartBroken(g: Grid, x: number, y: number): void {
 }
 const dyed = (k: Grid, c: string) => recolor(k, { [P.hairGirl]: c, [P.hairBoy]: c, [P.hairGirlHi]: '#ffd1e3', [P.hairBoyHi]: '#ffd1e3' });
 
+
+// ───────── 소품 3 (상점 이야기) ─────────
+function piano(): Grid {
+  const g = new Grid(40, 30).rect(0, 0, 40, 22, '#4a3123').rect(2, 2, 36, 6, '#6d4a33').rect(0, 22, 40, 2, '#4a3123');
+  g.rect(2, 12, 36, 6, P.white);
+  for (let x = 4; x < 38; x += 4) g.vline(x, 12, 17, P.greyDark);
+  for (const x of [5, 9, 17, 21, 25, 33]) g.rect(x, 12, 2, 4, P.ink);
+  g.rect(2, 24, 3, 6, '#4a3123').rect(35, 24, 3, 6, '#4a3123').rect(14, 3, 12, 4, P.white).hline(16, 23, 5, P.inkSoft);
+  return g.outline(P.ink);
+}
+function bike(): Grid {
+  const g = new Grid(36, 22);
+  for (const cx of [7, 28]) { g.ellipse(cx, 15, 6, 6, P.ink).ellipse(cx, 15, 4.5, 4.5, null).set(cx, 15, P.grey); }
+  for (let i = 0; i <= 10; i++) { g.set(7 + i * 1.1, 15 - i * 0.8, P.tomato); g.set(18 + i * 1, 7 + i * 0.8, P.tomato); }
+  g.hline(10, 26, 8, P.tomato).rect(8, 5, 6, 2, P.ink).rect(24, 4, 6, 2, P.greyDark).vline(26, 4, 8, P.greyDark);
+  return g;
+}
+function planters(): Grid {
+  const g = new Grid(40, 20);
+  for (const [x, c] of [[0, P.tomato], [14, P.mustard], [28, P.sage]] as const) {
+    g.rect(x, 12, 12, 8, '#b9855a').hline(x, x + 11, 12, '#94653f');
+    g.vline(x + 6, 4, 11, P.greenDark).ellipse(x + 3, 7, 3, 2, P.green).ellipse(x + 9, 5, 3, 2, P.green).ellipse(x + 6, 3, 2, 2, c);
+  }
+  return g.outline(P.ink);
+}
+function tent(): Grid {
+  const g = new Grid(40, 26);
+  for (let i = 0; i < 26; i++) g.hline(20 - Math.round(i * 0.75), 20 + Math.round(i * 0.75), i, i % 6 < 3 ? P.tomato : P.mustard);
+  for (let i = 8; i < 26; i++) g.hline(20 - Math.round((i - 8) * 0.3), 20 + Math.round((i - 8) * 0.3), i, '#3a2a44');
+  return g.outline(P.ink);
+}
+function campfire(): Grid {
+  const g = new Grid(14, 14).rect(1, 11, 12, 3, P.brownDark).rect(3, 10, 8, 2, P.brown);
+  g.ellipse(7, 6, 4, 5, P.tomato).ellipse(7, 7, 2.5, 3.5, P.mustard).ellipse(7, 8, 1.2, 2, P.egg);
+  return g.outline(P.ink);
+}
+function handCamera(): Grid {
+  const g = new Grid(14, 10).rect(0, 2, 14, 8, P.ink).rect(2, 0, 4, 2, P.ink).ellipse(8, 6, 3, 3, P.greyDark).ellipse(8, 6, 1.5, 1.5, P.sky).set(12, 3, P.white);
+  return g.outline(P.inkSoft);
+}
+const pup = () => dog(0);
+/** 사진 속 작은 부모 실루엣 (전봇대 뒤에 숨은) */
+function tinyParent(g: Grid, x: number, y: number): void {
+  g.rect(x + 4, y, 2, 14, P.greyDark).ellipse(x + 2, y + 3, 2, 2, P.inkSoft).rect(x, y + 5, 4, 8, P.inkSoft).rect(x + 3, y + 8, 2, 2, P.tomato);
+}
+
+
+// ───────── 소품 4 (이야기 꾸러미 2) ─────────
+function fishTank(): Grid {
+  const g = new Grid(36, 30).rect(0, 2, 36, 22, '#7fc4e6').rect(0, 2, 36, 3, '#bfe6f5').rect(0, 20, 36, 4, P.mustard);
+  for (const [x, y, c] of [[8, 10, P.tomato], [22, 14, P.egg], [14, 17, P.sky]] as const) g.ellipse(x, y, 3, 2, c).set(x + 3, y, c).set(x + 4, y - 1, c).set(x + 4, y + 1, c).set(x - 1, y - 1, P.ink);
+  g.vline(30, 8, 19, P.green).vline(31, 11, 19, P.greenDark).set(5, 6, P.white).set(18, 8, P.white);
+  g.rect(-1, 24, 38, 6, '#94653f');
+  return g.outline(P.ink);
+}
+function bookshelf(): Grid {
+  const g = new Grid(40, 52).rect(0, 0, 40, 52, '#94653f');
+  const cs = [P.tomato, P.sky, P.sage, P.mustard, P.plum, P.pink, P.navy];
+  for (let r = 0; r < 4; r++) { g.rect(2, 2 + r * 12, 36, 10, '#6d4a33'); for (let i = 0; i < 8; i++) g.rect(3 + i * 4.4, 3 + r * 12 + (i % 3), 4, 9 - (i % 3), cs[(r * 3 + i) % cs.length]); }
+  return g.outline(P.ink);
+}
+function airLetter(): Grid {
+  const g = new Grid(18, 12).rect(0, 0, 18, 12, P.white);
+  for (let i = 0; i < 18; i += 4) { g.rect(i, 0, 2, 1, P.red).rect(i + 2, 0, 2, 1, P.skyDark).rect(i, 11, 2, 1, P.skyDark).rect(i + 2, 11, 2, 1, P.red); }
+  for (let i = 0; i < 8; i++) g.set(1 + i, 1 + i * 0.6, P.greyDark).set(16 - i, 1 + i * 0.6, P.greyDark);
+  g.rect(13, 2, 3, 3, P.tomato);
+  return g.outline(P.ink);
+}
+function flowers(): Grid {
+  const g = new Grid(14, 18);
+  for (const [x, y, c] of [[4, 4, P.red], [9, 3, P.pink], [7, 7, P.red]] as const) g.ellipse(x, y, 2.5, 2.5, c).set(x, y, P.mustard);
+  g.vline(6, 8, 17, P.greenDark).vline(8, 8, 17, P.greenDark);
+  for (let i = 0; i < 6; i++) g.hline(3 + Math.floor(i / 2), 10 - Math.floor(i / 2), 11 + i, P.white);
+  return g.outline(P.ink);
+}
+
 // ───────── 장면 ─────────
 type Build = (l: Look, e: Expr) => Grid;
 const SCENES: Record<string, { expr: Expr; build: Build }> = {
@@ -443,7 +519,7 @@ const SCENES: Record<string, { expr: Expr; build: Build }> = {
   hagwon: { expr: 'surprise', build: (l, e) => { const g = classroom(); put(g, kid(l, e), 30); for (let i = 0; i < 6; i++) g.rect(62, FEET - 6 - i * 5, 18 - (i % 2) * 2, 5, [P.tomato, P.sky, P.sage, P.mustard, P.plum, P.pink][i]).hline(62, 79 - (i % 2) * 2, FEET - 6 - i * 5, P.ink); sweat(g, 50, 28); return g; } },
   school: { expr: 'happy', build: (l, e) => { const g = park(); put(g, school(), 34, FLOOR); blossoms(g); put(g, parent(0), 6); put(g, kid(l, e), 74); return g; } },
   picnic: { expr: 'happy', build: (l, e) => { const g = park(); put(g, tree(), 2, FLOOR); put(g, mat(), 26, FEET); put(g, kid(l, e), 30, FEET - 2); put(g, friend(l, 'happy'), 60, FEET - 2); put(g, miniLunch(), 47, FEET); return g; } },
-  fight: { expr: 'yuck', build: (l, e) => { const g = park(); put(g, tree(), 82, FLOOR); put(g, kid(l, e), 24); put(g, childFront(friendLook(l), 'yuck', { outfit: 'mint' }), 58, FEET, true); anger(g, 42, 18); anger(g, 76, 20); return g; } },
+  fight: { expr: 'yuck', build: (l, e) => { const g = park(); put(g, tree(), 82, FLOOR); put(g, kid(l, e), 24); put(g, childFront(friendLook(l), 'yuck', { outfit: 'mint', plain: true }), 58, FEET, true); anger(g, 42, 18); anger(g, 76, 20); return g; } },
   sportsday: { expr: 'happy', build: (l, e) => { const g = park({ track: true, bunting: true }); put(g, kid(l, e), 30); put(g, friend(l, 'surprise'), 60); g.vline(90, 34, 66, P.white).vline(91, 34, 66, P.greyDark).rect(92, 34, 10, 7, P.tomato); return g; } },
   dream: { expr: 'happy', build: (l, e) => { const g = classroom(); put(g, kid(l, e), 43); g.rect(66, 12, 26, 18, P.white).outline(P.ink); g.stamp(['..y..', '.yyy.', 'yyyyy', '.yyy.', '.y.y.'], 76, 18, { y: P.mustard }); g.set(64, 32, P.white).set(62, 35, P.white); return g; } },
   puberty: { expr: 'yuck', build: () => { const g = room({ bed: false }); put(g, door(), 50, FEET); put(g, parent(0), 20); g.set(44, 26, P.ink).set(46, 26, P.ink).set(48, 26, P.ink); return g; } },
@@ -475,7 +551,7 @@ const SCENES: Record<string, { expr: Expr; build: Build }> = {
   reportcard: { expr: 'surprise', build: (l, e) => { const g = room({ desk: true }); put(g, kid(l, e), 44); put(g, reportCard(), 70, 46); sweat(g, 64, 26); return g; } },
   runaway_try: { expr: 'sad', build: (l, e) => { const g = tint(street(), '#1f2747', 0.6); put(g, pole(), 20, FEET); g.ellipse(27, 12, 5, 3, '#fff4c2'); put(g, tint(kid(l, e), '#1f2747', 0.25), 60); return g; } },
   thrown: { expr: 'sad', build: (l, e) => { const g = kitchen(); counterFront(g); put(g, trashBin(), 62, FEET); put(g, parent(0), 26, FEET); void l; void e; sweat(g, 42, 26); return g; } },
-  bullied: { expr: 'sad', build: (l, e) => { const g = classroom(); schoolDesk(g, 10); put(g, kid(l, e), 14, FEET - 2); put(g, miniLunch(), 22, 54); put(g, friend(l, 'happy'), 66); put(g, childFront(l, 'happy', { outfit: 'berry' }), 84); return g; } },
+  bullied: { expr: 'sad', build: (l, e) => { const g = classroom(); schoolDesk(g, 10); put(g, kid(l, e), 14, FEET - 2); put(g, miniLunch(), 22, 54); put(g, friend(l, 'happy'), 66); put(g, childFront({ ...l, gender: l.gender }, 'happy', { outfit: 'berry', plain: true }), 84); return g; } },
   bully: { expr: 'neutral', build: (l, e) => { const g = classroom(); put(g, kid(l, e, 'shades'), 22); put(g, friend(l, 'sad'), 64); sweat(g, 84, 30); anger(g, 44, 20); return g; } },
   lie: { expr: 'surprise', build: (l, e) => { const g = room({ night: true, bed: false }); put(g, tv(), 54, FLOOR + 4); put(g, kid(l, e), 24); put(g, gamepad(), 30, FEET - 14); put(g, parent(0), 88, FEET, true); return g; } },
   casting: { expr: 'surprise', build: (l, e) => { const g = street(); put(g, kid(l, e), 30); put(g, teacher(), 62, FEET, true); g.rect(52, 34, 10, 6, P.white).hline(53, 59, 36, P.inkSoft).outline(P.ink); g.stamp(['..y..', '.yyy.', 'yyyyy', '.yyy.', '.y.y.'], 20, 20, { y: P.mustard }); return g; } },
@@ -500,7 +576,30 @@ const SCENES: Record<string, { expr: Expr; build: Build }> = {
   president: { expr: 'happy', build: (l, e) => { const g = classroom(); put(g, kid(l, e), 30); put(g, ballot(), 66, FEET - 6); schoolDesk(g, 62); return g; } },
   diet_obsess: { expr: 'sad', build: (l, e) => { const g = room(); put(g, kid(l, e), 40, FEET - 3); put(g, scale(), 42, FEET); put(g, miniLunch(), 14); return g; } },
   ramen: { expr: 'happy', build: (l, e) => { const g = tint(kitchen(), '#2c3557', 0.4); kidBehind(g, l, e, 56); put(g, parent(0), 16, 74); counterFront(g); put(g, ramenPot(), 40, 60); smoke(g, 50, 44); return g; } },
+  grandma_nag: { expr: 'surprise', build: (l, e) => { const g = kitchen(); put(g, neighbor(), 62, 74); put(g, parent(0), 14, 74); kidBehind(g, l, e, 38); counterFront(g); put(g, envelope(), 70, 60); return g; } },
+  cast: { expr: 'neutral', build: (l, e) => { const g = classroom(); const k = kid(l, e); k.rect(13, 30, 3, 6, P.white).set(14, 32, P.tomato).set(13, 34, P.sky); put(g, k, 43); put(g, friend(l, 'happy'), 16); put(g, childFront(friendLook(l), 'surprise', { outfit: 'sky', plain: true }), 72); return g; } },
   note_reply: { expr: 'happy', build: (l, e) => { const g = kitchen(); kidBehind(g, l, e, 20); counterFront(g); put(g, miniLunch(), 54, 60); g.rect(70, 50, 14, 10, P.egg).hline(72, 81, 53, P.inkSoft).hline(72, 79, 56, P.inkSoft).outline(P.ink); heart(g, 78, 38); return g; } },
+  puppy: { expr: 'happy', build: (l, e) => { const g = park(); g.rect(64, 34, 40, 26, '#d4a26a').rect(64, 34, 40, 4, '#b27a45').outline(P.ink); for (let x = 68; x < 104; x += 6) g.vline(x, 38, 59, '#94653f'); put(g, kid(l, e), 30); put(g, pup(), 52); heart(g, 56, 40); return g; } },
+  dog_walk: { expr: 'happy', build: (l, e) => { const g = street(); put(g, tree(), 82, FEET); put(g, childSide(l, 2, e), 40); put(g, pup(), 70); g.hline(56, 70, 52, P.tomato); return g; } },
+  dog_old: { expr: 'sad', build: (l, e) => { const g = tint(park(), '#e89a6a', 0.35); g.ellipse(88, 30, 8, 8, P.tomato); put(g, kid(l, e), 36); put(g, pup(), 58); return g; } },
+  piano: { expr: 'surprise', build: (l, e) => { const g = room({ bed: false }); put(g, piano(), 52, FEET); put(g, kid(l, e), 24); note(g, 64, 18); note(g, 80, 12); return g; } },
+  piano_recital: { expr: 'happy', build: (l, e) => { const g = stage(); put(g, piano(), 50, FEET); put(g, kid(l, e), 26); note(g, 60, 20); note(g, 76, 14); heart(g, 40, 18); return g; } },
+  garden: { expr: 'happy', build: (l, e) => { const g = room({ bed: false }); put(g, planters(), 56, FEET); put(g, kid(l, e), 26); put(g, food('tomato'), 42, 46); return g; } },
+  camera_gift: { expr: 'happy', build: (l, e) => { const g = room(); put(g, kid(l, e), 36); put(g, handCamera(), 48, 54); put(g, parent(0), 14); return g; } },
+  photo_contest: { expr: 'surprise', build: (l, e) => { const g = classroom(); g.rect(60, 14, 34, 24, P.white).outline(P.ink); g.rect(62, 16, 30, 18, P.sky).rect(62, 28, 30, 6, P.grass); tinyParent(g, 72, 18); put(g, kid(l, e), 24); g.stamp(['..y..', '.yyy.', 'yyyyy', '.yyy.', '.y.y.'], 96, 10, { y: P.mustard }); return g; } },
+  bike: { expr: 'surprise', build: (l, e) => { const g = park(); put(g, bike(), 40, FEET); put(g, childSide(l, 3, e), 44, FEET - 6); put(g, parent(4), 10); return g; } },
+  camping: { expr: 'happy', build: (l, e) => { const g = tint(park(), '#1f2747', 0.55); for (let i = 0; i < 14; i++) g.set((i * 29) % EV_W, (i * 13) % 26, P.white); put(g, tent(), 66, FEET - 4); put(g, campfire(), 46, FEET); put(g, kid(l, e), 22); put(g, parent(0), 88, FEET, true); return g; } },
+  shades_day: { expr: 'happy', build: (l, e) => { const g = street(); put(g, kid(l, e, 'shades'), 43); g.stamp(['..y..', '.yyy.', 'yyyyy', '.yyy.', '.y.y.'], 30, 24, { y: P.mustard }); return g; } },
+  little_chef: { expr: 'happy', build: (l, e) => { const g = kitchen(); kidBehind(g, l, e, 30, 'chef'); counterFront(g); put(g, pan(), 54, 58); put(g, food('egg'), 76, 60); return g; } },
+  crown_day: { expr: 'happy', build: (l, e) => { const g = classroom(); put(g, kid(l, e, 'crown'), 43); put(g, friend(l, 'happy'), 14); put(g, childFront(friendLook(l), 'surprise', { outfit: 'sky', plain: true }), 74); return g; } },
+  fishtank: { expr: 'happy', build: (l, e) => { const g = room({ bed: false }); put(g, fishTank(), 56, FEET); put(g, kid(l, e), 26); heart(g, 70, 26); return g; } },
+  aquarium_trip: { expr: 'surprise', build: (l, e) => { const g = g0().rect(0, 0, EV_W, EV_H, '#1f4a78'); for (let i = 0; i < 18; i++) g.set((i * 31) % EV_W, (i * 17) % 50, '#7fc4e6'); g.ellipse(70, 26, 26, 9, '#5f86b8').ellipse(70, 26, 20, 6, '#9fc0e0'); for (let i = 0; i < 10; i++) g.set(56 + i * 3, 22 + (i % 2) * 3, P.white); g.rect(0, FLOOR, EV_W, EV_H - FLOOR, '#2b3f5c'); put(g, kid(l, e), 20); return g; } },
+  library_card: { expr: 'happy', build: (l, e) => { const g = classroom(); put(g, bookshelf(), 66, FEET); put(g, kid(l, e), 30); g.rect(46, 44, 10, 7, P.white).rect(47, 45, 3, 3, P.sky).outline(P.ink); return g; } },
+  book_overdue: { expr: 'sad', build: (l, e) => { const g = room({ desk: true }); put(g, kid(l, e), 40); g.rect(58, 40, 10, 14, P.red).vline(59, 40, 53, P.redDark).outline(P.ink); put(g, phone(), 80, 54); return g; } },
+  penpal: { expr: 'happy', build: (l, e) => { const g = room({ desk: true }); put(g, kid(l, e), 40); put(g, airLetter(), 62, 44); put(g, plane(), 66, 18); return g; } },
+  penpal_visit: { expr: 'happy', build: (l, e) => { const g = park(); put(g, plane(), 60, 16); put(g, kid(l, e), 30); put(g, childFront({ age: l.age, gender: l.gender === 'girl' ? 'boy' : 'girl' }, 'happy', { outfit: 'raincoat', plain: true }), 56); put(g, suitcase(), 80); return g; } },
+  theater_club: { expr: 'surprise', build: (l, e) => { const g = stage(); put(g, pole(), 40, FEET); put(g, kid(l, e, 'shades'), 52); g.rect(14, 46, 14, 10, P.white).hline(16, 25, 49, P.inkSoft).hline(16, 23, 52, P.inkSoft).outline(P.ink); return g; } },
+  stage_debut: { expr: 'happy', build: (l, e) => { const g = stage(); put(g, pole(), 36, FEET); put(g, kid(l, e), 50); put(g, flowers(), 76); for (let i = 0; i < 3; i++) heart(g, 24 + i * 26, 14 + (i % 2) * 6); return g; } },
   bonus: { expr: 'happy', build: (l, e) => { const g = entry(); put(g, grandma(), 26, FLOOR + 8); put(g, kid(l, e), 56, FLOOR + 6); put(g, envelope(), 46, 50); heart(g, 52, 22); return g; } },
 };
 
@@ -532,6 +631,18 @@ const ENDING_SCENES: Record<string, EndBuild> = {
   fragile: (l) => { const g = room(); g.draw(headOnly(l, 'sad'), 72, 26); g.rect(80, 46, 28, 10, P.sky); put(g, thermometer(), 86, 40); return g; },
   debt: (l) => { const g = room({ night: true, bed: false }); put(g, kid(l, 'sad'), 30); put(g, chartPhone(false), 62, 50); g.rect(74, 18, 26, 18, P.white).outline(P.ink); g.rect(78, 26, 18, 3, P.red); return g; },
   conartist: (l) => { const g = street(); put(g, kid(l, 'happy', 'shades'), 40); g.rect(64, 34, 12, 7, P.white).outline(P.ink); g.rect(80, 30, 12, 7, P.egg).outline(P.ink); return g; },
+  grandmaKid: (l) => { const g = kitchen(); put(g, neighbor(), 22, 74); kidBehind(g, l, 'happy', 52); counterFront(g); put(g, miniLunch(), 40, 60); heart(g, 46, 24); return g; },
+  pianist: (l) => { const g = stage(); put(g, piano(), 50, FEET); put(g, kid(l, 'happy'), 26); for (let i = 0; i < 3; i++) heart(g, 30 + i * 22, 14 + (i % 2) * 6); return g; },
+  photographer: (l) => { const g = classroom(); for (const x of [8, 42, 76]) { g.rect(x, 10, 26, 20, P.white).outline(P.ink); g.rect(x + 2, 12, 22, 14, P.sky).rect(x + 2, 22, 22, 4, P.grass); tinyParent(g, x + 9, 12); } put(g, kid(l, 'happy'), 43); put(g, handCamera(), 56, 54); return g; },
+  dogTrainer: (l) => { const g = park(); put(g, kid(l, 'happy', 'cap'), 30); put(g, pup(), 56); put(g, dog(1), 76); heart(g, 66, 40); return g; },
+  farmer: (l) => { const g = park(); g.rect(0, 50, EV_W, EV_H - 50, '#8a6a3a'); for (let x = 4; x < EV_W; x += 10) g.vline(x + 3, 46, 52, P.greenDark).ellipse(x + 3, 46, 3, 2, P.green); put(g, kid(l, 'happy', 'cap'), 43); put(g, planters(), 66, FEET); return g; },
+  topToKitchen: (l) => { const g = kitchen(); kidBehind(g, l, 'happy', 30, 'chef'); counterFront(g); put(g, calendar(), 66, 66); put(g, pan(), 44, 58); return g; },
+  grandmaRestaurant: (l) => { const g = kitchen(); g.rect(14, 4, 52, 10, P.red).hline(20, 60, 8, P.mustard).outline(P.ink); g.rect(82, 16, 16, 17, P.white).outline(P.ink); g.draw(new Grid(14, 15).draw(neighbor(), -4, 0), 83, 17); kidBehind(g, l, 'happy', 30, 'chef'); counterFront(g); put(g, ramenPot(), 50, 60); return g; },
+  valedictorian: (l) => { const g = stage(); put(g, kid(l, 'happy', 'gradcap'), 43); put(g, micStand(), 66); g.rect(20, 50, 14, 10, P.white).outline(P.ink); for (let i = 0; i < 3; i++) heart(g, 22 + i * 30, 14 + (i % 2) * 6); return g; },
+  marineBio: (l) => { const g = g0().rect(0, 0, EV_W, 40, '#bfe6f5').rect(0, 40, EV_W, EV_H - 40, '#5f86b8'); for (let x = 0; x < EV_W; x += 6) g.set(x, 41, P.white); g.rect(20, 34, 70, 10, P.white).rect(60, 24, 14, 10, P.tomato).outline(P.ink); put(g, kid(l, 'happy', 'raincap'), 32, 36); g.ellipse(88, 56, 12, 4, '#3a5f8f'); return g; },
+  librarian: (l) => { const g = classroom(); put(g, bookshelf(), 4, FEET); put(g, bookshelf(), 70, FEET); put(g, kid(l, 'happy'), 43); return g; },
+  diplomat: (l) => { const g = stage(); g.rect(10, 52, 90, 6, P.white).outline(P.ink); for (const [x, c] of [[16, P.tomato], [40, P.sky], [64, P.sage], [86, P.mustard]] as const) g.rect(x, 10, 10, 7, c).vline(x, 10, 30, P.greyDark); put(g, kid(l, 'happy'), 43, 54); put(g, food('gimbap'), 48, 52); return g; },
+  actor: (l) => { const g = stage(); put(g, pole(), 30, FEET); put(g, kid(l, 'happy', 'shades'), 46); g.stamp(['..y..', '.yyy.', 'yyyyy', '.yyy.', '.y.y.'], 76, 18, { y: P.mustard }); put(g, flowers(), 74); return g; },
   coinRich: (l) => { const g = street(); put(g, kid(l, 'happy', 'shades'), 30); put(g, chartPhone(true), 60, 52); g.stamp(['.yy.', 'y..y', 'y..y', '.yy.'], 80, 30, { y: P.mustard }); return g; },
   idolFail: (l) => { const g = stage(); g.rect(30, 20, 50, 40, '#2a1f33'); put(g, kid(l, 'neutral'), 43); put(g, micStand(), 66); return g; },
   doctor: (l) => { const g = hospital(); const k = kid(l, 'happy'); k.rect(6, 22, 12, 10, P.white); put(g, k, 43); g.rect(54, 46, 2, 6, P.grey); return g; },
@@ -548,9 +659,10 @@ const ENDING_SCENES: Record<string, EndBuild> = {
   youtuber: (l) => { const g = kitchen(); kidBehind(g, l, 'happy', 22); put(g, parent(0), 56, 74); counterFront(g); put(g, camera(), 86, 70); return g; },
   artist: (l) => { const g = classroom(); put(g, easel(), 62); put(g, kid(l, 'happy'), 32); return g; },
   novelist: (l) => { const g = room({ desk: true, night: true }); put(g, kid(l, 'neutral'), 40); g.rect(66, 30, 14, 18, P.white).hline(68, 77, 34, P.inkSoft).hline(68, 77, 38, P.inkSoft).outline(P.ink); g.draw(parentSide(0), 92, 22); return g; },
-  teacher: (l) => { const g = classroom(); put(g, kid(l, 'happy'), 43); put(g, childFront({ age: 7, gender: 'boy' }, 'happy'), 14); put(g, childFront({ age: 7, gender: 'girl' }, 'happy', { outfit: 'sky' }), 78); return g; },
+  teacher: (l) => { const g = classroom(); put(g, kid(l, 'happy'), 43); put(g, childFront({ age: 7, gender: 'boy' }, 'happy', { plain: true }), 14); put(g, childFront({ age: 7, gender: 'girl' }, 'happy', { outfit: 'sky', plain: true }), 78); return g; },
   scholar: (l) => { const g = classroom(); const k = kid(l, 'neutral'); k.rect(6, 22, 12, 10, P.white); put(g, k, 43); for (let i = 0; i < 5; i++) g.rect(72, FEET - 6 - i * 5, 16, 5, [P.plum, P.sky, P.sage, P.mustard, P.tomato][i]).hline(72, 87, FEET - 6 - i * 5, P.ink); return g; },
   tattoo: (l) => { const g = tint(street(), '#3a2a5a', 0.55); put(g, dyed(kid(l, 'happy', 'shades'), '#7a5fd1'), 43); return g; },
+  afterThatDay: (l) => { const g = tint(street(), '#7d86a8', 0.3); g.rect(0, 64, EV_W, 8, '#7d7468'); for (let x = 4; x < EV_W; x += 14) g.rect(x, 67, 7, 2, P.white); put(g, kid(l, 'neutral'), 43); g.rect(80, 30, 24, 12, P.white).rect(83, 33, 18, 6, P.red).rect(90, 31, 4, 10, P.white).outline(P.ink); return g; },
   gosi: (l) => { const g = room({ desk: true, night: true, bed: false }); put(g, kid(l, 'sad'), 40); for (let i = 0; i < 6; i++) g.rect(66, FEET - 6 - i * 5, 18, 5, [P.tomato, P.sky, P.sage, P.mustard, P.plum, P.pink][i]).hline(66, 83, FEET - 6 - i * 5, P.ink); put(g, miniLunch(), 88); return g; },
   workaholic: (l) => { const g = room({ desk: true, night: true, bed: false }); put(g, kid(l, 'neutral'), 40); put(g, phone(), 70, 50); sweat(g, 60, 26); return g; },
   estranged: (l) => { const g = entry(); put(g, parent(0), 30, FLOOR + 8); put(g, phone(), 50, 46); void l; return g; },
@@ -571,6 +683,41 @@ export const hasEndingScene = (id: string) => id in ENDING_SCENES;
 /** 엔딩 장면 한 장 (110×72) */
 export function endingScene(id: string, tone: string, look: Look): Grid {
   return (ENDING_SCENES[id] ?? TONE_FALLBACK[tone] ?? TONE_FALLBACK.happy)(look);
+}
+
+// ───────── 사진첩: 등굣길 한 장면 · 일상 장면 ─────────
+type PhotoBuild = (l: Look) => Grid;
+const COMMUTE_PHOTOS: Record<string, { caption: string; build: PhotoBuild }> = {
+  caught: { caption: '결국 딱 걸린 순간', build: (l) => { const g = street(); put(g, pole(), 30, FEET); put(g, parent(2), 40); put(g, kid(l, 'yuck'), 62); g.stamp(['k.k', 'k.k', 'k.k', '...', 'k.k'], 72, 18, { k: P.red }); return g; } },
+  nearmiss: { caption: '아슬아슬하게 쏙 숨은 순간', build: (l) => { const g = street(); put(g, tree(), 22, FEET); put(g, parent(0), 20); put(g, tree(), 22, FEET); put(g, kid(l, 'surprise'), 70); sweat(g, 48, 28); return g; } },
+  'neighbor-fail': { caption: '이웃의 우렁찬 인사에 얼어붙은 순간', build: (l) => { const g = street(); put(g, neighbor(), 24); put(g, parent(0), 46); put(g, kid(l, 'surprise'), 76); g.rect(4, 14, 26, 10, P.white).outline(P.ink); g.hline(7, 26, 18, P.inkSoft); return g; } },
+  'neighbor-ok': { caption: '이웃 입을 손가락 하나로 막은 순간', build: (l) => { const g = street(); put(g, neighbor(), 24); put(g, parent(0), 46); put(g, kid(l, 'neutral'), 80); g.rect(36, 18, 4, 2, P.ink); return g; } },
+  dog: { caption: '모르는 강아지가 졸졸 따라온 날', build: (l) => { const g = street(); put(g, parent(0), 18); put(g, dog(0), 44); put(g, childSide(l, 2, 'happy'), 70); heart(g, 52, 40); return g; } },
+  deliver: { caption: '사물함에 도시락을 몰래 쏙 넣은 순간', build: (l) => { const g = park(); put(g, school(), 4, FLOOR); put(g, kid(l, 'happy'), 78); put(g, miniLunch(), 60); g.stamp(['..y..', '.yyy.', 'yyyyy', '.yyy.', '.y.y.'], 62, 40, { y: P.mustard }); return g; } },
+  'crisis-run': { caption: '참지 못하고 뛰쳐나간 순간', build: (l) => { const g = street(); put(g, parentSide(4, { dash: true }), 34); put(g, kid(l, 'happy'), 60); heart(g, 56, 26); return g; } },
+  'crisis-alone': { caption: '혼자 해내는 걸 숨어서 지켜본 순간', build: (l) => { const g = street(); put(g, tree(), 8, FEET); put(g, parent(0), 8); put(g, tree(), 8, FEET); put(g, kid(l, 'happy'), 64); g.stamp(['..y..', '.yyy.', 'yyyyy', '.yyy.', '.y.y.'], 80, 22, { y: P.mustard }); return g; } },
+  'crisis-hurt': { caption: '뛰어나가고 싶은 걸 꾹 참은 순간', build: (l) => { const g = tint(street(), '#7d86a8', 0.25); put(g, tree(), 8, FEET); put(g, parent(0), 8); put(g, tree(), 8, FEET); put(g, kid(l, 'sad'), 64); return g; } },
+  'danger-saved': { caption: '앞뒤 안 보고 뛰어들어 붙잡은 순간', build: (l) => { const g = street(); g.rect(0, 64, EV_W, 8, '#7d7468'); for (let x = 4; x < EV_W; x += 14) g.rect(x, 67, 7, 2, P.white); put(g, parentSide(4, { dash: true }), 30); put(g, kid(l, 'surprise'), 50); heart(g, 46, 22); return g; } },
+  'danger-luck': { caption: '심장이 멎는 줄 알았던 순간', build: (l) => { const g = tint(street(), '#d9826a', 0.2); put(g, kid(l, 'surprise'), 43); sweat(g, 64, 28); g.stamp(['r', 'r', 'r', '.', 'r'], 70, 14, { r: P.red }); return g; } },
+  'danger-hurt': { caption: '달려가지 못한 순간', build: (l) => { const g = hospital(); put(g, hospitalBed(), 50, FEET - 4); g.draw(headOnly(l, 'sad'), 52, 26); g.rect(58, 44, 46, 10, P.sky); g.rect(80, 46, 10, 6, P.white).outline(P.ink); put(g, parent(0), 22); return g; } },
+  lost: { caption: '아이를 놓치고 두리번거린 순간', build: () => { const g = street(); put(g, parent(0), 40); put(g, pole(), 80, FEET); g.stamp(['.kk.', 'k..k', '..k.', '.k..', '....', '.k..'], 62, 14, { k: P.ink }); return g; } },
+  calm: { caption: '별일 없던 평화로운 등굣길', build: (l) => { const g = street(); put(g, tree(), 6, FEET); put(g, childSide(l, 1, 'neutral'), 50); put(g, parent(0), 84); return g; } },
+};
+const DAILY_CAPTION: Record<number, string> = {
+  1: '처음 먹어 본 이유식', 2: '혼자 숟가락질한 날', 4: '유치원 도시락 가방', 7: '책가방보다 큰 도시락통',
+  11: '반찬 하나 더 넣어 달라던 날', 15: '말없이 비워 온 도시락통', 18: '밤 열 시의 야자 도시락', 19: '마지막으로 싼 도시락',
+};
+export const COMMUTE_PHOTO_IDS = Object.keys(COMMUTE_PHOTOS);
+export const DAILY_PHOTO_IDS = Object.keys(DAILY_CAPTION).map(Number);
+export const commuteCaption = (kind: string) => COMMUTE_PHOTOS[kind]?.caption ?? '등굣길';
+export const dailyCaption = (stage: number) => DAILY_CAPTION[stage] ?? '도시락 먹는 날';
+/** 사진 한 장 그리기 — id: c-<등굣길 종류> · e-<이벤트> · d-<성장 단계> */
+export function photoScene(id: string, look: Look, expr: Expr = 'happy'): Grid {
+  const [kind, rest] = [id.slice(0, 1), id.slice(2)];
+  if (kind === 'c') return (COMMUTE_PHOTOS[rest] ?? COMMUTE_PHOTOS.calm).build(look);
+  if (kind === 'e') return eventScene(rest, look, expr);
+  const g = kitchen(); kidBehind(g, look, 'happy', 22); counterFront(g); put(g, miniLunch(), 56, 60); heart(g, 60, 40);
+  return g;
 }
 
 void dog;

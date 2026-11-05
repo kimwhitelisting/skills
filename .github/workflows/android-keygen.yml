@@ -1,0 +1,60 @@
+# 냠냠졸졸 — 안드로이드 업로드 키 만들기 (딱 한 번만)
+# 사용법: bento-life/docs/ANDROID.md "PC 없이 출시하기"
+# 저장소가 공개라 결과물(키)은 GitHub에 로그인한 누구나 받을 수 있다 →
+# 키는 ANDROID_KEY_PASSWORD(16자 이상)로 잠기고, 결과물은 하루 뒤 지워진다. 받은 뒤엔 바로 지운다.
+name: "Android 1) 업로드 키 만들기 (한 번만)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "새 업로드 키를 만듭니다. 이미 Play에 올린 적이 있으면 만들지 마세요. 계속하려면 yes"
+        required: true
+        default: "no"
+
+permissions:
+  contents: read
+
+jobs:
+  keygen:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 확인
+        env:
+          CONFIRM: ${{ inputs.confirm }}
+          HAS_KEY: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ "$CONFIRM" != "yes" ]; then echo "::error::confirm 칸에 yes를 적어야 만들어요."; exit 1; fi
+          if [ "$HAS_KEY" = "true" ]; then echo "::error::ANDROID_KEYSTORE_BASE64가 이미 있어요. 키를 새로 만들면 지금 키로 올린 앱을 업데이트할 수 없어요. 정말 새로 만들려면 그 Secret을 먼저 지우세요."; exit 1; fi
+          if [ ${#KEY_PASSWORD} -lt 16 ]; then echo "::error::Secret ANDROID_KEY_PASSWORD를 16자 이상으로 먼저 만들어 주세요."; exit 1; fi
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: 키 만들기
+        env:
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          mkdir out
+          keytool -genkeypair -keystore out/upload-key.jks -storetype PKCS12 -alias upload \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass:env KEY_PASSWORD -keypass:env KEY_PASSWORD \
+            -dname "CN=Paran Studio, O=Paran, C=KR"
+          base64 -w0 out/upload-key.jks > out/upload-key.base64.txt
+          keytool -list -v -keystore out/upload-key.jks -storepass:env KEY_PASSWORD | grep -E "Alias name|SHA256:|Valid" > out/fingerprint.txt
+          cat > out/README.txt <<'TXT'
+          upload-key.jks        : 업로드 키. 두 군데 이상 따로 보관 (클라우드 드라이브 + 다른 곳)
+          upload-key.base64.txt : 이 안의 글자 전체를 GitHub Secret ANDROID_KEYSTORE_BASE64에 붙여 넣는다
+          fingerprint.txt       : 키 지문 (공개돼도 괜찮은 정보)
+          비밀번호는 ANDROID_KEY_PASSWORD에 넣은 그것. 잃어버리지 않게 따로 적어 둔다.
+          TXT
+          cat out/fingerprint.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: upload-key
+          path: out/
+          retention-days: 1

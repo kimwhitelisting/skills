@@ -20,6 +20,8 @@ const inAge = (e: GameEvent, age: number) =>
 function eligible(s: GameState, e: GameEvent) {
   if (!inAge(e, s.age)) return false;
   if ((e.once || e.kind === 'milestone') && s.seenEvents.includes(e.id)) return false;
+  if (e.shop && !s.unlocks?.includes(e.shop)) return false;
+  if (e.wear && !s.wear?.includes(e.wear)) return false;
   return e.when ? e.when(s) : true;
 }
 
@@ -81,6 +83,7 @@ function next(s: GameState): void {
 
 export function startGame(s: GameState): GameState {
   s.yearStart = { ...s.stats };
+  s.yearKnown = { likes: [...s.child.known.likes], dislikes: [...s.child.known.dislikes], talent: s.child.known.talent };
   enterStep(s, 'milestone');
   return s;
 }
@@ -119,9 +122,15 @@ export const hasLeave = (age: number) => age >= 2;
 const FORGOT_CHANCE = 0.3;
 
 function startDay(s: GameState): void {
+  // 할머니 찬스: 반찬값이 바닥나면 보내 주신다 — 공짜는 아니다 (잔소리 이벤트, 엔딩 「할머니가 키운 아이」)
+  let notice: string | undefined;
   if (s.money < cheapestCost(s)) {
     s.money += 15;
-    s.log.push({ age: s.age, text: '반찬값이 바닥났다. 할머니가 15를 보내 주셨다.' });
+    const n = (s.flags.grandma = (s.flags.grandma ?? 0) + 1);
+    notice = n === 1 ? '반찬값이 바닥났다… 할머니가 15를 보내 주셨다.'
+      : n === 2 ? '또 할머니 찬스. "애 굶기면 안 된다" 하시며 15를 보내셨다.'
+        : `할머니가 아예 반찬통을 들고 오셨다. (할머니 찬스 ${n}번째)`;
+    s.log.push({ age: s.age, text: `🧓 ${notice}` });
   }
   let reqs: string[] = [];
   if (s.age >= 2) {
@@ -133,7 +142,7 @@ function startDay(s: GameState): void {
       if (s.age >= 9 && !['again', 'picnic'].includes(first.id) && other && chance(s, 0.5)) reqs.push(other.id);
     }
   }
-  s.today = { reqs, forgot: canCommute(s.age) && chance(s, FORGOT_CHANCE), phase: 'morning' };
+  s.today = { reqs, forgot: canCommute(s.age) && chance(s, FORGOT_CHANCE), phase: 'morning', notice };
 }
 
 export const todayRequests = (s: GameState): Request[] => (s.today?.reqs ?? []).map((id) => REQUEST_BY_ID[id]);
@@ -188,11 +197,11 @@ export function chooseLeave(s: GameState, choice: LeaveChoice): Evening | undefi
   let d: Delta;
   if (choice === 'escort') {
     d = { bond: 2, indep: 1 };
-    extra.push(pick(s, ['손잡고 같이 걸어갔다. 가는 내내 재잘재잘.', '어린이집 앞에서 한참을 손을 흔들었다.', '가다가 개미 구경을 10분 했다.']));
+    extra.push(pick(s, ['손잡고 같이 걸어갔다. 가는 내내 재잘재잘.', a < 3 ? '어린이집 앞에서 한참을 손을 흔들었다.' : '유치원 앞에서 한참을 손을 흔들었다.', '가다가 개미 구경을 10분 했다.']));
   } else {
     d = a < 6 ? { indep: 3, bond: -1 } : { indep: 4, bond: a < 8 ? -1 : 0 };
     if (a >= 13) s.vigilance = Math.max(0, s.vigilance - 0.08);
-    extra.push(a < 6 ? '어린이집 차에 태워 보냈다. 창문에 얼굴을 붙이고 갔다.' : pick(s, ['혼자 씩씩하게 학교에 갔다.', '친구를 만나 수다 떨며 갔다고 한다.', '무슨 일이 있었는지 물어봐도 "그냥."']));
+    extra.push(a < 6 ? `${a < 3 ? '어린이집' : '유치원'} 차에 태워 보냈다. 창문에 얼굴을 붙이고 갔다.` : pick(s, ['혼자 씩씩하게 학교에 갔다.', '친구를 만나 수다 떨며 갔다고 한다.', '무슨 일이 있었는지 물어봐도 "그냥."']));
   }
   return settle(s, scaled(s, d), extra);
 }
@@ -222,6 +231,12 @@ export function finishCommute(s: GameState, r: CommuteResult): Evening {
     if (r.over !== 'caught') lunchAdj = -1;
     extra.push(r.over === 'caught' ? '도시락은 받았지만… 친구들 앞에서 받았다.' : '도시락은 교무실에서 늦게 받았다. 다 식어 있었다.');
   }
+  if (r.injury) {
+    // 진짜 위험에서 참았다가 크게 다쳤다 — 병원, 깁스, 한동안 우울
+    addDelta(d, { health: -8, happy: -3, fitness: -3 });
+    s.flags.injury = (s.flags.injury ?? 0) + 1;
+    extra.push('병원에 다녀왔다. 깁스를 했다. 그날 밤 잠이 오지 않았다.');
+  }
   if (s.age >= 13) s.vigilance = Math.min(0.4, s.vigilance + (r.over === 'caught' ? 0.2 : 0.1));
   return settle(s, scaled(s, d), extra, lunchAdj);
 }
@@ -240,7 +255,7 @@ function settle(s: GameState, leave: Delta, extra: string[] = [], lunchAdj = 0):
   const says = lunchSays(s, p, lunch);
   t.evening = { lunch, says, extra, delta: total };
   t.phase = 'evening';
-  s.album.push({ age: s.age, menu: p.meal.menu.key, lunch, leave: t.leave, over: t.commute?.over, moment: t.commute?.moment });
+  s.album.push({ age: s.age, menu: p.meal.menu.key, lunch, leave: t.leave, over: t.commute?.over, moment: t.commute?.moment, momentKind: t.commute?.momentKind });
   if (s.album.length > 60) s.album.shift();
   return t.evening;
 }
@@ -299,5 +314,6 @@ export function advanceYear(s: GameState): void {
   if (s.age >= 7) applyDelta(s, { indep: 1 });
   yearlyDrift(s);
   s.yearStart = { ...s.stats };
+  s.yearKnown = { likes: [...s.child.known.likes], dislikes: [...s.child.known.dislikes], talent: s.child.known.talent };
   enterStep(s, 'milestone');
 }

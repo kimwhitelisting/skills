@@ -66,3 +66,22 @@ export function miniLunch(): Grid {
   g.rect(7, 1, 6, 5, P.mustard).set(5, 0, P.mustard).set(14, 0, P.mustard).set(6, 1, P.mustard).set(13, 1, P.mustard).rect(9, 3, 2, 2, P.mustardDark);
   return g.outline(P.ink);
 }
+
+/** 키 재기 벽: 벽지 + 액자 + 기린 키재기 스티커 (문 없이 — 크게 그린 아이와 크기를 비교할 기준을 두지 않는다) */
+export const GIRAFFE_X = 80;
+export function growthWall(w: number, h: number): Grid {
+  const g = new Grid(w, h).rect(0, 0, w, h, '#f6ead6');
+  for (let y = 4; y < h; y += 8) for (let x = (y / 8) % 2 ? 2 : 6; x < w; x += 8) g.set(x, y, '#ead6b8').set(x + 1, y, '#ead6b8');
+  // 액자 (도시락 그림)
+  g.rect(6, 8, 18, 14, '#b9855a').rect(8, 10, 14, 10, P.white).rect(10, 13, 10, 6, P.tomato).rect(13, 12, 4, 2, P.mustard);
+  g.rect(8, 26, 12, 9, '#b9855a').rect(9, 27, 10, 7, '#cfe6f2').ellipse(14, 31, 2, 2, P.egg);
+  // 기린 키재기 스티커
+  const x = GIRAFFE_X, top = 10;
+  const body = '#f4c64e', spot = '#c9852f';
+  g.rect(x, top, 10, h - top, body);
+  for (let y = top + 3; y < h - 2; y += 7) g.rect(x + 2 + ((y / 7) % 2) * 4, y, 3, 3, spot);
+  g.ellipse(x + 5, top - 3, 6, 4, body).rect(x + 8, top - 5, 6, 4, body).set(x + 3, top - 9, spot).set(x + 3, top - 8, P.woodDark).set(x + 7, top - 9, spot).set(x + 7, top - 8, P.woodDark);
+  g.set(x + 9, top - 4, P.ink).set(x + 13, top - 3, P.woodDark).set(x + 3, top - 2, P.blush);
+  for (let y = top + 2; y < h; y += 3) g.hline(x + 10, x + ((y - top) % 12 === 2 ? 14 : 12), y, P.inkSoft);
+  return g.outline(P.ink);
+}

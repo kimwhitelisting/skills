@@ -120,6 +120,16 @@ describe('day loop', () => {
     expect(e.lunch).toBeGreaterThanOrEqual(2);
     expect(e.says.join()).toContain('달리기');
   });
+  it('holding back in real danger can mean an injury', () => {
+    const s = toDay(9, 8);
+    packToday(s, { base: 'rice', main: 'bulgogi', side: 'broccoli' });
+    chooseLeave(s, 'follow');
+    const h = s.stats.health;
+    const e = finishCommute(s, { over: 'school', delivered: false, score: 80, bond: -2, indep: 1, happy: -4, injury: true, momentKind: 'danger-hurt' });
+    expect(s.stats.health).toBeLessThan(h - 5);
+    expect(s.flags.injury).toBe(1);
+    expect(e.extra.join()).toContain('깁스');
+  });
   it('following a teen backfires and makes them warier', () => {
     const s = toDay(3, 15);
     packToday(s, { base: 'rice', main: 'bulgogi', side: 'broccoli' });
@@ -201,6 +211,75 @@ describe('endings', () => {
     s.step = 'summary'; s.active = undefined; s.age = 14; s.flags.abroad = 1;
     advanceYear(s);
     expect(s.endingId).toBe('abroad');
+  });
+});
+
+describe('money and hearts', () => {
+  it('grandma bails you out when you cannot afford a lunchbox, and it counts', async () => {
+    const { advanceYear } = await import('../src/game/engine.ts');
+    const s = startGame(newGame(41));
+    s.step = 'summary'; s.active = undefined; s.age = 5; s.money = 0;
+    s.tuning = { ...s.tuning, incomeBase: 0, incomePerDay: 0 };
+    advanceYear(s);
+    const { chooseEventOption, continueAfterEvent } = await import('../src/game/engine.ts');
+    for (let a = s.active as { choices: { enabled: boolean }[] } | undefined; a; a = s.active) { chooseEventOption(s, a.choices.findIndex((c) => c.enabled)); continueAfterEvent(s); }
+    expect(s.step).toBe('day');
+    expect(s.flags.grandma).toBe(1);
+    expect(s.today?.notice).toContain('할머니');
+    expect(s.money).toBeGreaterThanOrEqual(15);
+  });
+  it('shop items are unique and tools map to the commute tools', async () => {
+    const { SHOP, toolIds } = await import('../src/game/shop.ts');
+    expect(new Set(SHOP.map((i) => i.id)).size).toBe(SHOP.length);
+    expect(toolIds(['tool-news', 'hat-cap', 'tool-pot'])).toEqual(['news', 'pot']);
+    for (const i of SHOP) expect(i.price, i.id).toBeGreaterThan(0);
+  });
+});
+
+describe('shop stories', () => {
+  it('story events only appear after buying the pack, and their endings become reachable', async () => {
+    const { SHOP } = await import('../src/game/shop.ts');
+    const stories = SHOP.filter((i) => i.kind === 'story').map((i) => i.id);
+    let without = 0, withPack = 0;
+    const ends = new Set<string>();
+    for (let seed = 1; seed <= 300; seed++) {
+      without += playthrough(seed, 'random').seenEvents.filter((id) => EVENTS.find((e) => e.id === id)?.shop).length;
+      const s = playthrough(seed, 'random', undefined, { unlocks: stories, wear: ['hat-chef'] });
+      withPack += s.seenEvents.filter((id) => EVENTS.find((e) => e.id === id)?.shop || EVENTS.find((e) => e.id === id)?.wear).length;
+      ends.add(s.endingId!);
+    }
+    expect(without).toBe(0);
+    expect(withPack).toBeGreaterThan(300);
+    for (const id of ['pianist', 'dogTrainer', 'farmer', 'photographer', 'marineBio', 'librarian', 'diplomat', 'actor']) expect(ends.has(id), id).toBe(true);
+  });
+});
+
+describe('photo album', () => {
+  it('every photo kind draws at every growth stage', async () => {
+    const { photoScene, COMMUTE_PHOTO_IDS, DAILY_PHOTO_IDS, EV_W, EV_H } = await import('../src/pixel/event-scenes.ts');
+    const { PX_AGES } = await import('../src/pixel/child.ts');
+    const ids = [...COMMUTE_PHOTO_IDS.map((k) => `c-${k}`), ...DAILY_PHOTO_IDS.map((k) => `d-${k}`), ...EVENTS.map((e) => `e-${e.id}`)];
+    for (const age of PX_AGES) for (const id of ids) {
+      const g = photoScene(id, { age, gender: age % 2 ? 'girl' : 'boy' });
+      expect(g.w, id).toBe(EV_W); expect(g.h, id).toBe(EV_H);
+    }
+  });
+});
+
+describe('music', () => {
+  it('every track parses and its parts line up bar for bar', async () => {
+    const { TRACK_IDS, trackOf, parse, stepsOf, freq } = await import('../src/ui/music.ts');
+    expect(Math.round(freq('A4'))).toBe(440);
+    expect(Math.round(freq('C4'))).toBe(262);
+    for (const id of TRACK_IDS) {
+      const t = trackOf(id);
+      const n = stepsOf(t);
+      expect(n % 8, id).toBe(0);
+      const count = (s: string) => s.split(/\s+/).filter((x) => x && x !== '|').length;
+      expect(count(t.bass), `${id} bass`).toBe(n);
+      if (t.drum) expect(count(t.drum), `${id} drum`).toBe(n);
+      expect(parse(t.lead).length, id).toBeGreaterThan(4);
+    }
   });
 });
 

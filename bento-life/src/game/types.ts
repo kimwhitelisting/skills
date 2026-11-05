@@ -70,6 +70,10 @@ export interface CommuteResult {
   indep: number;
   happy: number;
   moment?: string;
+  /** 등굣길 한 장면의 종류 (caught, nearmiss, deliver…) — 사진첩 사진 */
+  momentKind?: string;
+  /** 진짜 위험한 순간에 참아서 크게 다쳤다 */
+  injury?: boolean;
   log?: string[];
 }
 
@@ -100,6 +104,8 @@ export interface Evening {
 export interface Today {
   reqs: string[];
   forgot: boolean;
+  /** 아침에 띄울 알림 (할머니 찬스 등) */
+  notice?: string;
   phase: 'morning' | 'leave' | 'commute' | 'evening';
   pack?: PackResult;
   leave?: LeaveChoice;
@@ -108,7 +114,10 @@ export interface Today {
 }
 
 /** 앨범 한 칸 (하루 기록) */
-export interface DayRecord { age: number; menu: string; lunch: number; leave?: LeaveChoice; over?: CommuteResult['over']; moment?: string }
+export interface DayRecord { age: number; menu: string; lunch: number; leave?: LeaveChoice; over?: CommuteResult['over']; moment?: string; momentKind?: string }
+
+/** 사진첩 한 장 — 그림은 저장하지 않고, 다시 그릴 재료만 저장한다 */
+export interface Photo { id: string; age: number; gender: 'boy' | 'girl'; expr: string; caption: string; name: string; theme?: string; hat?: string }
 
 export interface LogEntry { age: number; text: string }
 
@@ -132,6 +141,10 @@ export interface GameState {
   /** 사춘기 경계심 0~0.4: 따라갈수록 쌓이고, 믿고 보내면 풀린다 */
   vigilance: number;
   album: DayRecord[];
+  /** 이번 생 앨범: 해마다 한 장 */
+  photos?: Photo[];
+  /** 올해 고른 이벤트 결과 (사진 고르기용) */
+  eventLog?: { age: number; id: string; expr: string; caption: string; kind: 'milestone' | 'random' }[];
   flags: Record<string, number>;
   eventQueue: string[];
   seenEvents: string[];
@@ -141,6 +154,12 @@ export interface GameState {
   /** 가장 최근에 먹인 메뉴 (끼니 수와 무관) */
   lastMenu?: string;
   yearStart: Stats;
+  /** 하트 상점에서 산 것 (이야기 꾸러미 등) — 판 시작과 살 때 채워진다 */
+  unlocks?: string[];
+  /** 지금 입고 있는 옷 색·모자 (상점 id) */
+  wear?: string[];
+  /** 올해 초에 알고 있던 취향 (결산의 "올해 알게 된 것") */
+  yearKnown?: { likes: string[]; dislikes: string[]; talent: boolean };
   log: LogEntry[];
   /** 이 판의 실험 조정값 (없으면 기본값) */
   tuning?: Partial<import('./config.ts').Tuning>;
@@ -189,6 +208,10 @@ export interface GameEvent {
   weight?: number;
   once?: boolean;
   when?: (s: GameState) => boolean;
+  /** 하트 상점에서 이 물건을 사야 나오는 이벤트 (이야기 꾸러미) */
+  shop?: string;
+  /** 이 모자/옷을 입고 있어야 나오는 이벤트 */
+  wear?: string;
   title: string;
   text: string | ((s: GameState) => string);
   choices: Choice[] | ((s: GameState) => Choice[]);

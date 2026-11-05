@@ -1,4 +1,4 @@
-# 🍱 도시락 육아 (가제)
+# 🍱 냠냠졸졸
 
 > 도시락 싸들고 졸졸 따라다니면 아이를 얼마나 잘 키울 수 있을까?
 
@@ -8,7 +8,7 @@
 
 설정 > 실험 설정에서 1년에 보내는 하루 수, 반찬값, 재료 가격을 바꿔 가며 해 볼 수 있다 (새 게임부터 적용).
 
-기획 문서: [`docs/GDD.md`](docs/GDD.md) · 아트 가이드: [`docs/ART.md`](docs/ART.md) · 그림 목록: [`docs/art-assets.csv`](docs/art-assets.csv) · AI 그림 지시문: [`docs/ai-prompts.md`](docs/ai-prompts.md) · 전체 메뉴표: [`docs/menus.csv`](docs/menus.csv)
+**처음이면:** [`docs/HANDOFF.md`](docs/HANDOFF.md) (인수인계) · 기획 문서: [`docs/GDD.md`](docs/GDD.md) · 도트 그림: [`docs/PIXEL.md`](docs/PIXEL.md) · (예전) 아트 가이드: [`docs/ART.md`](docs/ART.md) · 그림 목록: [`docs/art-assets.csv`](docs/art-assets.csv) · AI 그림 지시문: [`docs/ai-prompts.md`](docs/ai-prompts.md) · 전체 메뉴표: [`docs/menus.csv`](docs/menus.csv)
 
 ## 실행
 
@@ -19,7 +19,7 @@ npm run dev        # http://localhost:5173 — 휴대폰으로 같은 와이파�
 npm test           # 단위 테스트 + 2,000판 자동 플레이 (멈춤/버그 검사)
 npm run balance    # 플레이 성향별 평균 스탯·엔딩 분포 리포트
 npm run build      # dist/ 에 배포용 빌드
-npm run build:preview  # dist-preview/*.single.html — 휴대폰 미리보기 페이지용 단일 HTML (본 게임 + 맛보기 2종)
+npm run build:preview  # dist-preview/*.single.html — 휴대폰 미리보기 페이지용 단일 HTML (본 게임 + 맛보기 + 도트 부품 작업대)
 ```
 
 ## 구조
@@ -40,7 +40,7 @@ src/
     menus.ts              메뉴 조합 생성 규칙
     state.ts / save.ts    새 게임 생성, 저장/불러오기
   main.ts, game.css     ← 본 게임 화면 (장면은 캔버스 도트, 글·버튼은 DOM, 프레임워크 없음)
-  pixel/                ← 도트 엔진: 아이 7단계(층별 부품), 재료 28종, 장면, 효과
+  pixel/                ← 도트 엔진: 아이 8단계(층별 부품), 재료 28종, 장면, 효과
   proto/                ← 맛보기 (등굣길 미니게임 follow-core.ts 는 본 게임도 같이 쓴다)
   ui/                   ← 효과음·진동, 기기 설정
   game/config.ts        ← 실험 설정값 (하루 수, 수입, 가격)
@@ -66,7 +66,7 @@ tests/                     테스트 + 자동 플레이 시뮬레이터
 
 ```bash
 npm i @capacitor/core @capacitor/android @capacitor/ios && npm i -D @capacitor/cli
-npx cap init "도시락 육아" com.yourname.bentolife --web-dir dist
+npx cap init "냠냠졸졸" com.paranstudio.dosirak --web-dir dist
 npm run build && npx cap add android && npx cap sync
 npx cap open android      # Android Studio에서 서명된 AAB 빌드 → Play Console 업로드
 ```

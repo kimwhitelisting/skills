@@ -52,7 +52,11 @@ export function simCommute(s: GameState, r: { rng: number }, rushCrisis: boolean
   const roll = rand(r);
   const over: CommuteResult['over'] = roll < Math.min(0.9, base / p.lookMult) ? 'caught' : roll > 0.92 ? 'lost' : 'school';
   const res: CommuteResult = { over, delivered: p.forgot && over === 'school' && rand(r) < 0.75, score: over === 'school' ? 150 : over === 'caught' ? 50 : 60, bond: 0, indep: 0, happy: 0 };
-  if (rand(r) < 0.5) {
+  if (rand(r) < 0.12) {
+    // 진짜 위험: 달려가면 붙잡고, 참으면 대개 다친다
+    if (rushCrisis) { res.bond += 4; res.indep -= 1; res.momentKind = 'danger-saved'; }
+    else if (rand(r) < 0.8) { res.injury = true; res.happy -= 4; res.bond -= 2; res.momentKind = 'danger-hurt'; }
+  } else if (rand(r) < 0.5) {
     if (rushCrisis) { res.bond += p.level === 6 ? 3 : p.level === 10 ? 1 : -2; res.indep -= p.level === 6 ? 1 : 2; }
     else if (rand(r) < 0.3 + p.level * 0.03) { res.indep += 3; res.happy += 1; } else { res.happy -= 2; res.bond -= 1; }
   }
@@ -63,8 +67,10 @@ export function simCommute(s: GameState, r: { rng: number }, rushCrisis: boolean
 }
 
 /** 한 판을 끝까지 자동 진행 */
-export function playthrough(seed: number, policy: Policy = 'random', tuning?: Partial<Tuning>): GameState {
-  const s = startGame(newGame(seed, tuning));
+export function playthrough(seed: number, policy: Policy = 'random', tuning?: Partial<Tuning>, shop?: { unlocks?: string[]; wear?: string[] }): GameState {
+  const g = newGame(seed, tuning);
+  if (shop) Object.assign(g, shop);
+  const s = startGame(g);
   const r = { rng: seed ^ 0x5bd1e995 };
   const target = focusOf(policy);
   for (let guard = 0; guard < 4000; guard++) {

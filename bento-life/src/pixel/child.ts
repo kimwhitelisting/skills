@@ -9,15 +9,25 @@
 import { Grid, recolor, rotsprite, type Color } from './grid.ts';
 import { P } from './palette.ts';
 
-export type PxAge = 1 | 4 | 7 | 11 | 15 | 18 | 19;
-export const PX_AGES: PxAge[] = [1, 4, 7, 11, 15, 18, 19];
+export type PxAge = 1 | 2 | 4 | 7 | 11 | 15 | 18 | 19;
+export const PX_AGES: PxAge[] = [1, 2, 4, 7, 11, 15, 18, 19];
 /** 실제 나이 → 도트 성장 단계 */
-export const pxAgeOf = (age: number): PxAge => (age <= 1 ? 1 : age <= 5 ? 4 : age <= 9 ? 7 : age <= 12 ? 11 : age <= 15 ? 15 : age <= 18 ? 18 : 19);
+export const pxAgeOf = (age: number): PxAge => (age <= 1 ? 1 : age <= 3 ? 2 : age <= 5 ? 4 : age <= 9 ? 7 : age <= 12 ? 11 : age <= 15 ? 15 : age <= 18 ? 18 : 19);
 export type Gender = 'boy' | 'girl';
 export type Expr = 'neutral' | 'happy' | 'yuck' | 'sad' | 'surprise';
 export type View = 'front' | 'side';
 export interface Look { age: PxAge; gender: Gender }
-export interface Dress { outfit?: OutfitId; hat?: HatId; tilt?: number }
+/** plain: 상점에서 고른 옷 색·모자를 쓰지 않는다 (친구 등 다른 아이) */
+export interface Dress { outfit?: OutfitId; hat?: HatId; tilt?: number; plain?: boolean }
+
+// ───────── 상점에서 고른 옷 색·모자 (주인공 아이에게만) ─────────
+let THEME: [Color, Color] | undefined;
+let DEFAULT_HAT: HatId = 'none';
+/** 윗옷 색 바꾸기 (교복 시기는 그대로) — undefined면 기본 옷 */
+export function setTheme(c: [Color, Color] | undefined): void { THEME = c; }
+/** 장면이 따로 모자를 씌우지 않을 때 쓰는 모자 */
+export function setDefaultHat(h: HatId): void { DEFAULT_HAT = h; }
+let plainNow = false;
 
 export const CHILD_W = 24;
 export const CHILD_H = 40;
@@ -34,16 +44,17 @@ const part = (view: View, look: Look, layer: string, make: () => Grid): Grid => 
 // 발끝은 늘 같은 줄(38)에 닿는다: legTop + legH = 38. 클수록 머리는 작아지고 몸과 다리가 길어진다.
 const BODY: Record<PxAge, { rx: number; ry: number; torsoTop: number; torsoH: number; legTop: number; legH: number; torsoW: number }> = {
   1: { rx: 8, ry: 7.5, torsoTop: 29, torsoH: 6, legTop: 35, legH: 3, torsoW: 12 },
-  4: { rx: 7.8, ry: 7.2, torsoTop: 27, torsoH: 7, legTop: 34, legH: 4, torsoW: 12 },
-  7: { rx: 7.5, ry: 7, torsoTop: 25, torsoH: 8, legTop: 33, legH: 5, torsoW: 12 },
+  2: { rx: 7.9, ry: 7.4, torsoTop: 28, torsoH: 6, legTop: 34, legH: 4, torsoW: 12 },
+  4: { rx: 7.7, ry: 7.2, torsoTop: 26, torsoH: 7, legTop: 33, legH: 5, torsoW: 12 },
+  7: { rx: 7.5, ry: 7, torsoTop: 24, torsoH: 8, legTop: 32, legH: 6, torsoW: 12 },
   11: { rx: 7, ry: 7, torsoTop: 22, torsoH: 9, legTop: 31, legH: 7, torsoW: 12 },
   15: { rx: 6.5, ry: 7, torsoTop: 19, torsoH: 10, legTop: 29, legH: 9, torsoW: 12 },
   18: { rx: 6.3, ry: 7, torsoTop: 17, torsoH: 11, legTop: 28, legH: 10, torsoW: 12 },
   19: { rx: 6.3, ry: 7, torsoTop: 17, torsoH: 11, legTop: 28, legH: 10, torsoW: 12 },
 };
 const body = (age: PxAge) => BODY[age];
-type Style = 'baby' | 'kinder' | 'kid' | 'tween' | 'uniform' | 'senior' | 'casual';
-const STYLE: Record<PxAge, Style> = { 1: 'baby', 4: 'kinder', 7: 'kid', 11: 'tween', 15: 'uniform', 18: 'senior', 19: 'casual' };
+type Style = 'baby' | 'toddler' | 'kinder' | 'kid' | 'tween' | 'uniform' | 'senior' | 'casual';
+const STYLE: Record<PxAge, Style> = { 1: 'baby', 2: 'toddler', 4: 'kinder', 7: 'kid', 11: 'tween', 15: 'uniform', 18: 'senior', 19: 'casual' };
 const BABY_PINK = '#f6b7c0', BABY_PINK_D = '#e48896', TWEEN_PLUM = '#a77bb3', TWEEN_PLUM_D = '#86609a';
 const SENIOR = '#575b70', SENIOR_D = '#40435a', CASUAL_BOY = '#7fa7c9', CASUAL_BOY_D = '#5f88ab', CASUAL_GIRL = '#e9a3b0', CASUAL_GIRL_D = '#cf8191', LONG_SKIRT = '#c9b28f', SENIOR_SKIRT = '#7a4e5a';
 const blank = () => new Grid(CHILD_W, CHILD_H);
@@ -145,6 +156,7 @@ function outfitColors(look: Look) {
   const uni = st === 'uniform' || st === 'senior';
   const c: Record<Style, [Color, Color]> = {
     baby: girl ? [BABY_PINK, BABY_PINK_D] : [P.sky, P.skyDark],
+    toddler: [P.shirt, P.shirtShade],
     kinder: [P.smock, P.smockShade],
     kid: girl ? [P.smock, P.smockShade] : [P.shirt, P.shirtShade],
     tween: girl ? [TWEEN_PLUM, TWEEN_PLUM_D] : [P.sage, P.sageDark],
@@ -152,12 +164,12 @@ function outfitColors(look: Look) {
     senior: [SENIOR, SENIOR_D],
     casual: girl ? [CASUAL_GIRL, CASUAL_GIRL_D] : [CASUAL_BOY, CASUAL_BOY_D],
   };
-  const [top1, top2] = c[st];
+  const [top1, top2] = THEME && !uni && !plainNow ? THEME : c[st];
   /** 바지(다리 전체를 덮는 색) — 없으면 맨다리+양말 */
-  const pants: Color | undefined = st === 'baby' ? top1 : girl ? undefined : uni ? P.navy : st === 'tween' || st === 'casual' ? P.shorts : undefined;
+  const pants: Color | undefined = st === 'baby' ? top1 : st === 'toddler' && !girl ? P.shorts : girl ? undefined : uni ? P.navy : st === 'tween' || st === 'casual' ? P.shorts : undefined;
   /** 치마/반바지 (색, 길이) */
   const skirt: [Color, number] | undefined = girl
-    ? (st === 'kinder' || st === 'kid' ? [P.smock, 2] : st === 'tween' ? [TWEEN_PLUM, 3] : uni ? [st === 'senior' ? SENIOR_SKIRT : P.navy, 4] : st === 'casual' ? [LONG_SKIRT, 6] : undefined)
+    ? (st === 'toddler' ? [P.shorts, 3] : st === 'kinder' || st === 'kid' ? [P.smock, 2] : st === 'tween' ? [TWEEN_PLUM, 3] : uni ? [st === 'senior' ? SENIOR_SKIRT : P.navy, 4] : st === 'casual' ? [LONG_SKIRT, 6] : undefined)
     : st === 'kinder' || st === 'kid' ? [P.shorts, 2] : undefined;
   return { top1, top2, st, uni, pants, skirt, pack: st !== 'baby' && st !== 'casual' };
 }
@@ -178,6 +190,11 @@ function outfitFront(look: Look): Grid {
     g.set(cx - 3, top + 6, P.collar);
   } else if (st === 'baby') {
     g.rect(cx - 2, top, 4, 2, P.white).set(cx - 1, top + 3, top2).set(cx, top + 3, top2); // 턱받이
+  } else if (st === 'toddler') {
+    // 줄무늬 티 + 멜빵 (앞판과 어깨끈)
+    const stripe = look.gender === 'girl' ? P.pink : P.sky;
+    for (let y = top + 1; y < top + b.torsoH; y += 2) g.hline(left, left + b.torsoW - 1, y, stripe).set(left - 2, y, stripe).set(left - 1, y, stripe).set(left + b.torsoW, y, stripe).set(left + b.torsoW + 1, y, stripe);
+    g.rect(cx - 3, top + 3, 6, b.torsoH - 3, P.shorts).vline(cx - 3, top, top + 3, P.shorts).vline(cx + 2, top, top + 3, P.shorts).set(cx - 3, top + 3, P.mustard).set(cx + 2, top + 3, P.mustard);
   } else if (st === 'kinder') {
     g.rect(left + 7, top + 2, 3, 2, P.white).set(left + 8, top + 2, P.tomato); // 이름표
   } else if (st === 'kid') {
@@ -298,6 +315,7 @@ function compose(layers: Grid[], o: { bob: number; tiltDeg?: number; tiltPivot?:
 
 /** 정면 (부엌·현관·결산) */
 export function childFront(look: Look, expr: Expr = 'neutral', o: { blink?: boolean; bob?: 0 | 1 } & Dress = {}): Grid {
+  plainNow = !!o.plain;
   const full = headFull(look, 'front');
   const layers = [
     part('front', look, 'legs', () => legsFront(look)),
@@ -305,7 +323,9 @@ export function childFront(look: Look, expr: Expr = 'neutral', o: { blink?: bool
     part('front', look, 'head', () => splitHead(full, false)),
     part('front', look, 'hair', () => splitHead(full, true)),
     part('front', look, `face-${expr}${o.blink ? '-blink' : ''}`, () => face(look, 'front', expr, !!o.blink)),
-    hat(o.hat ?? 'none', look, 'front'),
+    hat(o.hat ?? (o.plain ? 'none' : DEFAULT_HAT), look, 'front'),
+    // 선글라스는 얼굴에 쓰니까 장면이 씌운 모자와 같이 보인다
+    hat(!o.plain && DEFAULT_HAT === 'shades' && o.hat && o.hat !== 'shades' ? 'shades' : 'none', look, 'front'),
   ];
   const { cx, cy, ry } = headCenter(look, 'front');
   let g = compose(layers, { bob: o.bob ?? 0, upperFrom: 1, tiltDeg: o.tilt, tiltPivot: { x: cx, y: cy + ry } });
@@ -315,6 +335,7 @@ export function childFront(look: Look, expr: Expr = 'neutral', o: { blink?: bool
 
 /** 옆모습 걷기 (오른쪽을 본다), frame 0~7 */
 export function childSide(look: Look, frame: number, expr: Expr = 'neutral', o: Dress = {}): Grid {
+  plainNow = !!o.plain;
   const f = ((frame % WALK_FRAMES) + WALK_FRAMES) % WALK_FRAMES;
   const full = headFull(look, 'side');
   const layers = [
@@ -323,7 +344,9 @@ export function childSide(look: Look, frame: number, expr: Expr = 'neutral', o: 
     part('side', look, 'head', () => splitHead(full, false)),
     part('side', look, 'hair', () => splitHead(full, true)),
     part('side', look, `face-${expr}`, () => face(look, 'side', expr, false)),
-    hat(o.hat ?? 'none', look, 'side'),
+    hat(o.hat ?? (o.plain ? 'none' : DEFAULT_HAT), look, 'side'),
+    // 선글라스는 얼굴에 쓰니까 장면이 씌운 모자와 같이 보인다
+    hat(!o.plain && DEFAULT_HAT === 'shades' && o.hat && o.hat !== 'shades' ? 'shades' : 'none', look, 'side'),
   ];
   let g = compose(layers, { bob: walkPose(f).bob, upperFrom: 1 });
   if (o.outfit && o.outfit !== 'default') g = recolor(g, OUTFIT_SWAPS[o.outfit]);

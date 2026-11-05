@@ -3,14 +3,14 @@
 //   → art-src/pixel-parts/_preview/<키>.png  (8배 미리보기)
 // 고친 파일을 src/assets/pixel/parts/ 에 같은 이름으로 넣으면 게임이 그걸 쓴다.
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { childLayers, partKey, type Gender, type PxAge, type View } from '../src/pixel/child.ts';
+import { childLayers, partKey, PX_AGES, type Gender, type View } from '../src/pixel/child.ts';
 import { gridToPng } from './png.ts';
 
 const dir = new URL('../art-src/pixel-parts/', import.meta.url);
 const prev = new URL('_preview/', dir);
 mkdirSync(prev, { recursive: true });
 let n = 0;
-for (const view of ['front', 'side'] as View[]) for (const age of [7, 15] as PxAge[]) for (const gender of ['boy', 'girl'] as Gender[]) {
+for (const view of ['front', 'side'] as View[]) for (const age of PX_AGES) for (const gender of ['boy', 'girl'] as Gender[]) {
   const look = { age, gender };
   for (const [layer, g] of Object.entries(childLayers(view, look))) {
     const key = partKey(view, look, layer);
