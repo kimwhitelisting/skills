@@ -210,3 +210,5 @@ html:has(#app.fit), html:has(#app.fit) body { height: 100%; overflow: hidden; ov
 .pixel-ui .px-sheet summary::-webkit-details-marker { display: none; }
 .pixel-ui .px-sheet summary::before { content: '▶'; font-size: 10px; width: 12px; flex: none; }
 .pixel-ui .px-sheet details[open] > summary::before { content: '▼'; }
+/* 예전 파스텔판 .title 여백(12vh)이 새 타이틀에 새지 않게 */
+#app.pixel-ui .px-screen.title { padding-top: 0; }

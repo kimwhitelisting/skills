@@ -1,4 +1,4 @@
-# 🍱 도시락 육아 (가제)
+# 🍱 냠냠졸졸
 
 > 도시락 싸들고 졸졸 따라다니면 아이를 얼마나 잘 키울 수 있을까?
 
@@ -66,7 +66,7 @@ tests/                     테스트 + 자동 플레이 시뮬레이터
 
 ```bash
 npm i @capacitor/core @capacitor/android @capacitor/ios && npm i -D @capacitor/cli
-npx cap init "도시락 육아" com.yourname.bentolife --web-dir dist
+npx cap init "냠냠졸졸" com.paranstudio.dosirak --web-dir dist
 npm run build && npx cap add android && npx cap sync
 npx cap open android      # Android Studio에서 서명된 AAB 빌드 → Play Console 업로드
 ```

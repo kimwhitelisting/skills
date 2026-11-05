@@ -3,7 +3,7 @@
 > 다른 사람(또는 다른 에이전트)이 이어서 작업할 때 먼저 읽는 문서. 기획은 [`GDD.md`](GDD.md), 그림은 [`PIXEL.md`](PIXEL.md).
 
 ## 한 줄
-**"도시락 싸들고 쫓아다니면 애를 얼마나 잘 키울 수 있을까?"** — 0살부터 스무 살까지 매년 아침 도시락을 싸고, 배웅하거나 몰래 따라가며 아이를 키우는 모바일 세로 도트 인생 시뮬레이터. 안드로이드 먼저 출시 예정 (개발자 등록 완료), 수익은 광고 + 광고 제거.
+**「냠냠졸졸」** (스토어 제목 「냠냠졸졸: 도시락 들고 몰래 육아」) — **"도시락 싸들고 쫓아다니면 애를 얼마나 잘 키울 수 있을까?"** 0살부터 스무 살까지 매년 아침 도시락을 싸고, 배웅하거나 몰래 따라가며 아이를 키우는 모바일 세로 도트 인생 시뮬레이터. 안드로이드 먼저 출시 예정 (개발자 등록 완료), 수익은 광고 + 광고 제거.
 
 ## 저장소
 - `kimwhitelisting/skills` 저장소의 `bento-life/` 폴더
@@ -48,7 +48,7 @@ npx tsc --noEmit -p .  # 타입 검사
 화면에는 **세는 나이** (갓난아기 1살 → 20살)로 보이고, 코드의 `s.age`는 0~19다. 화면에 나이를 쓸 땐 `main.ts`의 `shown(age)`를 거친다. 문서·코드 주석의 나이는 코드 나이.
 
 ## 안드로이드
-Capacitor로 감쌌다 (`capacitor.config.ts`, 패키지 이름은 **임시** `com.bentolife.app`). 휴대폰 글자 크기 설정은 무시한다(웹뷰 글자 배율 100% 고정, `scripts/android-assets.ts`가 MainActivity에 넣는다). 빌드·서명·Play 등록은 [`ANDROID.md`](ANDROID.md), 스토어 문구·설문 초안은 [`STORE.md`](STORE.md), 개인정보처리방침 초안은 [`privacy-policy.md`](privacy-policy.md). 스토어 그래픽은 `npm run store:art`, 스크린샷은 `npm run store:shots` → `art-src/store/`.
+Capacitor로 감쌌다 (`capacitor.config.ts`, 패키지 이름 **`com.paranstudio.dosirak`** 확정, android 폴더는 깃에 올라가 있다). 휴대폰 글자 크기 설정은 무시한다(웹뷰 글자 배율 100% 고정, `scripts/android-assets.ts`가 MainActivity에 넣는다). 빌드·서명·Play 등록은 [`ANDROID.md`](ANDROID.md), 스토어 문구·설문 초안은 [`STORE.md`](STORE.md), 개인정보처리방침 초안은 [`privacy-policy.md`](privacy-policy.md). 스토어 그래픽은 `npm run store:art`, 스크린샷은 `npm run store:shots` → `art-src/store/`.
 
 ## 글 점검
 `npm run text:dump` → `art-src/text-dump.md`에 이벤트·엔딩·아침 요청의 모든 문장이 (받침 있는 이름/없는 이름, 스탯 높음/낮음 갈래까지) 한 파일로 모인다. 문장을 고친 뒤 다시 뽑아서 읽는다.
@@ -70,7 +70,7 @@ Capacitor로 감쌌다 (`capacitor.config.ts`, 패키지 이름은 **임시** `c
 
 ## 다음 할 일 후보
 1. 직접 플레이 → 엔딩 균형, 문장 다듬기, 너무 쉽게 나오는 엔딩 조정
-2. 안드로이드: 패키지 이름 확정 → 서명 키 → 실제 휴대폰에서 디버그 APK 확인 → Play 내부 테스트 (ANDROID.md)
+2. 안드로이드: 서명 키 만들기 (패키지 이름은 확정) → 실제 휴대폰에서 디버그 APK 확인 → Play 내부 테스트 (ANDROID.md)
 3. 광고 (AdMob) + 광고 제거 결제. 그림이 아동용처럼 보이면 Play가 아동 대상 앱으로 분류해 광고가 제한될 수 있음 — 타깃은 20~40대 부모
 4. 사람이 고친 부품 PNG 반영 (`art-src/pixel-parts/` → `src/assets/pixel/parts/`)
 5. 배경음악은 귀로 들어 보며 다듬기 (곡은 `music.ts` 맨 위 악보만 고치면 된다)

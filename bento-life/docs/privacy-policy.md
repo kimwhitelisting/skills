@@ -1,10 +1,10 @@
-# 개인정보처리방침 — 도시락 육아
+# 개인정보처리방침 — 냠냠졸졸
 
 > 초안. 출시 전에 개발자(운영자) 이름과 연락처를 채우고 웹에 올려 그 주소를 Play Console에 적는다. 광고를 붙이면 아래 "광고" 부분을 바꾼다.
 
 시행일: 20XX년 X월 X일
 
-「도시락 육아」(이하 "게임")는 이용자의 개인정보를 소중히 여깁니다.
+「냠냠졸졸」(이하 "게임")는 이용자의 개인정보를 소중히 여깁니다.
 
 ## 1. 수집하는 정보
 게임은 이름, 연락처, 위치 같은 **개인정보를 수집하지 않습니다.**
@@ -28,6 +28,6 @@
 
 ---
 
-# Privacy Policy — Dosirak Yuga (Bento Parenting)
+# Privacy Policy — Nyamnyam Joljol
 
 The game does **not collect personal information**. Game progress is stored **only on your device** and is never sent to the developer or anyone else. The current version does not need an internet connection. If ads are added (Google AdMob), AdMob may collect device identifiers such as the advertising ID to serve and measure ads, under Google's privacy policy. Deleting the app removes all game data. The game is intended for adults. Contact: (developer name, email).

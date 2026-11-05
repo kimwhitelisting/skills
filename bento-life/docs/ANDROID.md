@@ -5,8 +5,8 @@
 ## 이미 해 둔 것
 | 항목 | 내용 | 파일 |
 |---|---|---|
-| 앱 설정 | 앱 이름 「도시락 육아」, 웹 파일 위치 `dist`, 배경색 | `capacitor.config.ts` |
-| 패키지 이름 | **임시값 `com.bentolife.app`** — 아래 "패키지 이름 정하기" | `capacitor.config.ts` |
+| 앱 설정 | 앱 이름 「냠냠졸졸」, 웹 파일 위치 `dist`, 배경색 | `capacitor.config.ts` |
+| 패키지 이름 | **`com.paranstudio.dosirak`** (확정 · 스튜디오 파란). iOS 번들 ID도 같은 이름으로 | `capacitor.config.ts` |
 | 저장 | 웹뷰 저장소 + 앱 저장소(@capacitor/preferences)에 같이 쓴다. 기기 저장 공간이 부족해 웹뷰 저장소가 지워져도 진행·도감·하트가 남는다 | `src/entry-app.ts`, `src/game/save.ts` |
 | 뒤로가기 | 창이 열려 있으면 닫기, 등굣길 도중엔 그대로, 타이틀이면 앱을 내린다 | `src/entry-app.ts`, `src/main.ts` |
 | 아이콘 | 보자기 도시락 뒤로 빼꼼 보는 아이 (도트). 적응형 아이콘 + 예전 방식 네모·동그라미 | `scripts/android-assets.ts` |
@@ -16,9 +16,9 @@
 | 글꼴 | 갈무리11이 앱 안에 들어 있어 오프라인에서도 같다 | — |
 
 ## android 폴더
-지금은 **깃에 올리지 않는다** (`.gitignore`). 패키지 이름이 임시라서, 정해지면 그때 새로 만들어 올린다.
-아이콘·시작 화면·세로 고정·글자 배율은 `scripts/android-assets.ts`에 있어서, 저장소를 새로 받은 곳에서는 `npm run android:reset` 한 번이면 같은 android 폴더가 만들어진다.
-패키지 이름을 확정한 뒤에는 `.gitignore`에서 `android`를 빼고 폴더째 올린다 (서명 설정 같은 손수정이 생기기 때문).
+패키지 이름을 확정해서 **폴더째 깃에 올려 둔다**. 손으로 고친 곳은 `app/build.gradle`의 출시용 서명 설정뿐이다.
+아이콘·시작 화면·세로 고정·글자 배율은 `scripts/android-assets.ts`가 넣는다 (`npm run android:assets`).
+⚠ `npm run android:reset`은 android 폴더를 지우고 새로 만든다 — 패키지 이름이 확정된 지금은 쓸 일이 거의 없고, 쓰면 `app/build.gradle`의 서명 설정을 다시 넣어야 한다.
 
 ## 명령
 ```bash
@@ -26,11 +26,11 @@ npm run android:sync     # 웹 빌드 → android 폴더로 복사 (코드를 �
 npm run android:open     # Android Studio로 열기 (PC에서)
 npm run android:bundle   # 출시용 AAB 빌드 (서명 설정이 있어야 함)
 npm run android:assets   # 아이콘·시작 화면·세로 고정·글자 배율 다시 넣기
-npm run android:reset    # android 폴더를 새로 만든다 (패키지 이름을 바꿀 때)
+npm run android:reset    # android 폴더를 지우고 새로 만든다 (⚠ 서명 설정도 지워짐)
 ```
 
 ## 확인된 것
-- 이 저장소의 클라우드 환경(JDK 21, Android SDK platform 36 · build-tools 36)에서 `./gradlew assembleDebug` 빌드 성공 — 디버그 APK 4.8MB, 패키지 `com.bentolife.app`, 앱 이름 「도시락 육아」, 세로 고정, targetSdk 36
+- 이 저장소의 클라우드 환경(JDK 21, Android SDK platform 36 · build-tools 36)에서 `./gradlew assembleDebug` 빌드 성공 — 디버그 APK 4.8MB, 패키지 `com.paranstudio.dosirak`, 앱 이름 「냠냠졸졸」, 세로 고정, targetSdk 36
 - 실제 기기·에뮬레이터 실행은 아직 안 해 봤다 (디버그 APK를 휴대폰에 설치해서 확인)
 
 ## PC에서 처음 빌드하기
@@ -39,9 +39,8 @@ npm run android:reset    # android 폴더를 새로 만든다 (패키지 이름�
 3. `npm run android:open` → Android Studio에서 ▶ 실행 (USB로 연결한 휴대폰이나 에뮬레이터)
    - 명령줄: `cd android && ./gradlew assembleDebug` → `android/app/build/outputs/apk/debug/app-debug.apk`
 
-## 패키지 이름 정하기 (Play에 처음 올리기 전에 꼭)
-- 예: `com.회사나이름.bentolife`, `kr.도메인.dosirak` — 소문자, 점으로 구분, **한 번 올리면 영영 못 바꾼다**
-- 바꾸는 법: `capacitor.config.ts`의 `appId` 수정 → `npm run android:reset` → `npm run android:sync`
+## 패키지 이름
+`com.paranstudio.dosirak` — 확정. Play에 한 번 올리면 영영 못 바꾼다. 게임 이름(「냠냠졸졸」)은 스토어에서 언제든 바꿀 수 있다.
 
 ## 서명 키 (출시용)
 Play는 **업로드 키**로 서명한 AAB만 받는다. 키를 잃어버리면 업데이트를 올릴 수 없으니(재설정 신청은 가능하지만 번거롭다) 두 군데 이상에 따로 보관한다. **키와 비밀번호는 저장소에 절대 올리지 않는다.**
@@ -55,7 +54,7 @@ storePassword=…
 keyAlias=upload
 keyPassword=…
 ```
-그리고 `android/app/build.gradle`의 `android { … }` 안에 서명 설정을 추가한다 (Android Studio의 *Build › Generate Signed App Bundle*로 해도 된다). Play Console에서 **Play 앱 서명**을 켜 두면 실제 배포 키는 Google이 보관한다.
+`android/app/build.gradle`에는 이 파일이 있으면 읽어서 서명하는 설정이 이미 들어 있다 (없으면 서명 없이 빌드). 시험용 키로 `bundleRelease`가 서명된 AAB를 만드는 것까지 확인했다. `*.jks`·`keystore.properties`는 `android/.gitignore`에 들어 있다. Play Console에서 **Play 앱 서명**을 켜 두면 실제 배포 키는 Google이 보관한다.
 
 ## 버전 올리기
 `android/app/build.gradle`의 `versionCode`(올릴 때마다 +1)와 `versionName`("1.0.1" 등).

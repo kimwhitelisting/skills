@@ -1,5 +1,5 @@
 /**
- * 도시락 육아 — 본 게임 (도트판)
+ * 냠냠졸졸 — 본 게임 (도트판)
  *
  *  한 해: 나이 이벤트 → 하루 (아침 도시락 → 배웅/따라가기 → 등굣길 → 저녁) → 랜덤 이벤트 → 키 재기 결산
  *  스무 해를 보내면 엔딩. 화면 나이는 세는 나이 (갓난아기 1살 → 20살), 규칙 안의 나이(s.age)는 0~19.
@@ -314,7 +314,7 @@ function renderTitle(): string {
   const canContinue = game && game.step !== 'ending';
   return `
   <div class="px-screen title">
-    <div class="px-sign"><h1>도시락 육아</h1><p>도시락 싸들고 졸졸 따라다니면<br>아이를 얼마나 잘 키울 수 있을까?</p></div>
+    <div class="px-sign"><h1>냠냠졸졸</h1><p>도시락 싸들고 졸졸 따라다니면<br>아이를 얼마나 잘 키울 수 있을까?</p></div>
     ${stage('title', '', '')}
     <section class="px-panel">
       ${canContinue ? `<button class="btn primary wide" data-act="continue">이어하기<small>${esc(game!.child.name)} · ${shown(game!.age)}살</small></button>` : ''}
