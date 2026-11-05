@@ -70,7 +70,7 @@ Capacitor로 감쌌다 (`capacitor.config.ts`, 패키지 이름 **`com.paranstud
 
 ## 다음 할 일 후보
 1. 직접 플레이 → 엔딩 균형, 문장 다듬기, 너무 쉽게 나오는 엔딩 조정
-2. 안드로이드: PR을 main에 합친 뒤 GitHub Actions로 업로드 키 만들기 → 출시 파일 (ANDROID.md \"PC 없이 출시하기\") → 실제 휴대폰에서 디버그 APK 확인 → Play 내부 테스트 (ANDROID.md)
+2. 안드로이드: PR을 main에 합친 뒤 GitHub Actions로 업로드 키 만들기 → 출시 파일 (ANDROID.md "PC 없이 출시하기") → 실제 휴대폰에서 디버그 APK 확인 → Play 내부 테스트 (ANDROID.md)
 3. 광고 (AdMob) + 광고 제거 결제. 그림이 아동용처럼 보이면 Play가 아동 대상 앱으로 분류해 광고가 제한될 수 있음 — 타깃은 20~40대 부모
 4. 사람이 고친 부품 PNG 반영 (`art-src/pixel-parts/` → `src/assets/pixel/parts/`)
 5. 배경음악은 귀로 들어 보며 다듬기 (곡은 `music.ts` 맨 위 악보만 고치면 된다)
