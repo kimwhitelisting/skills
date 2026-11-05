@@ -12,8 +12,9 @@ android {
         applicationId "com.paranstudio.dosirak"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        // 버전: 깃허브 출시 작업이 -PappVersionCode / -PappVersionName으로 넘긴다 (없으면 1 / 1.0)
+        versionCode((project.findProperty('appVersionCode') ?: '1') as Integer)
+        versionName((project.findProperty('appVersionName') ?: '1.0') as String)
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

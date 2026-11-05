@@ -56,8 +56,30 @@ keyPassword=…
 ```
 `android/app/build.gradle`에는 이 파일이 있으면 읽어서 서명하는 설정이 이미 들어 있다 (없으면 서명 없이 빌드). 시험용 키로 `bundleRelease`가 서명된 AAB를 만드는 것까지 확인했다. `*.jks`·`keystore.properties`는 `android/.gitignore`에 들어 있다. Play Console에서 **Play 앱 서명**을 켜 두면 실제 배포 키는 Google이 보관한다.
 
+## PC 없이 출시하기 (GitHub Actions · 휴대폰만으로)
+키 만들기와 AAB 빌드를 GitHub이 대신 한다. 작업 파일: 저장소 맨 위 `.github/workflows/android-keygen.yml`, `android-release.yml`.
+⚠ 두 작업은 **기본 브랜치(main)에 합쳐진 뒤에야** Actions 탭에 "Run workflow" 버튼이 생긴다.
+⚠ 이 저장소는 **공개**라 작업 결과물(Artifacts)은 GitHub에 로그인한 누구나 받을 수 있다. 그래서 키는 비밀번호로 잠기고 하루 뒤 지워지며, 받은 뒤 바로 지운다.
+
+**한 번만 — 업로드 키 만들기**
+1. 비밀번호 관리 앱 등으로 **16자 이상** 비밀번호를 만들어 적어 둔다
+2. 저장소 → Settings → Secrets and variables → Actions → New repository secret
+   - 이름 `ANDROID_KEY_PASSWORD`, 값 = 위 비밀번호 (휴대폰 GitHub 앱에 설정 메뉴가 없으면 브라우저로)
+3. Actions → **Android 1) 업로드 키 만들기** → Run workflow → confirm 칸에 `yes`
+4. 끝나면 그 실행 화면 맨 아래 Artifacts의 `upload-key` 받기 → 압축 풀기
+   - `upload-key.jks`를 **두 군데 이상** 보관 (클라우드 드라이브 + 다른 곳)
+5. `upload-key.base64.txt` 안의 글자 **전체**를 복사 → New repository secret `ANDROID_KEYSTORE_BASE64`에 붙여 넣기
+6. 실행 화면의 Artifacts에서 `upload-key` 옆 휴지통으로 **지운다**
+
+이미 `ANDROID_KEYSTORE_BASE64`가 있으면 1) 작업은 일부러 실패한다 (키를 실수로 바꾸면 앱 업데이트를 못 올림).
+
+**올릴 때마다 — 출시 파일 만들기**
+1. Actions → **Android 2) 출시 파일(AAB) 만들기** → Run workflow → 버전 이름(예: `1.0.0`)
+2. 끝나면 Artifacts의 `nyamjoljol-버전-번호` 받기 → 압축 풀면 `.aab` → Play Console에 업로드
+- versionCode는 이 작업을 돌린 횟수라 누를 때마다 저절로 올라간다. 테스트도 돌려서 실패하면 빌드하지 않는다
+
 ## 버전 올리기
-`android/app/build.gradle`의 `versionCode`(올릴 때마다 +1)와 `versionName`("1.0.1" 등).
+GitHub 출시 작업은 자동이다 (위). PC에서 빌드할 때는 `cd android && ./gradlew bundleRelease -PappVersionCode=2 -PappVersionName=1.0.1`처럼 넘긴다 (안 넘기면 1 / 1.0). versionCode는 Play에 올릴 때마다 전보다 커야 한다.
 
 ## Play Console에 올리기
 1. 앱 만들기 → 기본 언어 한국어, 게임, 무료
