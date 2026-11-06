@@ -212,3 +212,25 @@ html:has(#app.fit), html:has(#app.fit) body { height: 100%; overflow: hidden; ov
 .pixel-ui .px-sheet details[open] > summary::before { content: '▼'; }
 /* 예전 파스텔판 .title 여백(12vh)이 새 타이틀에 새지 않게 */
 #app.pixel-ui .px-screen.title { padding-top: 0; }
+
+/* 본 게임은 고정된 밝은 도트 팔레트. 공용 그림책 CSS의 dark 토큰이
+   사진첩/설정/상점으로 새지 않도록 공유 색도 같은 범위에서 정의한다. */
+#app.pixel-ui {
+  --paper: #f3e2c6; --sheet: var(--pane); --sheet-2: var(--pane2);
+  --muted: #6d5545; --line: #c9b79c; --bar: #e9d8bd;
+  --accent: var(--red-d); --accent-ink: #fff6e6; --accent-soft: #f8dccf;
+  --sage: var(--mint); --mustard: var(--gold);
+  --up: #416d28; --up-bg: #e4eed9; --down: var(--red-d); --down-bg: #f6dcd6;
+}
+.pixel-ui .btn.primary { background: var(--red-d); color: #fff6e6; box-shadow: inset 0 -4px 0 #843229, 0 4px 0 var(--ink); }
+.pixel-ui .btn:disabled, .pixel-ui .btn.primary:disabled {
+  background: var(--off); color: var(--ink); border-style: dashed;
+}
+.pixel-ui .btn small { color: inherit; }
+.pixel-ui .px-who small, .pixel-ui .px-panel .btn.choice small,
+.pixel-ui .px-wallet small, .pixel-ui .px-item small,
+.pixel-ui .px-photo-card small, .pixel-ui .px-lightbox figcaption small,
+.pixel-ui .px-food .price, .pixel-ui .px-adv summary small { color: var(--muted); }
+
+html:has(#app.pixel-ui) { background: #f3e2c6; }
+.pixel-ui .px-hud .px-pill.heart, .pixel-ui .px-wallet b { color: var(--red-d); }

@@ -778,6 +778,8 @@ const firstSentence = (t: string) => (t.match(/^[^.!?…]*[.!?…]+/)?.[0] ?? t)
 
 /** 올해의 한 장면 고르기: 등굣길 결정적 순간 → 올해 이벤트 → 그 나이의 일상 */
 function yearPhoto(s: GameState): Photo {
+  const saved = s.photos?.find((p) => p.age === s.age);
+  if (saved) return saved; // 결산에서 찍은 모습은 옷을 갈아입어도 유지
   const base = { age: s.age, gender: s.child.gender, name: s.child.name, theme: dex.equip.theme, hat: dex.equip.hat };
   const day = [...s.album].reverse().find((d) => d.age === s.age && d.momentKind && d.momentKind !== 'calm')
     ?? [...s.album].reverse().find((d) => d.age === s.age && d.momentKind);
@@ -790,6 +792,14 @@ function yearPhoto(s: GameState): Photo {
   if (ev) return { ...base, id: `e-${ev.id}`, expr: ev.expr, caption: ev.caption };
   const stage = pxAgeOf(s.age);
   return { ...base, id: `d-${stage}`, expr: 'happy', caption: dailyCaption(stage) };
+}
+/** 결산을 보는 순간 수집한다. 기존 결산 저장도 복구하고 반복 렌더는 중복 저장하지 않는다. */
+function collectYearPhoto(s: GameState): void {
+  if (s.photos?.some((p) => p.age === s.age)) return;
+  const photo = yearPhoto(s);
+  s.photos = [...(s.photos ?? []), photo];
+  dex.photos[photo.id] = photo;
+  persist();
 }
 const photoCache = new Map<string, string>();
 /** 사진 그리기 — 찍을 때 입고 있던 옷·모자로 */
@@ -893,6 +903,7 @@ function render(): void {
   let body: string;
   if (screen === 'intro') body = renderIntro();
   else if (screen === 'game' && s) {
+    if (s.step === 'summary' && !s.active && !eventResult) collectYearPhoto(s);
     const tip = currentTip();
     const inner = gameBody(s);
     // 안내는 장면 아래쪽에 겹쳐 띄운다 (아래 패널을 밀어내 화면이 넘치지 않게). 장면이 없으면 패널 맨 위에
@@ -1165,10 +1176,7 @@ function onAct(el: HTMLElement): void {
       break;
     case 'year': {
       if (!s) return;
-      // 올해의 한 장면을 앨범과 사진첩에 붙인다
-      const ph = yearPhoto(s);
-      s.photos = [...(s.photos ?? []).filter((p) => p.age !== s.age), ph];
-      dex.photos[ph.id] = ph;
+      collectYearPhoto(s);
       advanceYear(s);
       resetMorning();
       if (s.step === 'ending') { if (!dex.endings.includes(s.endingId!)) dex.endings.push(s.endingId!); sfx('chime'); }
