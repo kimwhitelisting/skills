@@ -9,6 +9,8 @@ const config: CapacitorConfig = {
   appId: 'com.paranstudio.dosirak',
   appName: '냠냠졸졸',
   webDir: 'dist',
+  // Auth plugins carry session tokens across the bridge, including Debug builds.
+  loggingBehavior: 'none',
   android: { backgroundColor: '#f3e2c6' },
   ios: { backgroundColor: '#f3e2c6' },
 };

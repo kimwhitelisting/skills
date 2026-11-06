@@ -1,0 +1,2 @@
+// Optional developer-machine signing; clean clones can build unsigned Simulator apps.
+#include? "signing.local.xcconfig"

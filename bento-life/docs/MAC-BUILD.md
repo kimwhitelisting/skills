@@ -1,5 +1,7 @@
 # Mac 빌드 검증 — 2026-11-06
 
+아래 초기 검증 기록 이후의 현재 Native 상태는 문서 끝의 **2026-11-07 Native 실행·로컬 서명 설정**을 우선한다.
+
 원본 main `e694d7a`(PR #2 병합)를 기준으로 새 Mac arm64에서 검증했다.
 기존 README/HANDOFF의 게임 설계와 저장 데이터·패키지 ID는 유지했다.
 
@@ -74,3 +76,29 @@ Owner iPhone LTE 사진으로 수정 전 접속은 확인했다. 수정 후 iPho
 - iOS WebView·시작 화면 배경을 `#f3e2c6`으로 명시했다. 설치된 Capacitor가 지원하는 `UIStatusBarStyleDarkContent`로 밝은 게임 화면의 상태바 글자를 지정했다. 세로 방향·전체 화면·번들 ID는 유지했다.
 - `npm test` 27개와 2000판 자동 플레이, TypeScript/Vite build, `cap sync ios`, plist·storyboard XML 검증 통과.
 - **Xcode 컴파일·Simulator·실제 iPhone 설치는 확인하지 않았다.** 관리자 초기 설정 이후 iOS sync/compile과 작은 화면·안전 영역·다크 모드 상태바·시작 이미지 잘림을 실제 기기에서 확인해야 한다.
+
+## 2026-11-07 Native 실행·로컬 서명 설정
+
+- Xcode에서 iPhone 18 Pro / iOS 27.2 Simulator 빌드·설치 후 홈 화면과 계정 화면 표시를 확인했다. SecureStorage의 Native 읽기 응답도 확인했다. 로그인 후 토큰 쓰기·재실행 복원, 실제 iPhone 설치·실행과 TestFlight는 아직 확인하지 않았다.
+- 첫 시작에 오래 걸리며 일시적으로 빈 화면이 보였고 LLDB의 `RPC Server exited`/detach 실패가 관찰됐다. 이후 정상 화면을 확인했으므로 이 디버거 오류만으로 앱 결함이라고 결론 내리지 않는다. 실제 기기의 시작 시간은 따로 확인한다.
+- `capacitor.config.ts`의 전역 `loggingBehavior: 'none'`은 Debug/Release에서 Capacitor의 JS·Native bridge 로그를 끈다. 인증 플러그인의 요청·응답에 세션 정보가 포함될 수 있으므로 실제 로그인 전에 적용한다. 모든 OS 로그나 개발자가 별도로 추가한 로그까지 제거하는 설정은 아니다. [Capacitor 설정](https://capacitorjs.com/docs/config)
+
+### 로컬 개발 서명
+
+공개 프로젝트에는 팀 값을 넣지 않는다. `ios/signing.xcconfig`가 Git에서 제외한 `ios/signing.local.xcconfig`를 선택적으로 읽으며, Debug는 기존 `debug.xcconfig`를 통해, Release는 직접 이 공통 설정을 사용한다. 실제 로컬 파일은 권한 `600`으로 보관한다.
+
+다른 개발 Mac에서는 Xcode에 본인 Apple 계정을 추가한 뒤 다음 형식으로 로컬 파일을 만든다. 예제 값을 그대로 사용하지 않는다.
+
+```xcconfig
+DEVELOPMENT_TEAM = YOUR_TEAM_ID
+```
+
+로컬 파일이 없어도 선택적 include는 실패하지 않으며 unsigned Simulator 빌드가 가능하다. Xcode UI가 팀 값을 `project.pbxproj`에 다시 쓰면 커밋 전에 로컬 파일로 옮긴다. 인증서·프로비저닝 프로파일·비밀번호는 저장소에 추가하지 않는다. [Apple xcconfig 안내](https://developer.apple.com/documentation/xcode/adding-a-build-configuration-file-to-your-project)
+
+일반적으로 유료 Apple Developer Program에 가입하지 않은 Apple 계정도 Xcode의 **Personal Team**으로 개인 기기에 개발용 테스트를 할 수 있다. 주기적 재프로비저닝이 필요하며 이 경로가 TestFlight/App Store 배포 자격을 뜻하지 않는다. 사용자 가입 보고와 멤버십 활성화·선택된 서명 팀의 확인은 별개다. [Apple 계정·Personal Team 안내](https://developer.apple.com/help/account/basics/about-your-developer-account)
+
+### 출시 전 호환성 잔여 항목
+
+현재 배포 대상 설정은 iOS 15.0이지만 계정 경로는 `navigator.locks`와 `AbortSignal.timeout()`을 사용한다. Web Locks는 Safari 15.4부터이며 `AbortSignal.timeout()`의 Safari 16 지원 범위도 고려해야 한다. iOS 15.0 전체를 지원한다고 보고하지 않는다. 최소 버전 상향 또는 검증된 대체 구현을 별도 결정·시험하며, 이번 로깅·서명 설정에서는 배포 대상이나 게임 코드를 바꾸지 않았다. [WebKit의 Safari 15.4 안내](https://webkit.org/blog/12445/new-webkit-features-in-safari-15-4/), [AbortSignal.timeout 호환성](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal/timeout_static)
+
+공식 문서와 설치된 Capacitor 8 설정 대조일: 2026-11-07.

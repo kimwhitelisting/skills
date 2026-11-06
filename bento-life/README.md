@@ -14,6 +14,8 @@
 
 계정 저장은 이메일 로그인·자동 저장·계정 복원을 제공한다. `.env.example`의 공개 클라이언트 설정과 [계정 구현·검증 기록](docs/ACCOUNT-IMPLEMENTATION.md)을 따른다. 실제 브라우저에서 게스트 가져오기·자동 저장·계정 전환·두 번째 탭 작성 차단을 확인했고, **2026-11-07 Owner의 실제 iPhone에서 가입·이메일 확인·로그인과 Safari 개인정보 보호 새 탭의 같은 진행 복원**을 확인했다. 이는 같은 iPhone의 별도 브라우저 저장 공간 시험이며 다른 물리 기기·Native 설치·TestFlight·Keychain 검증은 아니다. 실제 오프라인/재연결과 Native·출시 검증은 남아 있으며, 기본 SMTP 제한으로 아직 공개 가입용 서비스가 아니다. 결제는 포함하지 않는다.
 
+iOS Simulator에서는 Native 홈·계정 화면과 보안 저장소 읽기 응답까지 확인했다. 실제 로그인 후 토큰 쓰기·실제 iPhone 실행은 미검증이다. 개발 서명은 Git에서 제외한 로컬 xcconfig를 사용하며 인증 정보가 bridge 로그에 남지 않도록 로깅을 끈다. 설정과 잔여 호환성 항목은 [Mac 빌드 기록](docs/MAC-BUILD.md#2026-11-07-native-실행로컬-서명-설정)을 따른다.
+
 ```bash
 cd bento-life
 npm install
