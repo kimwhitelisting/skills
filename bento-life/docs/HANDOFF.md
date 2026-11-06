@@ -68,6 +68,8 @@ Capacitor로 감쌌다 (`capacitor.config.ts`, 패키지 이름 **`com.paranstud
 - 해피가 아직 가장 많다 — 더 씁쓸하게 조일지는 직접 플레이해 보고 정할 것
 - 끝날 때 반찬값 평균 약 20 (12~25% 판에서 할머니 찬스)
 
+실제 화면 재현 버그와 회귀 확인은 [PLAYTEST.md](PLAYTEST.md)를 따른다.
+
 ## 다음 할 일 후보
 1. 직접 플레이 → 엔딩 균형, 문장 다듬기, 너무 쉽게 나오는 엔딩 조정
 2. 안드로이드: PR을 main에 합친 뒤 GitHub Actions로 업로드 키 만들기 → 출시 파일 (ANDROID.md "PC 없이 출시하기") → 실제 휴대폰에서 디버그 APK 확인 → Play 내부 테스트 (ANDROID.md)

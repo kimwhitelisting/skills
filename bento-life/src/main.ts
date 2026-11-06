@@ -470,7 +470,9 @@ function eveningView(s: GameState): string {
   const menu = p.meal.menu;
   const commuteLine = c ? `${c.injury ? '등굣길에서 크게 다쳤다' : c.over === 'caught' ? '등굣길에 들켰다' : c.over === 'lost' ? '등굣길에 놓쳤다' : c.delivered ? '몰래 배달 성공' : '교문까지 지켜봤다'} · ♥ ${Math.round(c.score)}` : '';
   const leaveLine = t.leave === 'escort' ? '오늘은 손잡고 같이 갔다.' : t.leave === 'trust' ? '오늘은 믿고 보냈다.' : '';
-  const lines = [...e.extra, ...p.meal.lines].slice(0, 3);
+  // 메뉴 계산 시 붙은 기본 문구가 이후 요청/배달 결과와 모순되지 않게 한다.
+  const mealLines = p.meal.lines.filter((line) => line !== '냠냠, 깨끗하게 비웠다.' || e.lunch === 3);
+  const lines = [...e.extra, ...mealLines].slice(0, 3);
   return `
   ${stage('kitchen', e.says.map(esc).join(' '), `${DAY_LABEL(s)} · 저녁`)}
   <section class="px-panel">
@@ -906,8 +908,11 @@ function render(): void {
 }
 
 // ───────────────────────── 아침 시계 ─────────────────────────
+function isMorningState(s: GameState): boolean {
+  return s.step === 'day' && s.today?.phase === 'morning' && !s.active;
+}
 function inMorning(): boolean {
-  return screen === 'game' && !!game && game.step === 'day' && game.today?.phase === 'morning' && !game.active && !eventResult;
+  return screen === 'game' && !!game && isMorningState(game) && !eventResult;
 }
 function syncTimer(): void {
   const run = inMorning() && hasLeave(game!.age) && !overlay && !busy && !currentTip();
@@ -944,13 +949,16 @@ function closeLid(late = false): void {
   sfx('pack'); haptic(15);
   render();
   setTimeout(() => {
-    if (!game || game !== s || !inMorning()) { busy = false; return; }
+    // 제출한 도시락은 화면 이동과 무관하게 완료한다. 타이틀로 나가도 이미 누른
+    // 동작을 취소하지 않으며, 그 사이 새 게임을 시작한 경우만 이전 작업을 버린다.
+    if (game !== s) return;
+    if (!isMorningState(s)) { busy = false; lidT = -1; return; }
     const r = packToday(s, draft as Required<Draft>, new Set(dex.menus), late);
     if (!dex.menus.includes(r.meal.menu.key)) dex.menus.push(r.meal.menu.key);
     resetMorning();
     persist();
     render();
-    if (s.today?.phase === 'evening') afterEvening(s);
+    if (screen === 'game' && s.today?.phase === 'evening') afterEvening(s);
   }, 900);
 }
 
@@ -1002,14 +1010,24 @@ function openOverlay(o: Overlay): void {
   overlay = o;
   sfx('tap');
 }
+function openPhoto(p: Photo | undefined): void {
+  if (!p) return;
+  if (!photoView) history.pushState({ photo: true }, '');
+  photoView = p;
+}
 window.addEventListener('popstate', () => {
-  photoView = undefined;
-  if (overlay) overlay = undefined;
+  if (photoView) photoView = undefined;
+  else if (overlay) overlay = undefined;
   else if (commuteOn) return void history.pushState({ g: 1 }, ''); // 등굣길 도중엔 나가지 않는다
   else if (screen !== 'title') screen = 'title';
   render();
 });
-function enterGame(): void { screen = 'game'; history.pushState({ g: 1 }, ''); }
+function enterGame(): void {
+  // 엔딩에서 다시 키우기는 같은 게임 화면을 교체한다.
+  if (screen === 'game') history.replaceState({ g: 1 }, '');
+  else history.pushState({ g: 1 }, '');
+  screen = 'game';
+}
 
 // ───────────────────────── 행동 ─────────────────────────
 function startNewGame(): void {
@@ -1048,7 +1066,7 @@ function onAct(el: HTMLElement): void {
     case 'new':
       if (overlay) history.replaceState(null, '');
       overlay = undefined;
-      if (!prefs.seenIntro) { screen = 'intro'; introPage = 0; history.pushState({ g: 1 }, ''); break; }
+      if (!prefs.seenIntro) { enterGame(); screen = 'intro'; introPage = 0; break; }
       startNewGame(); enterGame(); break;
     case 'intro-next':
       if (introPage < INTRO.length - 1) { introPage++; sfx('tap'); break; }
@@ -1089,7 +1107,13 @@ function onAct(el: HTMLElement): void {
       applyEquip(); sfx('pop'); top = false; break;
     }
     case 'close': history.back(); return;
-    case 'home': overlay = undefined; screen = 'title'; history.replaceState(null, ''); break;
+    case 'home':
+      // 메뉴 기록과 게임 진입 기록을 함께 되돌려 타이틀 기록이 쌓이지 않게 한다.
+      overlay = undefined;
+      persist();
+      render();
+      history.go(-2);
+      return;
     case 'event-ok': eventResult = undefined; sfx('tap'); break;
     case 'tip-ok': prefs.seenTips = [...prefs.seenTips, el.dataset.key!]; sfx('tap'); top = false; break;
     case 'tips-reset': prefs.seenTips = []; prefs.seenIntro = false; sfx('tap'); top = false; break;
@@ -1154,13 +1178,13 @@ function onAct(el: HTMLElement): void {
     }
     case 'album': albumTab = screen === 'game' && game ? albumTab : 'all'; openOverlay('album'); break;
     case 'album-tab': albumTab = el.dataset.v as 'life' | 'all'; top = false; break;
-    case 'photo-now': if (s) photoView = yearPhoto(s); top = false; break;
+    case 'photo-now': if (s) openPhoto(yearPhoto(s)); top = false; break;
     case 'photo-open': {
       const id = el.dataset.id!;
-      photoView = el.dataset.age ? s?.photos?.find((p) => p.age === Number(el.dataset.age)) : dex.photos[id];
+      openPhoto(el.dataset.age ? s?.photos?.find((p) => p.age === Number(el.dataset.age)) : dex.photos[id]);
       top = false; break;
     }
-    case 'photo-close': photoView = undefined; top = false; break;
+    case 'photo-close': if (photoView) history.back(); return;
     default: return;
   }
   persist();
