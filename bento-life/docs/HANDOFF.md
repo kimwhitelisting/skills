@@ -7,7 +7,7 @@
 
 ## 저장소
 - `kimwhitelisting/skills` 저장소의 `bento-life/` 폴더
-- 작업 브랜치: `claude/bento-life-simulator-2r80xs` (기본 브랜치에는 아직 안 합침, PR 없음)
+- 원래 작업 브랜치: `claude/bento-life-simulator-2r80xs`. PR #2로 main `e694d7a`에 병합됨(2026-11-06 확인). Mac 빌드 결과는 [MAC-BUILD.md](MAC-BUILD.md).
 - 휴대폰 미리보기 (한 파일 HTML): https://claude.ai/artifact/Sk3dWcxVM5nUJ9VSanK66j — 원래 대화에서 올린 것이라, 다른 대화에서 같은 링크를 고치려면 이 링크를 지정해서 다시 올린다
 
 ## 실행
@@ -21,7 +21,7 @@ npm run balance        # 성향별 평균 스탯
 npm run build:preview  # dist-preview/*.single.html (본 게임 + 맛보기들)
 npx tsc --noEmit -p .  # 타입 검사
 ```
-- 미리보기 서버를 끌 때는 `kill $(lsof -t -i:4173)` (`pkill -f "vite preview"`는 셸까지 죽는다)
+- 미리보기 서버는 현재 작업이 시작한 프로세스/PID 또는 등록된 해당 서비스만 종료한다. 포트 번호만으로 종료하면 다른 프로젝트 서버를 끌 수 있다.
 - 스크립트 실행은 `vite-node` (node strip-types는 일부 문법을 못 읽음)
 
 ## 지금 게임 (완료)
