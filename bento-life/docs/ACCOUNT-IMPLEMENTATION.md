@@ -1,6 +1,6 @@
-# 계정 저장 구현 후보 — BENTO-ACCOUNT-IMPL-001
+# 계정 저장 구현·웹 실기기 검증 — BENTO-ACCOUNT-IMPL-001
 
-2026-11-06, 기준 e3f1baa. 결제는 포함하지 않는다. 별도 기능 브랜치의 구현 후보이며 운영 배포·사용자 iPhone 확인을 완료했다는 뜻이 아니다.
+구현 시작 기준은 2026-11-06의 e3f1baa이며, 최신 실기기 확인일은 **2026-11-07**이다. BENTO-ACCOUNT-IMPL-001의 구현과 iPhone 웹 가입·저장·복원 검증은 완료했다. 결제는 포함하지 않으며 공개 출시나 Native 설치 검증 완료를 뜻하지 않는다. Native·출시 잔여 검증은 BENTO-STABLE-001에서 이어간다.
 
 ## 설정과 로그인
 
@@ -8,7 +8,7 @@
 - `.env.example`을 참고해 무시되는 `.env.local`에 `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`를 넣고 빌드한다. 이 두 값은 공개 클라이언트 설정이다. 서비스 관리자 키·서버 비밀은 앱/환경 예제/저장소에 넣지 않는다.
 - 설정이 없으면 기존 게스트 게임을 사용할 수 있고 계정 화면에 연결 미준비를 표시한다. 설정이 잘못되거나 안전한 토큰 저장소를 열지 못하면 조용히 다른 계정이나 평문 Native 저장소로 넘어가지 않는다.
 - 현재 동작 경로는 이메일/비밀번호 가입·이메일 확인·로그인·확인 메일 재전송·비밀번호 재설정이다. Apple/Google 로그인 버튼은 구성되지 않아 제공하지 않는다. 호스팅의 기본 메일 서비스는 테스트 조직의 허용 이메일로 제한되어 일반 공개 가입 준비가 아니다.
-- 웹 확인/재설정 메일은 현재 origin/path를 redirect로 요청하며 서버 허용 목록에 있어야 한다. Native에서는 별도 VITE_AUTH_REDIRECT_URL의 허용된 웹 주소로 돌아온다. 검증되지 않은 custom deep link는 사용하지 않는다. 재설정은 웹에서 새 비밀번호를 정한 뒤 Native 앱에서 다시 로그인할 수 있다. 메일 URL/실제 수신·사용자 계정 로그인은 별도 확인 대상이다.
+- 웹 확인/재설정 메일은 현재 origin/path를 redirect로 요청하며 서버 허용 목록에 있어야 한다. Native에서는 별도 VITE_AUTH_REDIRECT_URL의 허용된 웹 주소로 돌아온다. 검증되지 않은 custom deep link는 사용하지 않는다. 2026-11-07 Owner가 실제 iPhone에서 가입·확인 메일을 통한 이메일 인증·로그인 성공을 보고했다. 비밀번호 재설정과 Native 앱에서의 로그인은 별도 확인 대상이다.
 - Native 토큰은 iOS Keychain/Android Keystore 기반 별도 저장 어댑터에만 둔다. iCloud 동기화를 끄고 iOS는 device-only 접근을 사용한다. 웹은 SDK의 별도 브라우저 Auth 저장 공간이며 암호화된 기기 저장소라고 표시하지 않는다.
 - 비밀번호는 요청 동안만 사용하며 저장하지 않는다. 토큰은 게임 snapshot·복구 원본·JSON 내보내기·클라우드 게임 저장에 포함하지 않는다.
 
@@ -36,12 +36,14 @@
 
 ## 검증 및 실제 기기 범위
 
+- **2026-11-07 실제 iPhone 웹:** Owner가 가입·이메일 확인·로그인 성공을 직접 보고했다. 서버에서는 해당 검증 시점의 집계로 인증·로그인 완료 1건과 저장 revision **1→15** 증가를 확인했다. 계정 식별자나 게임 원문을 공개 기록에 포함하지 않았다.
+- **같은 iPhone의 별도 저장 공간 복원:** Owner가 Safari 개인정보 보호 모드의 새 탭에서 같은 계정으로 로그인한 뒤 “같은 진행으로 복원됐어요”라고 직접 확인했다. 일반 탐색과 분리된 브라우저 저장 공간에서 계정 복원을 확인한 시험이며, 다른 물리 기기로 교체하거나 앱을 재설치한 시험은 아니다.
 - 자동 회귀: 기존76개 + 신규 sync/auth/writer/lifecycle/boot35개 =111개 통과. 신규 항목은 명시적 첫 저장 선택, 다른 기기 복원, 충돌 원본 보존, 응답 유실 재시작, 오래된 중복 ACK, 최신 checkpoint 보존, 스로틀, 계정 전환/늦은 응답, quota·손상·잘못된 응답, bearer 계정 고정, secure storage 실패, guest 읽기 경계와 복원·삭제 뒤 stale lifecycle 쓰기 차단이다. 단일 HTML의 eager import에서도 게임 초기화는 명시적인 `mountGame()` 호출 전까지 시작하지 않는다.
 - TypeScript·웹 빌드, Android/iOS 플러그인 sync, Android debug compile과 unsigned iOS Simulator compile을 통과했다. 단일 HTML 미리보기는 동적 import의 JS/CSS도 함께 묶는다. Native 보안 저장 어댑터 모의 테스트는 실제 Keychain/Keystore 접근 검증을 대신하지 않는다.
 - 후보4 실제 브라우저 UI: 게스트 “우진 · 1살” 생성/새로고침 보존 → 테스트 계정 B 로그인/명시적 가져오기 → 새로고침 후 보존 → 계정 패널 닫기 → 분유 주식 선택/“계정에 저장됨” → 저장이 없는 별도 origin에서 같은 계정 로그인 → 같은 이름·나이·주식 선택과 남은 두 칸 복원까지 통과했다. 같은 origin의 두 번째 탭은 작성 잠금으로 차단됐다. 후보4 HTML SHA256: `35d303329d0246963c17ea419ca28ddbb4093b0d66399ffc0675b7848ffce8eb`.
 - 계정 전환 UI도 통과했다: B 로그아웃 후 게스트의 “우진 · 1살” 원본이 유지됐고, A 로그인 후 A의 기존 하트150·진행 없음이 표시되어 B의 우진 진행이 섞이지 않았다.
-- 별도 서버 검증에서 실제 두 테스트 사용자 접근 분리·동시 CAS·응답 유실 재전송·새 로그인 복원을 통과했다. 계정 삭제 UI, iOS Simulator 실행, Android/iPhone의 실제 로그인·확인 메일·오프라인·기기 변경·삭제는 각각 별도 확인 대상이다. 위 브라우저 검증은 실제 iPhone 설치 검증이 아니다.
-- Mac 화면 잠금으로 Simulator UI 확인은 진행하지 못했다. 따라서 iOS 결과는 unsigned compile 성공까지이며 WKWebView의 Web Locks 지원과 Keychain 실제 접근은 미확인이다. 잠금 API가 없으면 안전하게 중단하는 현재 동작 때문에 Native 실행 가능성을 compile만으로 보장하지 않는다. 근거 없는 Native 잠금 우회는 넣지 않았다. 우선 비공개 Safari 미리보기로 사용자 테스트를 진행하고, Native 실행·서명·실제 설치는 별도 완료한다.
+- 별도 서버 검증에서 실제 두 테스트 사용자 접근 분리·동시 CAS·응답 유실 재전송·새 로그인 복원을 통과했다. 계정 삭제 UI·비밀번호 재설정, 실제 iPhone의 오프라인 진행/재연결·충돌, 다른 물리 기기의 복원 및 재설치는 별도 확인 대상이다. 위 Safari 검증은 Native iPhone 설치 검증이 아니다.
+- Mac 화면 잠금으로 Simulator UI 확인은 진행하지 못했다. 따라서 iOS Native 결과는 unsigned compile 성공까지이며 WKWebView의 Web Locks 지원과 Keychain 실제 접근은 미확인이다. 잠금 API가 없으면 안전하게 중단하는 현재 동작 때문에 Native 실행 가능성을 compile만으로 보장하지 않는다. 근거 없는 Native 잠금 우회는 넣지 않았다. Native 실행·서명·TestFlight·실제 Android/iPhone 설치 검증은 BENTO-STABLE-001의 잔여 범위다.
 - 재현 순서: `npm ci` → `npm test` → `npm run build` → `npm run build:preview` → `npx cap sync android` / `npx cap sync ios`. Native 빌드/서명과 iPhone 설치는 기존 빌드 문서에 따른다.
 
 근거(2026-11-06 확인): [Supabase 로그인](https://supabase.com/docs/reference/javascript/auth-signinwithpassword), [비밀번호 재설정](https://supabase.com/docs/reference/javascript/auth-resetpasswordforemail), [secure-storage의 Native/Web 저장 차이](https://github.com/aparajita/capacitor-secure-storage). Supabase changelog의 CLI v3 변경은 이번 앱 SDK 경로에 해당하지 않으며 TLS 변경은 실제 HTTPS 연결 검증 대상으로 둔다.
