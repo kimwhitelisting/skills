@@ -1,5 +1,5 @@
 import type { Tuning } from '../game/config.ts';
-import { PREFS_KEY, writeKey } from '../game/save.ts';
+import { PREFS_KEY, writeKey, readSaved } from '../game/save.ts';
 
 /** 기기별 환경설정 (게임 진행과 별개). 스토어 출시 시 save.ts와 함께 @capacitor/preferences로 이전 */
 export interface Prefs {
@@ -19,12 +19,7 @@ const KEY = PREFS_KEY;
 const DEFAULTS: Prefs = { sound: true, haptics: true, music: true, seenTips: [], tuning: {}, seenIntro: false, seenDragHint: false };
 
 export function loadPrefs(): Prefs {
-  try {
-    const raw = localStorage.getItem(KEY);
-    return { ...DEFAULTS, ...(raw ? JSON.parse(raw) : {}) };
-  } catch {
-    return { ...DEFAULTS };
-  }
+  return { ...DEFAULTS, ...readSaved<Partial<Prefs>>(KEY) };
 }
 
 export function savePrefs(p: Prefs): void {

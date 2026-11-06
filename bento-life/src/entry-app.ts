@@ -5,18 +5,17 @@
 import { Capacitor } from '@capacitor/core';
 import { App } from '@capacitor/app';
 import { Preferences } from '@capacitor/preferences';
-import { STORAGE_KEYS, setStorageMirror } from './game/save.ts';
+import { initializeStorage, flushStorage } from './game/save.ts';
 
 async function boot(): Promise<void> {
+  await initializeStorage(Capacitor.isNativePlatform() ? {
+    get: async key => (await Preferences.get({key})).value,
+    set: (key,value) => Preferences.set({key,value}),
+    remove: key => Preferences.remove({key}),
+  } : undefined);
   if (Capacitor.isNativePlatform()) {
-    for (const key of STORAGE_KEYS) {
-      try {
-        const { value } = await Preferences.get({ key });
-        if (value !== null && localStorage.getItem(key) === null) localStorage.setItem(key, value);
-      } catch { /* 처음 실행 */ }
-    }
-    setStorageMirror((key, value) => { void (value === null ? Preferences.remove({ key }) : Preferences.set({ key, value })); });
-    void App.addListener('backButton', ({ canGoBack }) => { if (canGoBack) history.back(); else void App.minimizeApp(); });
+    void App.addListener('backButton', ({canGoBack}) => { if(canGoBack) history.back(); else void App.minimizeApp(); });
+    void App.addListener('appStateChange', ({isActive}) => { if(!isActive) { window.dispatchEvent(new Event('bento-background')); void flushStorage(); } });
   }
   await import('./main.ts');
 }

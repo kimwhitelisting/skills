@@ -23,6 +23,8 @@ import { dog as dogSprite, neighbor as neighborSprite, school as schoolSprite } 
 import { bubble } from '../pixel/fx.ts';
 import { Grid, toDataURL } from '../pixel/grid.ts';
 import { P } from '../pixel/palette.ts';
+import { captureFollow, restoreFollow, type FollowCheckpoint, type FollowState as State, type Crisis } from './follow-checkpoint.ts';
+import { TransitionGuard } from '../ui/transition-guard.ts';
 import { pole, streetTile, tree } from '../pixel/scenes.ts';
 import { blit, sprite } from '../pixel/sprite-cache.ts';
 
@@ -39,7 +41,7 @@ const WALK = 92;
 const DASH = 320;
 const COVERS = ['🌳', '🪧', '📮', '🚏', '🌲', '🗑️', '🚙', '🌳'];
 
-interface Crisis { at: number; emoji: string; text: string; saved: string; alone: string; hurt: string; done?: boolean; danger?: boolean }
+
 /** 진짜 위험한 순간 — 이때만큼은 사춘기여도 달려가는 게 맞다. 참으면 크게 다칠 수 있다 (가끔 평범한 위기 대신 나온다) */
 const DANGERS: Record<Age, Omit<Crisis, 'at'>> = {
   6: { danger: true, emoji: '🚗', text: '공을 쫓아 차도로 뛰어든다! 차가 온다!', saved: '번쩍 안아 올렸다. 차가 바로 옆을 지나갔다. 한참을 안고 있었다.', alone: '차가 끼익 멈췄다. 아이가 얼어붙어 있다…', hurt: '차에 부딪혔다. 구급차 소리가 들린다…' },
@@ -76,19 +78,6 @@ let saved = loadSaved();
 const hasTool = (id: string) => (opts.tools ? opts.tools.includes(id) : saved.total >= TOOLS.find((t) => t.id === id)!.need);
 
 // ───────── 상태 ─────────
-type Moment = { rank: number; kind: string; text: string };
-interface Watcher { x: number; state: 'walk' | 'tele' | 'look'; timer: number; next: number }
-interface State {
-  phase: 'intro' | 'run' | 'deliver' | 'over';
-  t: number; px: number; kx: number; walking: boolean; dashTo?: number; lastMoveT: number; slow: number;
-  kidState: 'walk' | 'tele' | 'look' | 'pause'; kidTimer: number; nextLook: number; fakeOut: boolean;
-  sus: number; lostFor: number; score: number; nearMiss: number; covers: { x: number; e: string }[];
-  crisis?: Crisis; crises: Crisis[]; dangerSaved?: boolean; injury?: boolean; crisisLeft: number; log: string[]; bond: number; indep: number; happy: number;
-  over?: 'school' | 'caught' | 'lost'; delivered?: boolean; deliverLeft: number;
-  events: { at: number; kind: 'neighbor' | 'dog' | 'friend'; done?: boolean }[];
-  neighbor?: { x: number; left: number }; dog?: { left: number; bark: number }; friend?: Watcher & { left: number };
-  newsLeft: number; newsUsed: boolean; heartAcc: number; moment: Moment; stepAcc: number;
-}
 let age: Age = 10;
 
 /** 하루 맛보기 등에 끼워 넣을 때의 옵션 */
@@ -105,6 +94,10 @@ export interface FollowOpts {
   /** 도시락을 두고 간 날이면 학교에서 몰래 넣기까지 */
   forgot?: boolean;
   onEnd?: (r: FollowResult) => void;
+  resume?: unknown;
+  interrupted?: boolean;
+  onCheckpoint?: (checkpoint: FollowCheckpoint) => void;
+  canProgress?: () => boolean;
   /** 본 게임: 하트 상점에서 산 변장 도구 id (있으면 누적 해금 대신 이걸 쓴다) */
   tools?: string[];
   /** 도트 캐릭터 생김새 (없으면 나이에 맞춰 기본) */
@@ -120,11 +113,43 @@ const S = 3;
 const GROUND = 92;
 let st: State;
 let raf = 0;
+let paused = false;
+let restartNotice = false;
+let lastCheckpoint = 0;
+const followGuard = new TransitionGuard();
+function checkpoint(): void { if (active && st) opts.onCheckpoint?.(captureFollow(age, st)); }
+export function pauseFollow(): void {
+  if (!active || !st || paused) return;
+  paused = true;
+  st.walking = false;
+  lastTap = 0;
+  checkpoint();
+  render();
+}
+function startLoop(): void {
+  cancelAnimationFrame(raf);
+  let last = performance.now();
+  const loop = (now: number) => {
+    const real = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (!paused && !document.hidden && opts.canProgress?.() !== false && (st.phase === 'run' || st.phase === 'deliver')) {
+      tick(st.slow > 0 ? real * 0.3 : real, real);
+      draw();
+      if (now - lastCheckpoint >= 500) { lastCheckpoint = now; checkpoint(); }
+    } else if (!paused && (document.hidden || opts.canProgress?.() === false)) pauseFollow();
+    raf = requestAnimationFrame(loop);
+  };
+  raf = requestAnimationFrame(loop);
+}
+
 let app: HTMLElement = document.body;
 const rnd = (a: number, b: number) => a + Math.random() * (b - a);
 const shuffle = <T,>(a: T[]) => a.map((v) => [Math.random(), v] as const).sort((x, y) => x[0] - y[0]).map(([, v]) => v);
 
 function newRun(showIntro = true): void {
+  paused = false;
+  restartNotice = false;
+  lastTap = 0;
   const covers: { x: number; e: string }[] = [];
   for (let x = 200; x < ROUTE - 120; x += rnd(160, 270)) covers.push({ x, e: COVERS[Math.floor(Math.random() * COVERS.length)] });
   // 이번 판 위기 두 개: 가끔 하나가 진짜 위험으로 바뀐다
@@ -140,14 +165,8 @@ function newRun(showIntro = true): void {
     newsLeft: 0, newsUsed: false, heartAcc: 0, moment: { rank: 0, kind: 'calm', text: '별일 없던 평화로운 등굣길' }, stepAcc: 0,
   };
   render();
-  cancelAnimationFrame(raf);
-  let last = performance.now();
-  const loop = (now: number) => {
-    const real = Math.min(0.05, (now - last) / 1000); last = now;
-    if (st.phase === 'run' || st.phase === 'deliver') { tick(st.slow > 0 ? real * 0.3 : real, real); draw(); }
-    raf = requestAnimationFrame(loop);
-  };
-  raf = requestAnimationFrame(loop);
+  checkpoint();
+  startLoop();
 }
 
 const remember = (rank: number, kind: string, text: string) => { if (rank >= st.moment.rank) st.moment = { rank, kind, text }; };
@@ -372,6 +391,7 @@ function end(how: 'school' | 'caught' | 'lost'): void {
 
 // ───────── 화면 ─────────
 function render(): void {
+  checkpoint();
   const T = TUNE[age];
   app.innerHTML = `
   <div class="proto follow">
@@ -421,6 +441,7 @@ function render(): void {
       </div>
     </div>` : ''}
     ${st.phase === 'over' ? resultCard() : ''}
+    ${paused ? `<div class="overlay-card follow-paused"><article class="diary"><h2>등굣길 잠시 멈춤</h2><p>${restartNotice ? '이전 버전에는 등굣길 위치 저장이 없어 이번 등굣길은 시작 지점부터 이어가요. 도시락과 이전 진행은 유지돼요.' : '위치·하트·남은 시간을 보관했어요. 준비되면 이어가세요.'}</p><button class="btn primary wide" data-act="resume-follow">${restartNotice ? '시작 지점부터 이어가기' : '이어서 걷기'}</button></article></div>` : ''}
   </div>`;
   draw();
 }
@@ -589,7 +610,7 @@ let active = false;
 function bindOnce(): void {
   if (bound) return;
   bound = true;
-  app.addEventListener('pointerdown', (e) => { if (!active) return;
+  app.addEventListener('pointerdown', (e) => { if (!active || paused || opts.canProgress?.() === false || !followGuard.allows(performance.now())) return;
     const t = e.target as HTMLElement;
     const tap = t.closest<HTMLElement>('[data-tap]');
     if (tap) {
@@ -612,11 +633,22 @@ function bindOnce(): void {
   });
   window.addEventListener('pointerup', () => setWalk(false));
   window.addEventListener('pointercancel', () => setWalk(false));
-  window.addEventListener('keydown', (e) => { if (!active) return; if (e.code === 'Space' && !e.repeat) { e.preventDefault(); setWalk(true); } if (e.code === 'ArrowRight' && st.phase === 'run') dash(); });
+  window.addEventListener('keydown', (e) => { if (!active || paused || opts.canProgress?.() === false || !followGuard.allows(performance.now())) return; if (e.code === 'Space' && !e.repeat) { e.preventDefault(); setWalk(true); } if (e.code === 'ArrowRight' && st.phase === 'run') dash(); });
   window.addEventListener('keyup', (e) => { if (e.code === 'Space') setWalk(false); });
-  app.addEventListener('click', (e) => { if (!active) return;
+  app.addEventListener('click', (e) => { if (!active || opts.canProgress?.() === false || !followGuard.allows(performance.now())) return;
     const el = (e.target as HTMLElement).closest<HTMLElement>('[data-act],[data-age]');
-    if (!el) return;
+    if (!el || (el as HTMLButtonElement).disabled) return;
+    if (paused) {
+      if (el.dataset.act === 'resume-follow') {
+        paused = false;
+        restartNotice = false;
+        lastTap = 0;
+        followGuard.changed('paused', 'running', performance.now());
+        render();
+      }
+      return;
+    }
+    const before = `${st.phase}:${!!st.crisis}`;
     if (el.dataset.age) { age = Number(el.dataset.age) as Age; newRun(); return; }
     const act = el.dataset.act;
     if (act === 'start') { st.phase = 'run'; sfx('tap'); render(); }
@@ -625,7 +657,9 @@ function bindOnce(): void {
     else if (act === 'deliver' && st.phase === 'deliver') { sfx('chime'); haptic(30); finishDeliver(true); }
     else if (act === 'news' && !st.newsUsed && st.phase === 'run') { st.newsUsed = true; st.newsLeft = 2; float('📰 바스락', 'info'); sfx('pop'); render(); }
     else if (act === 'again') newRun(false);
-    else if (act === 'evening') opts.onEnd?.(result());
+    else if (act === 'evening') { opts.onEnd?.(result()); return; }
+    followGuard.changed(before, `${st.phase}:${!!st.crisis}`, performance.now());
+    checkpoint();
   });
 }
 
@@ -647,8 +681,23 @@ export function mountFollow(root: HTMLElement, o: FollowOpts): void {
   saved = loadSaved();
   active = true;
   bindOnce();
-  newRun(true);
+  const restored = restoreFollow(o.resume, age);
+  if (restored) {
+    st = restored;
+    paused = true;
+    restartNotice = false;
+    lastTap = 0;
+    render();
+    startLoop();
+  } else {
+    newRun(true);
+    if (o.interrupted) { restartNotice = true; paused = true; render(); }
+  }
 }
 
 /** 다른 화면으로 넘어갈 때 애니메이션 정지 */
 export function unmountFollow(): void { cancelAnimationFrame(raf); active = false; if (st) st.walking = false; }
+
+window.addEventListener('pagehide', pauseFollow);
+window.addEventListener('bento-background', pauseFollow);
+document.addEventListener('visibilitychange', () => { if (document.hidden) pauseFollow(); });

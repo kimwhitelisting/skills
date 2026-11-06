@@ -15,7 +15,7 @@
 cd bento-life
 npm install
 npm run dev            # http://localhost:5173
-npm test               # 테스트 27개 + 자동 플레이 2,000판
+npm test               # 게임 규칙 + 저장/복귀 회귀 + 자동 플레이 2,000판
 npm run endings        # 플레이 성향별 엔딩 분포 (약 6천 판)
 npm run balance        # 성향별 평균 스탯
 npm run build:preview  # dist-preview/*.single.html (본 게임 + 맛보기들)
@@ -35,7 +35,7 @@ npx tsc --noEmit -p .  # 타입 검사
 | 화면 | 타이틀·소개·이벤트(결과 화면)·아침·배웅·저녁·결산·엔딩·시트(상태·수첩·도감·설정)·안드로이드 뒤로가기·자동 저장 | `src/main.ts`, `src/game.css` |
 | 한 화면에 딱 | 페이지는 스크롤되지 않는다. 장면 배율을 폭에 맞췄다가 넘치면 → 기기 픽셀로 딱 떨어지는 배율로 조금씩 줄이고(80%까지) → 촘촘한 배치 `#app.tight` + 2배까지 → 장면 위쪽을 1/5까지 잘라 냄 → 마지막엔 아래 패널 안에서만 스크롤. 같은 화면 안(탭 바꾸기)에서는 장면이 다시 커지지 않는다. 처음 안내는 장면 아래쪽에 겹쳐 뜬다. 360×640에서도 스크롤 없음 | `main.ts` `fitToScreen`, `game.css` 끝 |
 | 그림 | 전부 코드 도트. 아이 8단계, 재료 28, 이벤트·엔딩 장면 107개 | `src/pixel/` → [`PIXEL.md`](PIXEL.md) |
-| 저장 | localStorage `bento-life:run:v2` (형식을 바꾸면 버전을 올린다), 도감 `bento-life:dex:v1` | `src/game/save.ts` |
+| 저장·복귀 | 현재 진행·도감·설정은 localStorage `bento-life:snapshot:v1`에 함께 저장하고 Native 앱은 Preferences에 미러링한다. 기존 run/dex/prefs 키는 마이그레이션 원본으로 유지한다. 체크포인트 복귀·손상 원본 보관/내려받기·복구 제한은 [STORAGE.md](STORAGE.md)를 따른다. | `src/game/save.ts`, `src/game/checkpoint.ts`, `src/entry-app.ts` |
 | 실험 설정 | 1년 하루 수 1~3, 반찬값 수입, 재료 가격 (새 게임부터) | `src/game/config.ts` |
 | 반찬값 | 1년에 하루당 6 (기본 6). 끝날 때 평균 약 20 남음. 못 싸면 할머니가 15를 보내 주신다 — 횟수가 쌓이고(아침 알림), 2번이면 「할머니의 잔소리」, 엔딩 「할머니가 키운 아이」 | `engine.ts` `startDay` |
 | 하트 상점 | 등굣길 ♥는 판이 끝나도 남는 지갑(도감과 같이 저장). 이야기 꾸러미 10 (새 이벤트 21개 + 엔딩 8개를 연다) · 옷 색 6 · 모자 5 · 변장 도구 2 (영구) + 선물 2 (한 해 한 번, 스탯). 도감에 이벤트 수집 | `src/game/shop.ts`, `main.ts` `renderShop` |
@@ -69,6 +69,7 @@ Capacitor로 감쌌다 (`capacitor.config.ts`, 패키지 이름 **`com.paranstud
 - 끝날 때 반찬값 평균 약 20 (12~25% 판에서 할머니 찬스)
 
 실제 화면 재현 버그와 회귀 확인은 [PLAYTEST.md](PLAYTEST.md)를 따른다.
+저장 형식 전환·복구·화면 체크포인트의 원본은 [STORAGE.md](STORAGE.md)다. 이전 코드로 되돌릴 때 snapshot 호환성을 먼저 확인한다.
 
 ## 다음 할 일 후보
 1. 직접 플레이 → 엔딩 균형, 문장 다듬기, 너무 쉽게 나오는 엔딩 조정

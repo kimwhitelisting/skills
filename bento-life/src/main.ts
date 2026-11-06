@@ -25,7 +25,9 @@ import {
 import { ENDINGS, ENDING_BY_ID, TONE_LABEL, decideEnding, earlyWarning, type Tone } from './game/endings.ts';
 import { josa } from './game/korean.ts';
 import { menuKey } from './game/menus.ts';
-import { clearRun, loadDex, loadRun, saveDex, saveRun, type Dex } from './game/save.ts';
+import { loadDex, loadRun, saveSnapshot, storageStatus, subscribeStorage, retryStorage, flushStorage, recoveryExport, hasRecoveryOriginals, recoveryResetPlan, confirmRecoveryReset, storageReloadRequired, hasInvalidWrite, type Dex } from './game/save.ts';
+import { captureCheckpoint, restoreCheckpoint, type EventResult } from './game/checkpoint.ts';
+import { TransitionGuard } from './ui/transition-guard.ts';
 import { newGame } from './game/state.ts';
 import { fmt } from './game/text.ts';
 import type { Delta, GameEvent, GameState, LeaveChoice, Photo, Slot, StatKey } from './game/types.ts';
@@ -42,16 +44,14 @@ import { loadPartOverrides } from './pixel/parts-loader.ts';
 import { bentoBox, bentoLid, kitchenCounter, kitchenWall } from './pixel/scenes.ts';
 import { blit, clearSprites, sprite } from './pixel/sprite-cache.ts';
 import { isFull, menuLabel, placeOrToggle, SLOTS, SLOT_LABEL, type Draft } from './proto/bento-ui.ts';
-import { mountFollow, unmountFollow } from './proto/follow-core.ts';
+import { mountFollow, unmountFollow, pauseFollow } from './proto/follow-core.ts';
 import { haptic, setFeedbackPrefs, sfx } from './ui/feedback.ts';
 import { nowPlaying, setMusicEnabled, setTrack, unlockMusic, type TrackId } from './ui/music.ts';
-import { loadPrefs, savePrefs } from './ui/prefs.ts';
+import { loadPrefs } from './ui/prefs.ts';
 
 // ───────────────────────── 상태 ─────────────────────────
 type Screen = 'title' | 'intro' | 'game';
-type Overlay = 'stats' | 'menu' | 'notebook' | 'dex' | 'settings' | 'shop' | 'album';
-/** 방금 고른 이벤트 선택지의 결과 (엔진은 이미 다음으로 넘어가 있고, 화면만 한 번 더 보여 준다) */
-interface EventResult { id: string; emoji: string; title: string; text: string; delta: Delta; money: number; kind: string }
+type Overlay = 'stats' | 'menu' | 'notebook' | 'dex' | 'settings' | 'shop' | 'album' | 'new-confirm';
 
 const app = document.getElementById('app')!;
 app.classList.add('pixel-ui', 'fit'); // fit = 한 화면에 딱 (game.css)
@@ -74,6 +74,19 @@ let commuteOn = false;
 const MORNING_TIME = 30;
 let timer = MORNING_TIME;
 let timerId = 0;
+const restored = game ? restoreCheckpoint(game) : undefined;
+if (restored?.morning) {
+  draft = restored.morning.draft;
+  tab = restored.morning.tab;
+  lastPick = restored.morning.lastPick;
+  timer = restored.morning.timer;
+}
+eventResult = restored?.eventResult;
+let commuteCheckpoint: unknown = restored?.commute;
+let commuteInterrupted = game?.today?.phase === 'commute';
+const transitionGuard = new TransitionGuard();
+let lastRenderedNavigation: string | undefined;
+
 
 const STAT_DESC: Record<StatKey, string> = {
   health: '잘 먹고 안 아프기. 채소·균형 잡힌 도시락',
@@ -87,7 +100,16 @@ const STAT_DESC: Record<StatKey, string> = {
 
 const esc = (t: string) => t.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 const nl = (t: string) => esc(t).replace(/\n/g, '<br>');
-const persist = () => { if (game) saveRun(game); saveDex(dex); savePrefs(prefs); };
+const persist = () => {
+  if (game) {
+    captureCheckpoint(game, {
+      morning: isMorningState(game) ? { draft: { ...draft }, tab, lastPick, timer } : undefined,
+      eventResult,
+      commute: game.today?.phase === 'commute' ? commuteCheckpoint : undefined,
+    });
+  }
+  saveSnapshot(game, dex, prefs);
+};
 const lookOf = (s: GameState, age = s.age): Look => ({ age: pxAgeOf(age), gender: s.child.gender });
 const iconCache = new Map<string, string>();
 const foodIcon = (id: string) => { let u = iconCache.get(id); if (!u) { u = toDataURL(food(id), 3); iconCache.set(id, u); } return u; };
@@ -698,6 +720,7 @@ function renderSettings(): string {
     <div class="toggle-row"><span>효과음</span><button class="switch ${prefs.sound ? 'on' : ''}" data-act="pref" data-key="sound" aria-pressed="${prefs.sound}"><i></i></button></div>
     <div class="toggle-row"><span>진동</span><button class="switch ${prefs.haptics ? 'on' : ''}" data-act="pref" data-key="haptics" aria-pressed="${prefs.haptics}"><i></i></button></div>
     <button class="btn wide" data-act="tips-reset">처음 안내 다시 보기</button>
+    ${hasRecoveryOriginals() ? '<button class="btn wide" data-act="export-recovery">보관한 저장 원본 내려받기</button>' : ''}
     <details class="px-adv" ${advOpen || Object.keys(prefs.tuning ?? {}).length ? 'open' : ''}>
       <summary>고급 설정 <small>난이도 · 새 게임부터 적용</small></summary>
       <div class="field"><span>1년에 보내는 하루</span>${seg('daysPerYear', [1, 2, 3], (v) => `${v}일`)}</div>
@@ -850,6 +873,10 @@ function renderLightbox(): string {
 
 function renderOverlay(): string {
   if (!overlay) return '';
+  if (overlay === 'new-confirm') return sheet('새로 키울까요?', `
+    <p>${esc(game?.child.name ?? '아이')}의 지금 진행은 새 게임으로 바뀌어요. 도감·사진 수집·하트는 유지돼요.</p>
+    <button class="btn wide" data-act="close">취소 · 지금 진행 유지</button>
+    <button class="btn primary wide" data-act="new-confirm">지금 진행을 끝내고 새로 키우기</button>`);
   if (overlay === 'dex') return renderDex();
   if (overlay === 'shop') return renderShop();
   if (overlay === 'album') return renderAlbum();
@@ -912,6 +939,9 @@ function render(): void {
   }
   else body = renderTitle();
   app.innerHTML = body + renderOverlay() + renderLightbox();
+  const renderedNavigation = navigationKey();
+  if (lastRenderedNavigation !== undefined) transitionGuard.changed(lastRenderedNavigation, renderedNavigation, performance.now());
+  lastRenderedNavigation = renderedNavigation;
   sceneCanvas = document.getElementById('scene') as HTMLCanvasElement | null;
   fitToScreen();
   syncTimer();
@@ -930,8 +960,9 @@ function syncTimer(): void {
   if (!run) { clearInterval(timerId); timerId = 0; return; }
   if (timerId) return;
   timerId = window.setInterval(() => {
-    if (!inMorning() || overlay || busy || document.hidden || currentTip()) return;
-    timer -= 0.25;
+    if (!inMorning() || overlay || busy || document.hidden || currentTip() || storageStatus().blocked || storageStatus().errors.length) return;
+    timer = Math.max(0, timer - 0.25);
+    if (Number.isInteger(timer)) persist();
     const bar = document.getElementById('clock');
     if (bar) { bar.style.width = `${Math.max(0, (timer / MORNING_TIME) * 100)}%`; bar.classList.toggle('low', timer < 10); }
     if (timer <= 5 && Math.abs(timer % 1) < 0.01 && timer > 0) { sfx('tap'); haptic(12); }
@@ -951,7 +982,7 @@ function hurryFill(s: GameState): Draft {
 
 function closeLid(late = false): void {
   const s = game;
-  if (!s || busy || !inMorning()) return;
+  if (!s || busy || !inMorning() || storageStatus().blocked || storageStatus().errors.length) return;
   if (!late && (!isFull(draft) || selectionCost(s, draft) > s.money)) return;
   if (late) draft = hurryFill(s);
   busy = true;
@@ -963,6 +994,7 @@ function closeLid(late = false): void {
     // 제출한 도시락은 화면 이동과 무관하게 완료한다. 타이틀로 나가도 이미 누른
     // 동작을 취소하지 않으며, 그 사이 새 게임을 시작한 경우만 이전 작업을 버린다.
     if (game !== s) return;
+    if (storageStatus().blocked || storageStatus().errors.length) { busy = false; lidT = -1; render(); return; }
     if (!isMorningState(s)) { busy = false; lidT = -1; return; }
     const r = packToday(s, draft as Required<Draft>, new Set(dex.menus), late);
     if (!dex.menus.includes(r.meal.menu.key)) dex.menus.push(r.meal.menu.key);
@@ -998,17 +1030,26 @@ function startCommute(s: GameState): void {
   const p = commuteParams(s);
   setTrack('commute');
   mountFollow(app, {
+    resume: commuteCheckpoint,
+    interrupted: commuteInterrupted,
+    canProgress: () => !storageStatus().blocked && storageStatus().errors.length === 0,
+    onCheckpoint: checkpoint => {
+      if (game === s && s.today?.phase === 'commute') { commuteCheckpoint = checkpoint; persist(); }
+    },
     age: p.level, standalone: false, tools: toolIds(dex.owned), label: `${shown(s.age)}살`, title: `${shown(s.age)}살 등굣길`, look: lookOf(s),
     mood: p.mood, lookMult: p.lookMult, forgot: p.forgot,
     onEnd: (r) => {
       unmountFollow();
       commuteOn = false;
       if (!game || game !== s || s.today?.phase !== 'commute') return;
+      commuteCheckpoint = undefined;
+      commuteInterrupted = false;
       dex.hearts += Math.max(0, Math.round(r.score));
       finishCommute(s, { over: r.over, delivered: r.delivered, score: r.score, bond: r.bond, indep: r.indep, happy: r.happy, moment: r.moment, momentKind: r.momentKind, injury: r.injury, log: r.log });
       persist();
       render();
       window.scrollTo({ top: 0 });
+      transitionGuard.changed('commute', navigationKey(), performance.now());
       afterEvening(s);
     },
   });
@@ -1027,11 +1068,13 @@ function openPhoto(p: Photo | undefined): void {
   photoView = p;
 }
 window.addEventListener('popstate', () => {
+  const before = navigationKey();
   if (photoView) photoView = undefined;
   else if (overlay) overlay = undefined;
   else if (commuteOn) return void history.pushState({ g: 1 }, ''); // 등굣길 도중엔 나가지 않는다
   else if (screen !== 'title') screen = 'title';
   render();
+  transitionGuard.changed(before, navigationKey(), performance.now());
 });
 function enterGame(): void {
   // 엔딩에서 다시 키우기는 같은 게임 화면을 교체한다.
@@ -1042,12 +1085,12 @@ function enterGame(): void {
 
 // ───────────────────────── 행동 ─────────────────────────
 function startNewGame(): void {
-  clearRun();
   const g = newGame(undefined, prefs.tuning);
   syncShop(g);
   game = startGame(g);
   dex.plays += 1;
   eventResult = undefined; overlay = undefined;
+  commuteCheckpoint = undefined;
   resetMorning();
 }
 
@@ -1075,10 +1118,17 @@ function onAct(el: HTMLElement): void {
   let top = true;
   switch (act) {
     case 'new':
+      if (game && game.step !== 'ending') { openOverlay('new-confirm'); break; }
       if (overlay) history.replaceState(null, '');
       overlay = undefined;
       if (!prefs.seenIntro) { enterGame(); screen = 'intro'; introPage = 0; break; }
       startNewGame(); enterGame(); break;
+    case 'new-confirm':
+      if (overlay !== 'new-confirm') return;
+      startNewGame();
+      history.replaceState({ g: 1 }, '');
+      screen = 'game';
+      break;
     case 'intro-next':
       if (introPage < INTRO.length - 1) { introPage++; sfx('tap'); break; }
       prefs.seenIntro = true; startNewGame(); screen = 'game'; break;
@@ -1092,7 +1142,7 @@ function onAct(el: HTMLElement): void {
     case 'shop': shopMsg = ''; openOverlay('shop'); break;
     case 'buy': {
       const it = SHOP_BY_ID[el.dataset.id!];
-      if (!it || dex.hearts < it.price) return;
+      if (!it || dex.hearts < it.price || (it.kind !== 'gift' && dex.owned.includes(it.id))) return;
       if (it.kind === 'gift') {
         if (!s || screen !== 'game' || !giftOk(s, it.id)) return;
         dex.hearts -= it.price;
@@ -1125,6 +1175,7 @@ function onAct(el: HTMLElement): void {
       render();
       history.go(-2);
       return;
+    case 'export-recovery': downloadRecovery(); return;
     case 'event-ok': eventResult = undefined; sfx('tap'); break;
     case 'tip-ok': prefs.seenTips = [...prefs.seenTips, el.dataset.key!]; sfx('tap'); top = false; break;
     case 'tips-reset': prefs.seenTips = []; prefs.seenIntro = false; sfx('tap'); top = false; break;
@@ -1200,25 +1251,93 @@ function onAct(el: HTMLElement): void {
   if (top) window.scrollTo({ top: 0 });
 }
 
+const navigationKey = () => [screen, overlay, photoView?.id, game?.age, game?.dayIndex,
+  game?.step, game?.today?.phase, game?.active?.id, eventResult?.id, currentTip(), introPage].join('|');
+
 app.addEventListener('pointerdown', () => unlockMusic());
 app.addEventListener('click', (e) => {
   unlockMusic();
   if (commuteOn) return; // 등굣길은 follow-core가 처리
+  if (storageStatus().blocked || storageStatus().errors.length || !transitionGuard.allows(performance.now())) return;
   const target = e.target as HTMLElement;
   const s = game;
   // 캔버스의 도시락 칸을 누르면 그 칸으로
   if (target.id === 'scene' && s && inMorning() && !busy) {
     const r = target.getBoundingClientRect();
     const x = ((e as MouseEvent).clientX - r.left) / (r.width / KW), y = ((e as MouseEvent).clientY - r.top) / (r.height / Number(target.dataset.h));
-    for (const sl of SLOTS) { const c = bento.cells[sl]; if (x >= BX + c.x && x < BX + c.x + c.w && y >= BY + c.y && y < BY + c.y + c.h) { tab = sl; sfx('tap'); render(); return; } }
+    for (const sl of SLOTS) { const c = bento.cells[sl]; if (x >= BX + c.x && x < BX + c.x + c.w && y >= BY + c.y && y < BY + c.y + c.h) { tab = sl; sfx('tap'); persist(); render(); return; } }
     return;
   }
   const el = target.closest<HTMLElement>('[data-act],[data-tab],[data-ing]');
   if (!el || (el as HTMLButtonElement).disabled) return;
-  if (el.dataset.tab && !el.dataset.act) { tab = el.dataset.tab as Slot; sfx('tap'); render(); return; }
-  if (el.dataset.ing) { if (!s || busy) return; pickIngredient(s, el.dataset.ing); render(); return; }
+  if (el.dataset.tab && !el.dataset.act) { tab = el.dataset.tab as Slot; sfx('tap'); persist(); render(); return; }
+  if (el.dataset.ing) { if (!s || busy) return; pickIngredient(s, el.dataset.ing); persist(); render(); return; }
+  const before = navigationKey();
   onAct(el);
+  transitionGuard.changed(before, navigationKey(), performance.now());
 });
+
+// Keep storage feedback outside the game DOM so async native failures never reset the active screen.
+const saveNotice = document.createElement('aside');
+saveNotice.id = 'save-notice';
+saveNotice.setAttribute('role', 'alert');
+document.body.append(saveNotice);
+let recoveryDismissed = false;
+let saveConfirm: 'reset' | 'reload' | undefined;
+let saveConfirmAt = 0;
+function renderSaveNotice(): void {
+  const status = storageStatus();
+  const failed = status.errors.length > 0 || status.blocked;
+  app.inert = failed;
+  if (failed) { clearInterval(timerId); timerId = 0; if (commuteOn) pauseFollow(); }
+  else syncTimer();
+  saveNotice.hidden = !failed && (!status.recovered || recoveryDismissed);
+  if (saveNotice.hidden) return;
+  const resetPlan = recoveryResetPlan();
+  if (saveConfirm === 'reset' && resetPlan) {
+    saveNotice.innerHTML = `<b>백업을 남기고 새로 시작할까요?</b><p>${esc(resetPlan.description)}</p><button data-save="cancel">취소 · 원본 유지</button><button data-save="reset-yes">확인 · 백업 후 새로 시작</button>`;
+  } else if (saveConfirm === 'reload') {
+    saveNotice.innerHTML = '<b>저장된 진행으로 돌아갈까요?</b><p>이번에 저장하지 못한 변경은 화면에서 사라져요. 필요한 경우 취소하고 원본을 내려받아 보관해 주세요.</p><button data-save="cancel">취소 · 현재 화면 유지</button><button data-save="reload-yes">확인 · 저장된 진행 불러오기</button>';
+  } else {
+    saveNotice.innerHTML = failed
+      ? `<b>저장을 확인해 주세요</b><p>${esc(status.errors[0] ?? '저장 원본을 확인하지 못했어요.')}</p><button data-save="retry">저장 다시 시도</button>${hasRecoveryOriginals() ? '<button data-save="export">저장 원본 내려받기</button>' : ''}${resetPlan ? '<button data-save="reset">백업을 남기고 새로 시작</button>' : ''}${hasInvalidWrite() ? '<button data-save="reload">저장된 진행으로 돌아가기</button>' : ''}`
+      : '<p>보관된 저장 데이터로 진행을 복구했어요.</p><button data-save="dismiss">확인</button>';
+  }
+}
+function downloadRecovery(): void {
+  const url = URL.createObjectURL(new Blob([recoveryExport()], { type: 'application/json' }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'nyamnyam-save-recovery.json';
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+saveNotice.addEventListener('click', async e => {
+  const action = (e.target as HTMLElement).closest<HTMLElement>('[data-save]')?.dataset.save;
+  if (action === 'dismiss') { recoveryDismissed = true; renderSaveNotice(); }
+  if (action === 'cancel') { saveConfirm = undefined; renderSaveNotice(); }
+  if (action === 'reset' || action === 'reload') { saveConfirm = action; saveConfirmAt = performance.now(); renderSaveNotice(); }
+  if (action === 'reset-yes' && saveConfirm === 'reset' && performance.now() - saveConfirmAt >= 400) {
+    saveConfirm = undefined;
+    if (await confirmRecoveryReset(true)) location.reload();
+    else renderSaveNotice();
+  }
+  if (action === 'reload-yes' && saveConfirm === 'reload' && performance.now() - saveConfirmAt >= 400) location.reload();
+  if (action === 'retry') {
+    const wasBlocked = storageStatus().blocked;
+    if (!wasBlocked && !storageReloadRequired()) persist();
+    await retryStorage();
+    if ((wasBlocked || storageReloadRequired()) && !storageStatus().blocked && !storageStatus().errors.length) location.reload();
+    else renderSaveNotice();
+  }
+  if (action === 'export') downloadRecovery();
+});
+subscribeStorage(renderSaveNotice);
+renderSaveNotice();
+function checkpointBeforeBackground(): void { if (commuteOn) pauseFollow(); persist(); void flushStorage(); }
+window.addEventListener('pagehide', checkpointBeforeBackground);
+window.addEventListener('bento-background', checkpointBeforeBackground);
+document.addEventListener('visibilitychange', () => { if (document.hidden) checkpointBeforeBackground(); });
 
 // ───────────────────────── 루프 ─────────────────────────
 let last = performance.now();

@@ -122,6 +122,8 @@ export interface Photo { id: string; age: number; gender: 'boy' | 'girl'; expr: 
 export interface LogEntry { age: number; text: string }
 
 export interface GameState {
+  /** Additive v2 UI resume checkpoint; invalid or stale checkpoints are ignored. */
+  checkpoint?: import('./checkpoint.ts').Checkpoint;
   version: 2;
   rng: number;
   age: number;

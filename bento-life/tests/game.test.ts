@@ -8,6 +8,7 @@ import { chooseLeave, endDay, finishCommute, leaveOptions, packToday, startGame 
 import { ENDINGS } from '../src/game/endings.ts';
 import { callName, josa, vocative } from '../src/game/korean.ts';
 import { buildMenuTable, comboAgeRange, menuKey } from '../src/game/menus.ts';
+import { validRun } from '../src/game/validate-save.ts';
 import { newGame } from '../src/game/state.ts';
 import { playthrough } from './sim.ts';
 
@@ -158,14 +159,16 @@ describe('simulation', () => {
   it('2000 random playthroughs finish without getting stuck', () => {
     const counts: Record<string, number> = {};
     for (let seed = 1; seed <= 2000; seed++) {
-      const s = playthrough(seed, seed % 3 === 0 ? 'helicopter' : seed % 3 === 1 ? 'balanced' : 'random');
+      const s = playthrough(seed, seed % 3 === 0 ? 'helicopter' : seed % 3 === 1 ? 'balanced' : 'random', undefined, undefined, state => {
+        if (!validRun(state)) throw new Error(`Invalid save shape at seed ${seed}, age ${state.age}, ${state.step}/${state.today?.phase}`);
+      });
       expect(s.step).toBe('ending');
       counts[s.endingId!] = (counts[s.endingId!] ?? 0) + 1;
     }
     // 밸런스 리포트 (npx vitest run --reporter verbose 로 확인)
     console.log('ending distribution', Object.fromEntries(ENDINGS.map((e) => [e.id, counts[e.id] ?? 0])));
     expect(Object.keys(counts).length).toBeGreaterThanOrEqual(5);
-  });
+  }, 30000);
   it('every days-per-year setting finishes and stays in a sane money range', () => {
     for (const daysPerYear of [1, 2, 3] as const) {
       let money = 0;

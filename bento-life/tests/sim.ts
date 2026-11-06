@@ -67,13 +67,14 @@ export function simCommute(s: GameState, r: { rng: number }, rushCrisis: boolean
 }
 
 /** 한 판을 끝까지 자동 진행 */
-export function playthrough(seed: number, policy: Policy = 'random', tuning?: Partial<Tuning>, shop?: { unlocks?: string[]; wear?: string[] }): GameState {
+export function playthrough(seed: number, policy: Policy = 'random', tuning?: Partial<Tuning>, shop?: { unlocks?: string[]; wear?: string[] }, observe?: (s: GameState) => void): GameState {
   const g = newGame(seed, tuning);
   if (shop) Object.assign(g, shop);
   const s = startGame(g);
   const r = { rng: seed ^ 0x5bd1e995 };
   const target = focusOf(policy);
   for (let guard = 0; guard < 4000; guard++) {
+    observe?.(s);
     if (s.step === 'ending') return s;
     if (s.active) {
       const opts = s.active.choices.map((c, i) => (c.enabled ? i : -1)).filter((i) => i >= 0);
