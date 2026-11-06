@@ -18,19 +18,23 @@ function rgba(c: string | null): [number, number, number, number] {
   return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16), 255];
 }
 
-/** Grid → PNG 바이트 (scale배 확대 가능) */
-export function gridToPng(g: Grid, scale = 1): Buffer {
+/** Grid → PNG 바이트. 기본 RGBA는 기존 출력을 유지하고, RGB는 불투명 그림만 허용한다. */
+export function gridToPng(g: Grid, scale = 1, format: 'rgba' | 'rgb' = 'rgba'): Buffer {
   const W = g.w * scale, H = g.h * scale;
-  const raw = Buffer.alloc((W * 4 + 1) * H);
+  const channels = format === 'rgb' ? 3 : 4;
+  const stride = W * channels + 1;
+  const raw = Buffer.alloc(stride * H);
   for (let y = 0; y < H; y++) {
-    raw[y * (W * 4 + 1)] = 0;
+    raw[y * stride] = 0;
     for (let x = 0; x < W; x++) {
       const [r, gg, b, a] = rgba(g.get(Math.floor(x / scale), Math.floor(y / scale)));
-      const o = y * (W * 4 + 1) + 1 + x * 4;
-      raw[o] = r; raw[o + 1] = gg; raw[o + 2] = b; raw[o + 3] = a;
+      if (format === 'rgb' && a !== 255) throw new Error('RGB PNG requires an opaque background');
+      const o = y * stride + 1 + x * channels;
+      raw[o] = r; raw[o + 1] = gg; raw[o + 2] = b;
+      if (channels === 4) raw[o + 3] = a;
     }
   }
   const ihdr = Buffer.alloc(13);
-  ihdr.writeUInt32BE(W, 0); ihdr.writeUInt32BE(H, 4); ihdr[8] = 8; ihdr[9] = 6; ihdr[10] = 0; ihdr[11] = 0; ihdr[12] = 0;
+  ihdr.writeUInt32BE(W, 0); ihdr.writeUInt32BE(H, 4); ihdr[8] = 8; ihdr[9] = format === 'rgb' ? 2 : 6; ihdr[10] = 0; ihdr[11] = 0; ihdr[12] = 0;
   return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', ihdr), chunk('IDAT', deflateSync(raw)), chunk('IEND', Buffer.alloc(0))]);
 }

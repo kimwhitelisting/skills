@@ -10,6 +10,7 @@ const config: CapacitorConfig = {
   appName: '냠냠졸졸',
   webDir: 'dist',
   android: { backgroundColor: '#f3e2c6' },
+  ios: { backgroundColor: '#f3e2c6' },
 };
 
 export default config;

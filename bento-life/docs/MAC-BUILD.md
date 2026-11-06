@@ -27,7 +27,7 @@ iOS는 후속 BENTO-MOBILE-001에서 `@capacitor/ios`8.6.0과 SPM 네이티브 �
 세로 방향과 전체 화면, Preferences의 UserDefaults 접근 사유(CA92.1) manifest와 앱 Resources 연결을 준비했다.
 `npm test` 27개 및 `npm run ios:sync`는 성공했다. `npm run ios:simulator`는 Xcode 관리자 라이선스 적용 문제로 exit69여서 compile은 미검증이다.
 `Package.swift`는 Capacitor8.6.0을 exact로 지정하지만, 실제 SPM 해석 후 생성될 Package.resolved는 아직 없다.
-아이콘과 시작 화면은 Capacitor 기본 테스트 자산이며 교체·실기기 확인이 필요하다.
+초기 기본 아이콘·시작 화면은 아래 iOS 자산 준비에서 기존 게임 아트로 교체했다. 실제 설치 화면 확인은 남아 있다.
 Xcode 관리자 초기 설정·배포용 계정/서명·TestFlight가 필요하다.
 현재 APK를 iPhone에 설치할 수 있다고 안내하지 않는다.
 
@@ -64,3 +64,13 @@ Claude 읽기 전용 검토의 문서 불일치를 정정했다. 출시 전에 �
 브라우저 390px 폭에서 app/doc 폭390px, 주 버튼 높이 약50.8px·정상 문서 모드를 확인했다.
 Owner iPhone LTE 사진으로 수정 전 접속은 확인했다. 수정 후 iPhone 화면은 재확인 대기다.
 게임 로직·저장 키·origin·네이티브 빌드는 변경하지 않았다.
+
+## iOS 자산·시작 색 준비 (BENTO-STABLE-001)
+
+- 별도 branch/worktree의 Codex 구현으로 기존 스토어 아이콘과 Android 시작 화면의 코드 도트 아트를 재사용했다. 게임 코드·Android 자산·패키지 잠금 파일은 변경하지 않았다.
+- `scripts/ios-assets.ts`가 1024×1024 불투명 RGB 아이콘과 2732×2732 불투명 RGB 시작 이미지 3개를 기존 asset catalog 파일명으로 생성한다. 기본 Capacitor 로고를 제거했다.
+- 재생성: `npm ci` 후 `npx --no-install vite-node scripts/ios-assets.ts`. 서명이나 Xcode 실행은 필요하지 않다.
+- `scripts/png.ts`는 기본 RGBA 출력을 그대로 유지하고 선택한 RGB 출력에서 투명 픽셀을 거부한다. 기존 스토어 512 아이콘의 정확한 2배 픽셀 일치, 기본 RGBA 바이트 호환, 자산 크기와 알파 채널 없음, 생성 이미지 육안 확인을 수행했다.
+- iOS WebView·시작 화면 배경을 `#f3e2c6`으로 명시했다. 설치된 Capacitor가 지원하는 `UIStatusBarStyleDarkContent`로 밝은 게임 화면의 상태바 글자를 지정했다. 세로 방향·전체 화면·번들 ID는 유지했다.
+- `npm test` 27개와 2000판 자동 플레이, TypeScript/Vite build, `cap sync ios`, plist·storyboard XML 검증 통과.
+- **Xcode 컴파일·Simulator·실제 iPhone 설치는 확인하지 않았다.** 관리자 초기 설정 이후 iOS sync/compile과 작은 화면·안전 영역·다크 모드 상태바·시작 이미지 잘림을 실제 기기에서 확인해야 한다.
