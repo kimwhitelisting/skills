@@ -235,9 +235,11 @@ html:has(#app.fit), html:has(#app.fit) body { height: 100%; overflow: hidden; ov
 html:has(#app.pixel-ui) { background: #f3e2c6; }
 .pixel-ui .px-hud .px-pill.heart, .pixel-ui .px-wallet b { color: var(--red-d); }
 
-#save-notice { position: fixed; z-index: 200; left: max(8px, env(safe-area-inset-left)); right: max(8px, env(safe-area-inset-right)); bottom: max(8px, env(safe-area-inset-bottom)); max-width: 500px; margin: auto; padding: 12px; background: #fff6e6; color: #3b2a24; border: 3px solid #3b2a24; box-shadow: 0 4px 0 #3b2a24; font: 14px/1.5 'Galmuri11', sans-serif; }
-#save-notice[hidden] { display: none; }
-#save-notice p { margin: 6px 0; }
-#save-notice button { min-height: 44px; margin: 4px; border: 2px solid #3b2a24; color: #3b2a24; background: #f3e2c6; font: inherit; padding: 6px 10px; }
+#save-notice, #export-notice { position: fixed; z-index: 200; left: max(8px, env(safe-area-inset-left)); right: max(8px, env(safe-area-inset-right)); bottom: max(8px, env(safe-area-inset-bottom)); max-width: 500px; margin: auto; padding: 12px; background: #fff6e6; color: #3b2a24; border: 3px solid #3b2a24; box-shadow: 0 4px 0 #3b2a24; font: 14px/1.5 'Galmuri11', sans-serif; }
+#save-notice[hidden], #export-notice[hidden] { display: none; }
+#save-notice p, #export-notice p { margin: 6px 0; }
+#save-notice button, #export-notice button { min-height: 44px; margin: 4px; border: 2px solid #3b2a24; color: #3b2a24; background: #f3e2c6; font: inherit; padding: 6px 10px; }
 
 .follow-paused { z-index: 90; }
+
+#export-notice { z-index: 210; top: max(8px, env(safe-area-inset-top)); bottom: auto; }

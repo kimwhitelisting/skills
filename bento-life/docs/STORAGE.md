@@ -35,3 +35,11 @@
 `npm test`는 게임 규칙·2000판 자동 플레이와 `tests/persistence.test.ts`를 실행한다. 저장 회귀에는 quota 실패/전체 snapshot 재시도, 손상 구조, Native authority 읽기·보관·복구 실패, 백업 읽기 재시도, 원본 중복 보관, 직렬 Native 쓰기, 체크포인트 JSON 왕복·잘못된 날짜 거부, 등굣길 단계 복원, 전환 직후 연속 탭 보호가 포함된다.
 
 합성 실패 테스트는 메모리 저장소·가짜 Native API로 수행한다. 실제 기기의 디스크 장애·OS 강제 종료를 재현했다는 뜻이 아니다. UI와 실기기 결과는 [PLAYTEST.md](PLAYTEST.md)에 별도로 기록한다.
+
+## 복구 원본 파일 내보내기
+
+- 웹은 Blob 다운로드를 요청한다. Native 진입점은 공식 Filesystem8.1.5/Share8.0.3 어댑터를 등록하고, `Directory.Cache`의 `nyamnyam-save-recovery.json` 한 파일에 UTF-8로 쓴 뒤 OS 공유 창을 연다. 게임 저장·복구 원본 키는 변경하거나 삭제하지 않는다.
+- 사용자가 내보내기를 누른 경우에만 실행하며 파일 작성부터 공유 창 반환까지 중복 요청을 막는다. 캐시 파일은 다음 요청에서 덮어쓸 수 있고 OS가 정리할 수 있으므로 장기 백업이 아니다. 보관할 위치나 공유 앱은 사용자가 고른다.
+- 취소와 파일/공유 실패를 안내하고 다시 시도할 수 있다. 공유 창 반환이나 브라우저 다운로드 요청이 실제 파일 보관 완료를 증명하지 않으므로 완료로 표시하지 않는다. 선택한 위치의 JSON을 직접 확인해야 한다.
+- 외부 저장소 권한을 추가하지 않는다. iOS Privacy Manifest에 기존 UserDefaults 사유와 함께 FileTimestamp `C617.1`을 선언한다. 공식 근거(2026-11-06 확인): [Filesystem v8](https://capacitorjs.com/docs/apis/filesystem), [Share v8](https://capacitorjs.com/docs/apis/share).
+- 모의 어댑터 테스트는 읽기/파일쓰기/공유 실패·취소·동시 요청·재시도·정확한 JSON 전달을 검증한다. 실제 Android/iPhone의 공유 대상 선택·취소·Files 저장 및 저장된 JSON 확인은 별도이며 아직 미검증이다.

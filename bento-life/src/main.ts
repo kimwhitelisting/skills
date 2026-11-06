@@ -28,6 +28,7 @@ import { menuKey } from './game/menus.ts';
 import { loadDex, loadRun, saveSnapshot, storageStatus, subscribeStorage, retryStorage, flushStorage, recoveryExport, hasRecoveryOriginals, recoveryResetPlan, confirmRecoveryReset, storageReloadRequired, hasInvalidWrite, type Dex } from './game/save.ts';
 import { captureCheckpoint, restoreCheckpoint, type EventResult } from './game/checkpoint.ts';
 import { TransitionGuard } from './ui/transition-guard.ts';
+import { RecoveryExporter } from './ui/recovery-export.ts';
 import { newGame } from './game/state.ts';
 import { fmt } from './game/text.ts';
 import type { Delta, GameEvent, GameState, LeaveChoice, Photo, Slot, StatKey } from './game/types.ts';
@@ -1175,7 +1176,7 @@ function onAct(el: HTMLElement): void {
       render();
       history.go(-2);
       return;
-    case 'export-recovery': downloadRecovery(); return;
+    case 'export-recovery': void downloadRecovery(); return;
     case 'event-ok': eventResult = undefined; sfx('tap'); break;
     case 'tip-ok': prefs.seenTips = [...prefs.seenTips, el.dataset.key!]; sfx('tap'); top = false; break;
     case 'tips-reset': prefs.seenTips = []; prefs.seenIntro = false; sfx('tap'); top = false; break;
@@ -1304,14 +1305,26 @@ function renderSaveNotice(): void {
       : '<p>보관된 저장 데이터로 진행을 복구했어요.</p><button data-save="dismiss">확인</button>';
   }
 }
-function downloadRecovery(): void {
-  const url = URL.createObjectURL(new Blob([recoveryExport()], { type: 'application/json' }));
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = 'nyamnyam-save-recovery.json';
-  link.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+const recoveryExporter = new RecoveryExporter(recoveryExport);
+const exportNotice = document.createElement('aside');
+exportNotice.id = 'export-notice';
+exportNotice.setAttribute('role', 'status');
+exportNotice.hidden = true;
+document.body.append(exportNotice);
+
+async function downloadRecovery(): Promise<void> {
+  if (recoveryExporter.pending) return;
+  exportNotice.hidden = false;
+  exportNotice.innerHTML = '<p>저장 원본을 내보내는 중이에요. 열린 창에서 보관할 위치를 선택해 주세요.</p>';
+  const result = await recoveryExporter.run();
+  exportNotice.innerHTML = `<p>${esc(result.message)}</p><button data-export="retry">다시 내보내기</button><button data-export="close">닫기</button>`;
 }
+exportNotice.addEventListener('click', e => {
+  if (recoveryExporter.pending) return;
+  const action = (e.target as HTMLElement).closest<HTMLElement>('[data-export]')?.dataset.export;
+  if (action === 'retry') void downloadRecovery();
+  if (action === 'close') exportNotice.hidden = true;
+});
 saveNotice.addEventListener('click', async e => {
   const action = (e.target as HTMLElement).closest<HTMLElement>('[data-save]')?.dataset.save;
   if (action === 'dismiss') { recoveryDismissed = true; renderSaveNotice(); }
@@ -1330,7 +1343,7 @@ saveNotice.addEventListener('click', async e => {
     if ((wasBlocked || storageReloadRequired()) && !storageStatus().blocked && !storageStatus().errors.length) location.reload();
     else renderSaveNotice();
   }
-  if (action === 'export') downloadRecovery();
+  if (action === 'export') void downloadRecovery();
 });
 subscribeStorage(renderSaveNotice);
 renderSaveNotice();

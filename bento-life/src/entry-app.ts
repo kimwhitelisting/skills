@@ -5,6 +5,10 @@
 import { Capacitor } from '@capacitor/core';
 import { App } from '@capacitor/app';
 import { Preferences } from '@capacitor/preferences';
+import { Filesystem } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
+import { registerRecoveryTransport } from './ui/recovery-export.ts';
+import { nativeRecoveryTransport } from './ui/native-recovery-export.ts';
 import { initializeStorage, flushStorage } from './game/save.ts';
 
 async function boot(): Promise<void> {
@@ -14,6 +18,7 @@ async function boot(): Promise<void> {
     remove: key => Preferences.remove({key}),
   } : undefined);
   if (Capacitor.isNativePlatform()) {
+    registerRecoveryTransport(nativeRecoveryTransport(Filesystem, Share));
     void App.addListener('backButton', ({canGoBack}) => { if(canGoBack) history.back(); else void App.minimizeApp(); });
     void App.addListener('appStateChange', ({isActive}) => { if(!isActive) { window.dispatchEvent(new Event('bento-background')); void flushStorage(); } });
   }
