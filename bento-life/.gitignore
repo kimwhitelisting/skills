@@ -1,5 +1,13 @@
 node_modules
 dist
-ios
+/build/
+ios/App/App/public/
+ios/App/App/capacitor.config.json
+ios/**/xcuserdata/
+ios/**/.build/
+ios/**/DerivedData/
+*.p12
+*.p8
+*.mobileprovision
 dist-preview
 art-src/store/.states.json

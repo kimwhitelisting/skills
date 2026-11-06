@@ -23,7 +23,9 @@
     "android:bundle": "npm run android:sync && cd android && ./gradlew bundleRelease",
     "store:art": "vite-node scripts/store-art.ts",
     "store:shots": "vite-node scripts/store-states.ts && node scripts/store-shots.cjs",
-    "text:dump": "vite-node scripts/text-dump.ts"
+    "text:dump": "vite-node scripts/text-dump.ts",
+    "ios:sync": "npm run build && cap sync ios",
+    "ios:simulator": "npm run ios:sync && bash scripts/build-ios-simulator.sh"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.6.0",
@@ -37,6 +39,7 @@
     "@capacitor/android": "^8.6.0",
     "@capacitor/app": "^8.1.2",
     "@capacitor/core": "^8.6.0",
+    "@capacitor/ios": "8.6.0",
     "@capacitor/preferences": "^8.0.1",
     "@fontsource/gaegu": "^5.3.0",
     "@fontsource/gowun-dodum": "^5.3.0",
