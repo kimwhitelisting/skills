@@ -79,12 +79,20 @@ Owner iPhone LTE 사진으로 수정 전 접속은 확인했다. 수정 후 iPho
 
 ## 2026-11-07 Native 실행·로컬 서명 설정
 
-- Xcode에서 iPhone 18 Pro / iOS 27.2 Simulator 빌드·설치 후 홈 화면과 계정 화면 표시를 확인했다. SecureStorage의 Native 읽기 응답도 확인했다. 로그인 후 토큰 쓰기·재실행 복원, 실제 iPhone 설치·실행과 TestFlight는 아직 확인하지 않았다.
+- Xcode에서 iPhone 18 Pro / iOS 27.2 Simulator 빌드·설치 후 홈 화면과 계정 화면 표시를 확인했다. SecureStorage의 Native 읽기 응답도 확인했다. 이후 실제 iPhone 설치·앱 열림까지 확인했으며, 로그인 후 토큰 쓰기·재실행 복원과 TestFlight는 아직 확인하지 않았다.
 - 첫 시작에 오래 걸리며 일시적으로 빈 화면이 보였고 LLDB의 `RPC Server exited`/detach 실패가 관찰됐다. 이후 정상 화면을 확인했으므로 이 디버거 오류만으로 앱 결함이라고 결론 내리지 않는다. 실제 기기의 시작 시간은 따로 확인한다.
 - `capacitor.config.ts`의 전역 `loggingBehavior: 'none'`은 Debug/Release에서 Capacitor의 JS·Native bridge 로그를 끈다. 인증 플러그인의 요청·응답에 세션 정보가 포함될 수 있으므로 실제 로그인 전에 적용한다. 모든 OS 로그나 개발자가 별도로 추가한 로그까지 제거하는 설정은 아니다. [Capacitor 설정](https://capacitorjs.com/docs/config)
 - 로깅·로컬 서명 변경 **f488432** 기준 후속 검증: unsigned iOS Simulator 빌드·설치 성공, 설치된 앱의 `loggingBehavior: 'none'` 확인, iPhone 18 Pro / iOS 27.2에서 새로 실행한 홈 화면 확인을 통과했다. 이 실행에서는 Native 로그인·토큰 쓰기·로그인 상태 재실행 복원을 시험하지 않았다.
 - 같은 f488432 기준 Android `./gradlew --no-daemon assembleDebug`가 244 tasks로 성공했다. APK의 v2 debug 서명과 포함된 config의 `loggingBehavior: 'none'`을 확인했다. 출시 서명 또는 실제 Android 설치·실행 검증은 아니다.
-- f488432의 독립 읽기 전용 보안 검토도 통과했다. 실제 iPhone 설치·Native 인증·세션 복원과 TestFlight는 계속 미검증이며, 위 빌드·설정·화면 확인으로 대체하지 않는다.
+- f488432의 독립 읽기 전용 보안 검토도 통과했다. Native 인증·계정 복원·세션 재실행 복원과 TestFlight는 계속 미검증이며, 빌드·설치·화면 확인으로 대체하지 않는다.
+
+### 실제 iPhone 개발 빌드 설치·실행
+
+- 소스 HEAD 5a292d3, 런타임 f488432 기준으로 실제 iPhone 17 / iOS 26.6.1에서 검증했다. Owner가 개발자 모드를 켠 뒤 CoreDevice·devmodectl에서도 활성 상태를 확인했다.
+- 해당 기기를 대상으로 Xcode Debug 빌드가 성공했다. `codesign --verify --deep --strict`를 통과했고, 개발 프로파일의 연결 기기 포함·번들 일치·`get-task-allow=true`와 앱 config의 `loggingBehavior: 'none'`을 확인했다. 기기 식별자·서명 팀·프로파일 값은 공개 기록에 넣지 않는다.
+- `devicectl` 설치 성공 후 첫 실행은 개발자 인증서 신뢰 단계에서 막혔다. Owner가 본인의 인증서를 신뢰한 뒤 “앱이 열려요”라고 보고했으며 실행 중인 앱 프로세스도 확인했다. 이는 실제 기기의 앱 열림 확인이며 게임 전체 동작이나 Native 계정 로그인 성공을 뜻하지 않는다.
+- 이번 설치는 **Personal Team 무료 개발 빌드**이며 TestFlight/App Store 배포가 아니다. 로컬에서 확인한 개발 프로파일의 유효 기간은 7일이다. 기간이 지나면 같은 개발 경로로 재서명·재설치가 필요하며, 정확한 만료 시점과 개인 서명 정보는 비공개 운영 기록으로 관리한다.
+- Native 로그인·계정 진행 복원·토큰 쓰기·앱 재실행 후 로그인/진행 유지는 추가 검증 대기다. Safari 웹 계정 검증 결과와 구분한다.
 
 ### 로컬 개발 서명
 
