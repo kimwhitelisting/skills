@@ -9,19 +9,27 @@ import { Filesystem } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 import { registerRecoveryTransport } from './ui/recovery-export.ts';
 import { nativeRecoveryTransport } from './ui/native-recovery-export.ts';
-import { initializeStorage, flushStorage } from './game/save.ts';
+import { flushStorage } from './game/save.ts';
+import { bootAccount } from './account/account.ts';
+import { nativeAuthStorage } from './account/native-auth.ts';
 
 async function boot(): Promise<void> {
-  await initializeStorage(Capacitor.isNativePlatform() ? {
+  const ready = await bootAccount(Capacitor.isNativePlatform() ? {
     get: async key => (await Preferences.get({key})).value,
     set: (key,value) => Preferences.set({key,value}),
     remove: key => Preferences.remove({key}),
-  } : undefined);
+    keys: async () => (await Preferences.keys()).keys,
+  } : undefined, Capacitor.isNativePlatform() ? await nativeAuthStorage() : undefined);
+  if (!ready) return;
   if (Capacitor.isNativePlatform()) {
     registerRecoveryTransport(nativeRecoveryTransport(Filesystem, Share));
     void App.addListener('backButton', ({canGoBack}) => { if(canGoBack) history.back(); else void App.minimizeApp(); });
     void App.addListener('appStateChange', ({isActive}) => { if(!isActive) { window.dispatchEvent(new Event('bento-background')); void flushStorage(); } });
   }
-  await import('./main.ts');
+  const { mountGame } = await import('./main.ts');
+  mountGame();
 }
-void boot();
+void boot().catch(() => {
+  const app = document.getElementById('app')!;
+  app.textContent = '안전한 로그인 저장소를 열지 못했어요. 기기 잠금을 해제하고 앱을 다시 열어 주세요. 진행 원본은 바꾸지 않았어요.';
+});

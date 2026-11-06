@@ -1,3 +1,4 @@
+import { scopedStorage } from '../account/scope.ts';
 import type { GameState, Photo } from './types.ts';
 import { validRun, validDex, validPrefs, object } from './validate-save.ts';
 const RUN_KEY = 'bento-life:run:v2';
@@ -5,7 +6,7 @@ const DEX_KEY = 'bento-life:dex:v1';
 export const PREFS_KEY = 'bento-life:prefs:v1';
 export const SNAPSHOT_KEY = 'bento-life:snapshot:v1';
 export const STORAGE_KEYS = [SNAPSHOT_KEY, RUN_KEY, DEX_KEY, PREFS_KEY];
-interface Snapshot {
+export interface Snapshot {
     version: 1;
     run?: GameState;
     dex: Dex;
@@ -51,10 +52,10 @@ function archivedOriginals(): Record<string, string> {
     const archived: Record<string, string> = {};
     const ownArchive = /^(?:native:|unsaved:)?bento-life:(?:snapshot:v1|run:v2|dex:v1|prefs:v1):recovery:/;
     try {
-        for (let index = 0; index < localStorage.length; index++) {
-            const key = localStorage.key(index);
+        for (let index = 0; index < scopedStorage.length; index++) {
+            const key = scopedStorage.key(index);
             if (!key || !ownArchive.test(key)) continue;
-            const value = localStorage.getItem(key);
+            const value = scopedStorage.getItem(key);
             if (value !== null) archived[key] = value;
         }
     } catch { /* Captured originals remain exportable even if storage access is unavailable. */ }
@@ -74,12 +75,12 @@ function quarantine(key: string, value: string): boolean {
     try {
         let attempt = 0;
         let dest = archiveName(key, value, attempt);
-        let stored = localStorage.getItem(dest);
+        let stored = scopedStorage.getItem(dest);
         while (stored !== null && stored !== value) {
             dest = archiveName(key, value, ++attempt);
-            stored = localStorage.getItem(dest);
+            stored = scopedStorage.getItem(dest);
         }
-        if (stored === null) localStorage.setItem(dest, value);
+        if (stored === null) scopedStorage.setItem(dest, value);
         preserved.add(identity);
         errors.delete(`preserve:${key}`);
         return true;
@@ -91,7 +92,7 @@ function quarantine(key: string, value: string): boolean {
 
 function readRaw(key: string): string | null {
     try {
-        const value = localStorage.getItem(key);
+        const value = scopedStorage.getItem(key);
         loadFailures.delete(`read:${key}`);
         if (errors.delete(`read:${key}`) && !unsafeNative.has(key))
             blocked.delete(key);
@@ -127,7 +128,7 @@ function readValid(key: string): string | null {
         try {
             if (!quarantine(key, raw))
                 throw Error('preserve');
-            localStorage.setItem(key, backup);
+            scopedStorage.setItem(key, backup);
             recovered = true;
             blocked.delete(key);
             errors.delete(`invalid:${key}`);
@@ -174,7 +175,7 @@ export async function initializeStorage(backend?: NativeStorage): Promise<void> 
                 continue;
             }
             try {
-                localStorage.setItem(key, remote);
+                scopedStorage.setItem(key, remote);
                 blocked.delete(key);
                 errors.delete(`invalid:${key}`);
                 errors.delete(`local:${key}`);
@@ -244,7 +245,7 @@ function writeLocal(key: string, value: string | null): boolean {
     if (blocked.has(key))
         return false;
     try {
-        const old = localStorage.getItem(key);
+        const old = scopedStorage.getItem(key);
         if (old !== null && !check(key, old)) {
             if (!quarantine(key, old))
                 return false;
@@ -253,11 +254,11 @@ function writeLocal(key: string, value: string | null): boolean {
             return false;
         }
         if (old !== null && old !== value)
-            localStorage.setItem(backupKey(key), old);
+            scopedStorage.setItem(backupKey(key), old);
         if (value === null)
-            localStorage.removeItem(key);
+            scopedStorage.removeItem(key);
         else
-            localStorage.setItem(key, value);
+            scopedStorage.setItem(key, value);
         errors.delete(`local:${key}`);
         return true;
     }
@@ -453,7 +454,7 @@ export async function confirmRecoveryReset(confirmed: boolean): Promise<boolean>
     const restoredPrefs = !allReset && rawPrefs !== null && check(PREFS_KEY, rawPrefs) ? JSON.parse(rawPrefs) : {};
     const payload = JSON.stringify({ version: 1, dex: restoredDex, prefs: restoredPrefs } satisfies Snapshot);
     try {
-        localStorage.setItem(SNAPSHOT_KEY, payload);
+        scopedStorage.setItem(SNAPSHOT_KEY, payload);
     }
     catch {
         errors.set('recovery-reset', '새 저장을 쓰지 못해 초기화를 중단했어요. 기존 데이터는 그대로예요.');
@@ -475,4 +476,17 @@ export async function confirmRecoveryReset(confirmed: boolean): Promise<boolean>
     await flushStorage();
     notify();
     return errors.size === 0;
+}
+
+/** Only the same validated game snapshot is eligible for cloud sync; tokens never belong here. */
+export function validSnapshot(value: unknown): value is Snapshot {
+    return object(value) && value.version === 1 && (value.run === undefined || validRun(value.run)) && validDex(value.dex) && validPrefs(value.prefs)
+        && Object.keys(value).every(key => ['version', 'run', 'dex', 'prefs'].includes(key))
+        && new TextEncoder().encode(JSON.stringify(value)).length <= 1024 * 1024;
+}
+export function currentSnapshot(): Snapshot | undefined {
+    const raw = readValid(SNAPSHOT_KEY);
+    if (raw === null) return undefined;
+    const value: unknown = JSON.parse(raw);
+    return check(SNAPSHOT_KEY, raw) ? value as Snapshot : undefined;
 }

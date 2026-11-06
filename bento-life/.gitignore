@@ -11,3 +11,7 @@ ios/**/DerivedData/
 *.mobileprovision
 dist-preview
 art-src/store/.states.json
+
+.env
+.env.*
+!.env.example

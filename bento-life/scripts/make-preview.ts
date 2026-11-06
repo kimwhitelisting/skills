@@ -1,11 +1,15 @@
 // 미리보기 페이지용 단일 HTML 만들기:  npm run build:preview  →  dist-preview/<entry>.single.html
 // (claude.ai 아티팩트는 <html>/<head>/<body> 없이 내용만 쓰고, 스크립트·스타일은 안에 넣어야 한다)
 // 일반 브라우저용 문서는 dist-preview/<entry>.standalone.html로 별도 출력한다.
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, readdirSync } from 'node:fs';
 
 const entry = process.argv[2] ?? 'preview';
 const dir = new URL(`../dist-preview/${entry}/`, import.meta.url);
 const html = readFileSync(new URL(`${entry}.html`, dir), 'utf8');
+const assets = readdirSync(new URL('assets/', dir));
+if (assets.filter(name => name.endsWith('.js')).length !== 1 || assets.filter(name => name.endsWith('.css')).length !== 1) {
+  throw new Error('Standalone preview requires one JS and one CSS bundle; dynamic chunks would be missing from the exported HTML.');
+}
 const title = html.match(/<title>([^<]+)<\/title>/)![1];
 const cssHref = html.match(/<link rel="stylesheet"[^>]*href="\.\/(assets\/[^"]+\.css)"/)?.[1];
 const jsSrc = html.match(/<script type="module"[^>]*src="\.\/(assets\/[^"]+\.js)"/)?.[1];

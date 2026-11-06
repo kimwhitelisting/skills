@@ -6,6 +6,6 @@ const entry = process.env.PREVIEW_ENTRY ?? 'preview';
 export default defineConfig(({ mode }) => ({
   base: './',
   build: mode === 'preview-page'
-    ? { outDir: `dist-preview/${entry}`, assetsInlineLimit: 100_000_000, rollupOptions: { input: `${entry}.html` } }
+    ? { outDir: `dist-preview/${entry}`, assetsInlineLimit: 100_000_000, cssCodeSplit: false, rollupOptions: { input: `${entry}.html`, output: { inlineDynamicImports: true } } }
     : {},
 }));
