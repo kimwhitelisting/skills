@@ -88,17 +88,19 @@ npx --yes deno@2.9.6 check --no-config --lock=supabase/functions/deno.lock supab
 | 범위 | 실제 결과 |
 |---|---|
 | JSON Schema | 100판 엔진 관찰의 454개 고유 phase + UI-only 사진/이벤트결과/아침 draft/등굣길 checkpoint를 포함한 457개 snapshot 통과, 잘못된/권한 관련 payload 6종 거절 |
-| 삭제 handler | 인증·재인증·UUID 변조·MFA·본문 한도·오류 마스킹·호출 순서 모의 6개 통과, Edge와 검증 스크립트 Deno typecheck 통과 |
+| 삭제 handler | 인증·재인증·UUID 변조·MFA·본문 한도·오류 마스킹·호출 순서 모의 6개 통과, 통합 담당자의 독립 재실행도 6개 PASS. Edge와 검증 스크립트 Deno typecheck 통과 |
 | 전용 hosted 개발 DB | 통합 담당자가 migration 적용 성공을 확인. 이 디렉터리 작성자는 원격 배포를 수행하지 않음 |
 | hosted rollback SQL | 통합 담당자가 `account-save.sql` 전체 실행으로 CAS·동일/변형 operation·late ACK·검증·RLS·직접쓰기 권한·확인된 계정·삭제 cascade PASS 확인 |
 | rollback 후 | saves 0 / operations 0 / Auth users 0 확인. 테스트 사용자는 지속시키지 않음 |
 | advisor | performance 없음. security의 private operations `RLS enabled without policy` INFO 하나는 의도된 직접 접근 차단 |
 | 비인증 HTTP | 공개 get RPC와 save table SELECT 모두 401 / SQLSTATE 42501 거절 확인 |
 | 실제 public Auth / HTTP | 통합 담당자가 정확한 두 합성 seed 계정으로 JWT 발급, RPC/SELECT 계정 격리, 직접쓰기 거절, 실제 동시 CAS의 한 saved/한 conflict, late ACK, 변형 operation 거절, 새 세션 복원을 PASS 확인. 가입/메일 검증 시험은 아님 |
-| HTTP fixture 수명 | save phase 후 정확히 두 합성 계정을 UI 검증용으로 유지. UI 종료 후 delete phase와 좁은 fallback cleanup 및 잔여 0 확인은 통합 담당자가 수행 |
-| 아직 미검증 | 실제 사용자 이메일 확인·실기기 변경 복원·Edge 실제 계정 삭제. SQL claims 시험이나 handler mock으로 이를 대신했다고 주장하지 않음 |
+| 실제 웹 UI | 통합 담당자가 서로 다른 origin에서 B의 기존 게스트 기록 명시적 가져오기 → 플레이 자동 저장 → 별도 origin의 새 로그인 복원 → 로그아웃 후 게스트 원본 보존을 PASS 확인. A의 하트 150 기록도 별도 계정으로 유지됨을 확인. 합성 계정으로 한 웹 시험이며 실제 iPhone 시험은 아님 |
+| 실제 삭제 Edge / HTTP | 틀린 암호 403과 기존 기록 유지, A 실제 삭제, 아직 만료되지 않은 삭제 계정 JWT의 get RPC 거절, A 삭제 후 B 보존, B 실제 삭제 모두 PASS |
+| fixture 정리 | 삭제 Edge 시험 후 SQL에서 users / identities / saves / operations 모두 0 확인. fallback SQL 삭제는 필요하지 않았음. 임시 암호 파일 삭제와 실행 메모리 비우기 완료 |
+| 아직 미검증 | 실제 사용자 이메일 확인·iPhone 및 iOS Simulator 런타임·실기기 변경 복원. 합성 Auth fixture·웹 UI·HTTP 결과로 이를 대신했다고 주장하지 않음 |
 
-통합 이후 실제 Auth·HTTP·기기 결과는 별도 작업 기록으로 추가한다. 통합 담당자가 삭제 Edge v1 ACTIVE 배포와 `verify_jwt=true`를 확인했다. 실제 인증 요청/삭제 성공 여부는 별도 시험 결과로 기록한다.
+위 hosted·웹 UI·삭제 HTTP 결과는 통합 담당자의 실제 실행 인계로 기록했다. 삭제 Edge v1 ACTIVE 배포와 `verify_jwt=true`를 확인했다. 백엔드 구현 `96737a5`는 통합 기능 브랜치에 `876db1a`로 반영됐다. 이후 실제 사용자 인증·기기 결과는 별도로 추가한다.
 
 ## 변경 시
 
