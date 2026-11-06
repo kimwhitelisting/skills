@@ -53,3 +53,14 @@ Claude 읽기 전용 검토의 문서 불일치를 정정했다. 출시 전에 �
 첫 실기기 테스트는 새 게임→아침 도시락→등굣길→저녁→결산, 앱 종료 후 재실행,
 저장·도감·하트 보존, 작은 화면·safe-area·키보드, 오프라인·오디오·진동 순으로 기록한다.
 테스트를 위해 기존 사용자 저장 데이터를 삭제하지 않는다.
+
+## iPhone 웹 미리보기 문서 수정 (BENTO-PREVIEW-001)
+
+모바일에서 임베드용 `preview.single.html`을 직접 제공하면 viewport와 doctype가 없어
+화면이 작게 축소된다. 일반 HTTP 미리보기는 새 `preview.standalone.html`을 제공한다.
+원본 preview.html의 메타데이터를 보존하고 CSS/JS만 inline한다. 기존 fragment 6개는 SHA256 동일.
+기존 테스트27개·2000판, 웹 build와 preview build 통과. 생성된 문서6개에서 viewport/doctype와
+외부 로컬 script/style 미참조를 확인했다. 일부 prototype의 기존 Google Fonts는 유지한다.
+브라우저 390px 폭에서 app/doc 폭390px, 주 버튼 높이 약50.8px·정상 문서 모드를 확인했다.
+Owner iPhone LTE 사진으로 수정 전 접속은 확인했다. 수정 후 iPhone 화면은 재확인 대기다.
+게임 로직·저장 키·origin·네이티브 빌드는 변경하지 않았다.

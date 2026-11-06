@@ -19,8 +19,12 @@ npm run dev        # http://localhost:5173 — 휴대폰으로 같은 와이파�
 npm test           # 단위 테스트 + 2,000판 자동 플레이 (멈춤/버그 검사)
 npm run balance    # 플레이 성향별 평균 스탯·엔딩 분포 리포트
 npm run build      # dist/ 에 배포용 빌드
-npm run build:preview  # dist-preview/*.single.html — 휴대폰 미리보기 페이지용 단일 HTML (본 게임 + 맛보기 + 도트 부품 작업대)
+npm run build:preview  # dist-preview/*.standalone.html (브라우저용), *.single.html (임베드용)
 ```
+
+웹 서버에서 직접 제공하거나 휴대폰 브라우저로 열 때는 `dist-preview/preview.standalone.html`을 사용한다.
+`*.single.html`은 Claude 아티팩트처럼 바깥 HTML 문서가 있는 곳에 삽입하는 조각이다.
+브라우저용 파일은 원본 viewport·문서 모드를 보존한다. 본 게임의 그림·글꼴·CSS·JS는 파일에 포함되고, 일부 비교용 prototype의 기존 Google Fonts 연결은 유지한다.
 
 ## 구조
 

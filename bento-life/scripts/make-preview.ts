@@ -1,5 +1,6 @@
 // 미리보기 페이지용 단일 HTML 만들기:  npm run build:preview  →  dist-preview/<entry>.single.html
 // (claude.ai 아티팩트는 <html>/<head>/<body> 없이 내용만 쓰고, 스크립트·스타일은 안에 넣어야 한다)
+// 일반 브라우저용 문서는 dist-preview/<entry>.standalone.html로 별도 출력한다.
 import { readFileSync, writeFileSync } from 'node:fs';
 
 const entry = process.argv[2] ?? 'preview';
@@ -25,3 +26,14 @@ ${body}
 `;
 writeFileSync(new URL(`../${entry}.single.html`, dir), page);
 console.log(`${entry}: ${(page.length / 1024).toFixed(0)} KB → dist-preview/${entry}.single.html`);
+
+// HTTP로 직접 열 파일은 원본 문서의 doctype·언어·viewport·theme-color를 보존한다.
+// single.html은 바깥 문서가 있는 임베드 전용이므로 기존 출력 계약을 유지한다.
+const scriptTag = html.match(/<script type="module"[^>]*src="\.\/assets\/[^\"]+\.js"[^>]*><\/script>/)?.[0];
+const styleTag = html.match(/<link rel="stylesheet"[^>]*href="\.\/assets\/[^\"]+\.css"[^>]*>/)?.[0];
+if (!scriptTag || !styleTag) throw new Error(`standalone script/style tags not found in ${entry}.html`);
+const standalone = html
+  .replace(styleTag, () => `<style>${css}</style>`)
+  .replace(scriptTag, () => `<script type="module">${js}</script>`);
+writeFileSync(new URL(`../${entry}.standalone.html`, dir), standalone);
+console.log(`${entry}: browser document → dist-preview/${entry}.standalone.html`);
