@@ -44,6 +44,7 @@
 - 계정 전환 UI도 통과했다: B 로그아웃 후 게스트의 “우진 · 1살” 원본이 유지됐고, A 로그인 후 A의 기존 하트150·진행 없음이 표시되어 B의 우진 진행이 섞이지 않았다.
 - 별도 서버 검증에서 실제 두 테스트 사용자 접근 분리·동시 CAS·응답 유실 재전송·새 로그인 복원을 통과했다. 계정 삭제 UI·비밀번호 재설정, 실제 iPhone의 오프라인 진행/재연결·충돌, 다른 물리 기기의 복원 및 재설치는 별도 확인 대상이다. 위 Safari 검증은 Native iPhone 설치 검증이 아니다.
 - 초기에는 Mac 화면 잠금으로 Simulator UI 확인이 막혔으나, 이후 2026-11-07 iOS 27.2 Simulator에서 홈·계정 화면과 SecureStorage 읽기 응답을 확인했다. 해당 환경의 시작 경로를 통과한 결과이며 로그인 후 토큰 쓰기·재실행 복원이나 모든 iOS 버전의 지원을 확인한 것은 아니다. 첫 시작의 LLDB detach 오류와 이후 정상 화면은 [Mac 빌드 기록](MAC-BUILD.md#2026-11-07-native-실행로컬-서명-설정)에 구분했다. 실제 Android/iPhone 실행·서명 배포·TestFlight 및 최소 OS 호환성 검증은 BENTO-STABLE-001의 잔여 범위다.
+- 로깅 비활성화 변경 f488432 이후에도 unsigned Simulator 빌드·설치·새 실행의 홈 화면을 확인했고 설치본 config가 `loggingBehavior: 'none'`임을 확인했다. Android debug 빌드·APK v2 debug 서명·포함 config도 통과했다. 독립 보안 검토를 통과했으며, Native 로그인·토큰 쓰기·재실행 복원 및 실제 iPhone 설치는 여전히 미검증이다. 상세 범위는 위 Mac 빌드 기록을 따른다.
 - 재현 순서: `npm ci` → `npm test` → `npm run build` → `npm run build:preview` → `npx cap sync android` / `npx cap sync ios`. Native 빌드/서명과 iPhone 설치는 기존 빌드 문서에 따른다.
 
 근거(2026-11-06 확인): [Supabase 로그인](https://supabase.com/docs/reference/javascript/auth-signinwithpassword), [비밀번호 재설정](https://supabase.com/docs/reference/javascript/auth-resetpasswordforemail), [secure-storage의 Native/Web 저장 차이](https://github.com/aparajita/capacitor-secure-storage). Supabase changelog의 CLI v3 변경은 이번 앱 SDK 경로에 해당하지 않으며 TLS 변경은 실제 HTTPS 연결 검증 대상으로 둔다.
