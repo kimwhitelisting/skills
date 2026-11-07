@@ -79,12 +79,12 @@ Owner iPhone LTE 사진으로 수정 전 접속은 확인했다. 수정 후 iPho
 
 ## 2026-11-07 Native 실행·로컬 서명 설정
 
-- Xcode에서 iPhone 18 Pro / iOS 27.2 Simulator 빌드·설치 후 홈 화면과 계정 화면 표시를 확인했다. SecureStorage의 Native 읽기 응답도 확인했다. 이후 실제 iPhone 설치·앱 열림까지 확인했으며, 로그인 후 토큰 쓰기·재실행 복원과 TestFlight는 아직 확인하지 않았다.
+- Xcode에서 iPhone 18 Pro / iOS 27.2 Simulator 빌드·설치 후 홈·계정 화면과 SecureStorage 읽기를 확인했다. 아래 ad-hoc 서명 수정 후에는 Native 로그인·토큰 쓰기·인증 후 앱 reload·계정 진행 저장도 확인했다. 실제 iPhone은 설치·앱 열림까지 확인했으며, 해당 기기의 Native 로그인·복원과 TestFlight는 미검증이다.
 - 첫 시작에 오래 걸리며 일시적으로 빈 화면이 보였고 LLDB의 `RPC Server exited`/detach 실패가 관찰됐다. 이후 정상 화면을 확인했으므로 이 디버거 오류만으로 앱 결함이라고 결론 내리지 않는다. 실제 기기의 시작 시간은 따로 확인한다.
 - `capacitor.config.ts`의 전역 `loggingBehavior: 'none'`은 Debug/Release에서 Capacitor의 JS·Native bridge 로그를 끈다. 인증 플러그인의 요청·응답에 세션 정보가 포함될 수 있으므로 실제 로그인 전에 적용한다. 모든 OS 로그나 개발자가 별도로 추가한 로그까지 제거하는 설정은 아니다. [Capacitor 설정](https://capacitorjs.com/docs/config)
 - 로깅·로컬 서명 변경 **f488432** 기준 후속 검증: unsigned iOS Simulator 빌드·설치 성공, 설치된 앱의 `loggingBehavior: 'none'` 확인, iPhone 18 Pro / iOS 27.2에서 새로 실행한 홈 화면 확인을 통과했다. 이 실행에서는 Native 로그인·토큰 쓰기·로그인 상태 재실행 복원을 시험하지 않았다.
 - 같은 f488432 기준 Android `./gradlew --no-daemon assembleDebug`가 244 tasks로 성공했다. APK의 v2 debug 서명과 포함된 config의 `loggingBehavior: 'none'`을 확인했다. 출시 서명 또는 실제 Android 설치·실행 검증은 아니다.
-- f488432의 독립 읽기 전용 보안 검토도 통과했다. Native 인증·계정 복원·세션 재실행 복원과 TestFlight는 계속 미검증이며, 빌드·설치·화면 확인으로 대체하지 않는다.
+- f488432의 독립 읽기 전용 보안 검토도 통과했다. 이 단계의 빌드·설치·화면 확인을 Native 인증·계정 복원 검증으로 대체하지 않았으며, 이후 Simulator 로그인 결과는 아래에 별도로 기록했다.
 
 ### 실제 iPhone 개발 빌드 설치·실행
 
@@ -92,7 +92,7 @@ Owner iPhone LTE 사진으로 수정 전 접속은 확인했다. 수정 후 iPho
 - 해당 기기를 대상으로 Xcode Debug 빌드가 성공했다. `codesign --verify --deep --strict`를 통과했고, 개발 프로파일의 연결 기기 포함·번들 일치·`get-task-allow=true`와 앱 config의 `loggingBehavior: 'none'`을 확인했다. 기기 식별자·서명 팀·프로파일 값은 공개 기록에 넣지 않는다.
 - `devicectl` 설치 성공 후 첫 실행은 개발자 인증서 신뢰 단계에서 막혔다. Owner가 본인의 인증서를 신뢰한 뒤 “앱이 열려요”라고 보고했으며 실행 중인 앱 프로세스도 확인했다. 이는 실제 기기의 앱 열림 확인이며 게임 전체 동작이나 Native 계정 로그인 성공을 뜻하지 않는다.
 - 이번 설치는 **Personal Team 무료 개발 빌드**이며 TestFlight/App Store 배포가 아니다. 로컬에서 확인한 개발 프로파일의 유효 기간은 7일이다. 기간이 지나면 같은 개발 경로로 재서명·재설치가 필요하며, 정확한 만료 시점과 개인 서명 정보는 비공개 운영 기록으로 관리한다.
-- Native 로그인·계정 진행 복원·토큰 쓰기·앱 재실행 후 로그인/진행 유지는 추가 검증 대기다. Safari 웹 계정 검증 결과와 구분한다.
+- 실제 iPhone의 Native 로그인·계정 진행 복원·토큰 쓰기·앱 재실행 후 로그인/진행 유지는 추가 검증 대기다. Safari 웹 및 Simulator 계정 검증 결과와 구분한다.
 
 ### 로컬 개발 서명
 
@@ -123,5 +123,9 @@ DEVELOPMENT_TEAM = YOUR_TEAM_ID
 ZIP을 만들기 전 `scripts/verify-ios-simulator.mjs`가 Simulator 플랫폼, 코드 서명 검증, 각 아키텍처에서 번들과 일치하는 `application-identifier`, iOS override를 우선한 `loggingBehavior: 'none'`을 검사한다. Xcode는 Simulator entitlement를 Mach-O의 `__TEXT,__entitlements`에 넣으므로 `codesign -d --entitlements` 출력이 비어 있다는 사실만으로 실패 처리하지 않는다. 가드는 `lipo`·`otool`로 실제 실행 파일의 모든 slice를 검사하며 중간 `.xcent` 파일만 신뢰하지 않는다. 검사를 통과하지 못하면 패키징을 중단하며 식별자·entitlement 내용은 출력하지 않는다. 기존 unsigned 산출물 거부와 새 arm64/x86_64 산출물 통과를 확인했다. 이 검사는 로그인·Keychain 쓰기·재실행 복원 성공을 대신하지 않으며 해당 UI 재검증은 별도로 수행한다.
 
 수정된 스크립트 전체 실행은 빌드·검사·ZIP 생성까지 exit 0으로 완료했다. 독립 검토에서 ZIP과 최종 `.app`의 42개 파일이 모두 일치했다. ZIP SHA256: `3f5f6f5a498fbeaa2e57003e3495debb8fdd49f7098e7928c54820b53ecc5d52`. 앱·토큰 저장 로직의 변경이 없어 게임 테스트를 반복하지 않았으며 빌드 스크립트 구문과 실제 산출물의 양성·음성 검증을 수행했다.
+
+수정 **4ccfd74**의 후속 Simulator UI 시험에서는 독립 테스트 계정의 Native 로그인 → 첫 진행을 새로 시작 → 새 게임의 “하린 · 1살” 이름 선택을 통과했다. 서버 저장 revision **1→4**와 해당 진행 반영을 확인했다. Native 보안 토큰 쓰기와 인증 직후 앱 reload까지 동작한 근거이며 실제 iPhone의 본인 계정 복원 시험은 아니다.
+
+강제종료·재실행 명령은 수행했지만 화면이 나타나기를 기다리던 중 Mac 자동 잠금으로 UI 접근이 차단됐다. 따라서 강제종료 후 로그인 상태·진행의 UI 복원은 **미검증**이다. 시험에만 사용한 독립 계정과 관련 서버 인증·저장 기록은 정리했고 기존 사용자와 저장이 유지됐음을 확인했다. Simulator에 남은 테스트 세션의 로컬 로그아웃은 잠금 해제 후 정리해야 한다.
 
 근거: [Apple의 앱별 Keychain 접근과 서명 시 application-identifier 추가](https://developer.apple.com/documentation/security/sharing-access-to-keychain-items-among-a-collection-of-apps), [Xcode 빌드 설정](https://developer.apple.com/documentation/xcode/build-settings-reference).

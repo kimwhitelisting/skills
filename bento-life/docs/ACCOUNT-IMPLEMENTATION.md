@@ -8,7 +8,7 @@
 - `.env.example`을 참고해 무시되는 `.env.local`에 `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`를 넣고 빌드한다. 이 두 값은 공개 클라이언트 설정이다. 서비스 관리자 키·서버 비밀은 앱/환경 예제/저장소에 넣지 않는다.
 - 설정이 없으면 기존 게스트 게임을 사용할 수 있고 계정 화면에 연결 미준비를 표시한다. 설정이 잘못되거나 안전한 토큰 저장소를 열지 못하면 조용히 다른 계정이나 평문 Native 저장소로 넘어가지 않는다.
 - 현재 동작 경로는 이메일/비밀번호 가입·이메일 확인·로그인·확인 메일 재전송·비밀번호 재설정이다. Apple/Google 로그인 버튼은 구성되지 않아 제공하지 않는다. 호스팅의 기본 메일 서비스는 테스트 조직의 허용 이메일로 제한되어 일반 공개 가입 준비가 아니다.
-- 웹 확인/재설정 메일은 현재 origin/path를 redirect로 요청하며 서버 허용 목록에 있어야 한다. Native에서는 별도 VITE_AUTH_REDIRECT_URL의 허용된 웹 주소로 돌아온다. 검증되지 않은 custom deep link는 사용하지 않는다. 2026-11-07 Owner가 실제 iPhone에서 가입·확인 메일을 통한 이메일 인증·로그인 성공을 보고했다. 비밀번호 재설정과 Native 앱에서의 로그인은 별도 확인 대상이다.
+- 웹 확인/재설정 메일은 현재 origin/path를 redirect로 요청하며 서버 허용 목록에 있어야 한다. Native에서는 별도 VITE_AUTH_REDIRECT_URL의 허용된 웹 주소로 돌아온다. 검증되지 않은 custom deep link는 사용하지 않는다. 2026-11-07 Owner가 실제 iPhone 웹에서 가입·확인 메일을 통한 이메일 인증·로그인 성공을 보고했다. Native Simulator 로그인은 아래 후속 시험에서 통과했으며 비밀번호 재설정과 실제 iPhone Native 로그인은 별도 확인 대상이다.
 - Native 토큰은 iOS Keychain/Android Keystore 기반 별도 저장 어댑터에만 둔다. iCloud 동기화를 끄고 iOS는 device-only 접근을 사용한다. 웹은 SDK의 별도 브라우저 Auth 저장 공간이며 암호화된 기기 저장소라고 표시하지 않는다.
 - 비밀번호는 요청 동안만 사용하며 저장하지 않는다. 토큰은 게임 snapshot·복구 원본·JSON 내보내기·클라우드 게임 저장에 포함하지 않는다.
 
@@ -46,7 +46,8 @@
 - 초기에는 Mac 화면 잠금으로 Simulator UI 확인이 막혔으나, 이후 2026-11-07 iOS 27.2 Simulator에서 홈·계정 화면과 SecureStorage 읽기 응답을 확인했다. 해당 환경의 시작 경로를 통과한 결과이며 로그인 후 토큰 쓰기·재실행 복원이나 모든 iOS 버전의 지원을 확인한 것은 아니다. 첫 시작의 LLDB detach 오류와 이후 정상 화면은 [Mac 빌드 기록](MAC-BUILD.md#2026-11-07-native-실행로컬-서명-설정)에 구분했다. 실제 Android 실행·iPhone의 추가 기능 검증·배포 서명·TestFlight 및 최소 OS 호환성 검증은 BENTO-STABLE-001의 잔여 범위다.
 - 로깅 비활성화 변경 f488432 이후에도 unsigned Simulator 빌드·설치·새 실행의 홈 화면을 확인했고 설치본 config가 `loggingBehavior: 'none'`임을 확인했다. Android debug 빌드·APK v2 debug 서명·포함 config와 독립 보안 검토도 통과했다. 상세 범위는 위 Mac 빌드 기록을 따른다.
 - **실제 iPhone Native 설치·앱 열림:** iPhone 17 / iOS 26.6.1에서 개발자 모드 활성화, Debug 빌드·개발 서명/프로파일 검증, 설치를 완료했다. Owner가 개발자 인증서를 신뢰한 뒤 앱 열림을 보고했고 실행 프로세스도 확인했다. Personal Team 개발 빌드이며 TestFlight가 아니다. 확인한 무료 개발 프로파일은 7일 유효해 주기적 재서명이 필요하다. Native 로그인·계정 복원·토큰 쓰기·재실행 후 로그인/진행 유지는 추가 검증 대기이며 기존 Safari 웹 시험과 구분한다.
-- Simulator의 독립 테스트 로그인에서는 서버 인증 성공 뒤 세션 저장이 실패했다. `securityd`의 -34018과 entitlement 누락을 확인해 unsigned 빌드 경로를 Simulator ad-hoc 서명으로 수정하고 패키징 전 검사 가드를 추가했다. 실제 iPhone 개발 서명과 인증 어댑터는 변경하지 않았다. [원인·재현·검사 범위](MAC-BUILD.md#simulator-native-로그인-실패-원인과-빌드-수정)를 따르며 새 빌드의 Native 로그인·세션 복원 재검증은 별도다.
+- Simulator의 첫 독립 테스트 로그인에서는 서버 인증 성공 뒤 세션 저장이 실패했다. `securityd`의 -34018과 entitlement 누락을 확인해 unsigned 빌드 경로를 Simulator ad-hoc 서명으로 수정하고 패키징 전 검사 가드를 추가했다. 실제 iPhone 개발 서명과 인증 어댑터는 변경하지 않았다. [원인·재현·검사 범위](MAC-BUILD.md#simulator-native-로그인-실패-원인과-빌드-수정)를 따른다.
+- **수정 후 Simulator Native 인증·저장:** 4ccfd74 빌드에서 독립 테스트 계정 로그인·보안 토큰 쓰기·인증 후 앱 reload·첫 진행 선택·새 게임 “하린 · 1살”을 확인했다. 서버 저장 revision 1→4도 확인했다. 강제종료·재실행 후에는 Mac 자동 잠금으로 UI 확인이 막혀 로그인 상태·진행 복원은 미검증이다. 실제 iPhone의 본인 계정 복원도 미검증이다. 테스트용 서버 계정·관련 기록만 정리했고 기존 사용자 저장의 무변경을 확인했다. Simulator 로컬 테스트 세션 로그아웃은 잠금 해제 후 남은 정리 항목이다.
 - 재현 순서: `npm ci` → `npm test` → `npm run build` → `npm run build:preview` → `npx cap sync android` / `npx cap sync ios`. Native 빌드/서명과 iPhone 설치는 기존 빌드 문서에 따른다.
 
 근거(2026-11-06 확인): [Supabase 로그인](https://supabase.com/docs/reference/javascript/auth-signinwithpassword), [비밀번호 재설정](https://supabase.com/docs/reference/javascript/auth-resetpasswordforemail), [secure-storage의 Native/Web 저장 차이](https://github.com/aparajita/capacitor-secure-storage). Supabase changelog의 CLI v3 변경은 이번 앱 SDK 경로에 해당하지 않으며 TLS 변경은 실제 HTTPS 연결 검증 대상으로 둔다.
