@@ -126,6 +126,10 @@ ZIP을 만들기 전 `scripts/verify-ios-simulator.mjs`가 Simulator 플랫폼, 
 
 수정 **4ccfd74**의 후속 Simulator UI 시험에서는 독립 테스트 계정의 Native 로그인 → 첫 진행을 새로 시작 → 새 게임의 “하린 · 1살” 이름 선택을 통과했다. 서버 저장 revision **1→4**와 해당 진행 반영을 확인했다. Native 보안 토큰 쓰기와 인증 직후 앱 reload까지 동작한 근거이며 실제 iPhone의 본인 계정 복원 시험은 아니다.
 
-강제종료·재실행 명령은 수행했지만 화면이 나타나기를 기다리던 중 Mac 자동 잠금으로 UI 접근이 차단됐다. 따라서 강제종료 후 로그인 상태·진행의 UI 복원은 **미검증**이다. 시험에만 사용한 독립 계정과 관련 서버 인증·저장 기록은 정리했고 기존 사용자와 저장이 유지됐음을 확인했다. Simulator에 남은 테스트 세션의 로컬 로그아웃은 잠금 해제 후 정리해야 한다.
+첫 강제종료·재실행 시험은 Mac 자동 잠금으로 화면 확인이 막혔다. 잠금 해제 후 새 독립 테스트 계정으로 “선우 · 1살” 이름 선택과 서버 revision 4 저장을 확인하고 다시 시험했다. 강제종료·재실행 후 재로그인 입력 없이 같은 계정 패널·이어하기·동일 이벤트 결과가 표시되어 **로그인 상태와 진행 복원 PASS**를 확인했다.
+
+이어 같은 Simulator의 앱을 삭제·재설치했다. 앱 데이터 컨테이너가 바뀌었고 최초 실행 전 Preferences 저장 파일과 WebKit 디렉터리가 없는 것을 확인했다. Keychain 인증은 유지된 상태에서 서버의 “선우 · 1살”과 동일 이벤트가 복원됐으며 서버 revision 4와 snapshot digest는 전후 동일했다. **빈 게임 저장 공간에서 서버 복원 PASS**이며, 다른 물리 기기나 실제 iPhone의 개인 계정 복원 시험은 아니다.
+
+시험 후 UI 로그아웃과 빈 게스트 홈을 확인하고 Simulator 테스트 앱을 삭제했다. 이전에 남아 있던 로컬 테스트 세션 정리도 완료했다. 이번 독립 테스트 계정의 서버 사용자·인증 연결·세션·저장·전송 작업 기록은 모두 제거했고 기존 사용자와 저장 digest가 유지됨을 확인했다. 실제 iPhone 앱은 변경하지 않았으며 무료 개발 프로파일의 주기적 재서명 안내는 계속 적용된다. 이 후속 시험에서 런타임 코드는 변경하지 않았다.
 
 근거: [Apple의 앱별 Keychain 접근과 서명 시 application-identifier 추가](https://developer.apple.com/documentation/security/sharing-access-to-keychain-items-among-a-collection-of-apps), [Xcode 빌드 설정](https://developer.apple.com/documentation/xcode/build-settings-reference).
