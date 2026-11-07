@@ -1,2 +1,2 @@
-// Optional developer-machine signing; clean clones can build unsigned Simulator apps.
+// Optional developer-machine signing. Simulator builds preserve Xcode's ad-hoc signing.
 #include? "signing.local.xcconfig"

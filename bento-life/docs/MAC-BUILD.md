@@ -41,7 +41,7 @@ npm test
 npm run ios:simulator
 ```
 
-이 명령은 웹 빌드→SPM sync→unsigned Simulator compile을 수행한다.
+이 명령은 웹 빌드→SPM sync→Simulator ad-hoc 서명 빌드와 entitlement 검사를 수행한다. 처음에는 unsigned compile만 했으나 아래 Native 로그인 조사에서 Keychain 쓰기 불가를 확인하여 수정했다.
 새 clone을 Xcode에서 직접 열 때도 먼저 `npm ci`와 `npm run ios:sync`를 실행한다. 생성된 public/config 파일은 Git에 없으며 첫 SPM 해석에는 네트워크가 필요하다.
 성공 시 `build/NyamnyamJoljol-Simulator.zip`; 실제 iPhone 설치 파일이 아니다.
 번들 ID는 기존 앱 ID와 같은 `com.paranstudio.dosirak`이다. 서명 팀이나 계정을 코드에 넣지 않았다.
@@ -104,7 +104,7 @@ Owner iPhone LTE 사진으로 수정 전 접속은 확인했다. 수정 후 iPho
 DEVELOPMENT_TEAM = YOUR_TEAM_ID
 ```
 
-로컬 파일이 없어도 선택적 include는 실패하지 않으며 unsigned Simulator 빌드가 가능하다. Xcode UI가 팀 값을 `project.pbxproj`에 다시 쓰면 커밋 전에 로컬 파일로 옮긴다. 인증서·프로비저닝 프로파일·비밀번호는 저장소에 추가하지 않는다. [Apple xcconfig 안내](https://developer.apple.com/documentation/xcode/adding-a-build-configuration-file-to-your-project)
+로컬 파일이 없어도 선택적 include는 실패하지 않는다. Simulator 인증 테스트에는 아래 ad-hoc 서명·entitlement 검사를 통과한 앱을 사용한다. Xcode UI가 팀 값을 `project.pbxproj`에 다시 쓰면 커밋 전에 로컬 파일로 옮긴다. 인증서·프로비저닝 프로파일·비밀번호는 저장소에 추가하지 않는다. [Apple xcconfig 안내](https://developer.apple.com/documentation/xcode/adding-a-build-configuration-file-to-your-project)
 
 일반적으로 유료 Apple Developer Program에 가입하지 않은 Apple 계정도 Xcode의 **Personal Team**으로 개인 기기에 개발용 테스트를 할 수 있다. 주기적 재프로비저닝이 필요하며 이 경로가 TestFlight/App Store 배포 자격을 뜻하지 않는다. 사용자 가입 보고와 멤버십 활성화·선택된 서명 팀의 확인은 별개다. [Apple 계정·Personal Team 안내](https://developer.apple.com/help/account/basics/about-your-developer-account)
 
@@ -113,3 +113,15 @@ DEVELOPMENT_TEAM = YOUR_TEAM_ID
 현재 배포 대상 설정은 iOS 15.0이지만 계정 경로는 `navigator.locks`와 `AbortSignal.timeout()`을 사용한다. Web Locks는 Safari 15.4부터이며 `AbortSignal.timeout()`의 Safari 16 지원 범위도 고려해야 한다. iOS 15.0 전체를 지원한다고 보고하지 않는다. 최소 버전 상향 또는 검증된 대체 구현을 별도 결정·시험하며, 이번 로깅·서명 설정에서는 배포 대상이나 게임 코드를 바꾸지 않았다. [WebKit의 Safari 15.4 안내](https://webkit.org/blog/12445/new-webkit-features-in-safari-15-4/), [AbortSignal.timeout 호환성](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal/timeout_static)
 
 공식 문서와 설치된 Capacitor 8 설정 대조일: 2026-11-07.
+
+### Simulator Native 로그인 실패 원인과 빌드 수정
+
+독립 테스트 계정의 서버 인증은 성공했지만 Native 로그인 UI가 일반 오류로 돌아왔다. Simulator `securityd`에서 **-34018**, `application-identifier`와 `keychain-access-groups` entitlement가 없다는 오류를 확인했다. 이전 빌드 스크립트가 `CODE_SIGNING_ALLOWED=NO`로 서명을 끈 결과이며, 계정 비밀번호나 SecureStorage 메서드 인자 불일치가 원인은 아니었다. SecureStorage 8.0.1의 실제 API·Swift 구현과 대조했고 인증 어댑터는 변경하지 않았다.
+
+`scripts/build-ios-simulator.sh`는 이제 `CODE_SIGN_IDENTITY="-" CODE_SIGNING_ALLOWED=YES`로 Xcode의 Simulator ad-hoc 서명을 유지한다. 이 설정은 Simulator SDK를 지정한 명령에만 적용되며 실제 iPhone의 개발 서명·프로파일은 바꾸지 않는다. ad-hoc Simulator 서명을 스토어의 Ad Hoc 배포 방식과 혼동하지 않는다.
+
+ZIP을 만들기 전 `scripts/verify-ios-simulator.mjs`가 Simulator 플랫폼, 코드 서명 검증, 각 아키텍처에서 번들과 일치하는 `application-identifier`, iOS override를 우선한 `loggingBehavior: 'none'`을 검사한다. Xcode는 Simulator entitlement를 Mach-O의 `__TEXT,__entitlements`에 넣으므로 `codesign -d --entitlements` 출력이 비어 있다는 사실만으로 실패 처리하지 않는다. 가드는 `lipo`·`otool`로 실제 실행 파일의 모든 slice를 검사하며 중간 `.xcent` 파일만 신뢰하지 않는다. 검사를 통과하지 못하면 패키징을 중단하며 식별자·entitlement 내용은 출력하지 않는다. 기존 unsigned 산출물 거부와 새 arm64/x86_64 산출물 통과를 확인했다. 이 검사는 로그인·Keychain 쓰기·재실행 복원 성공을 대신하지 않으며 해당 UI 재검증은 별도로 수행한다.
+
+수정된 스크립트 전체 실행은 빌드·검사·ZIP 생성까지 exit 0으로 완료했다. 독립 검토에서 ZIP과 최종 `.app`의 42개 파일이 모두 일치했다. ZIP SHA256: `3f5f6f5a498fbeaa2e57003e3495debb8fdd49f7098e7928c54820b53ecc5d52`. 앱·토큰 저장 로직의 변경이 없어 게임 테스트를 반복하지 않았으며 빌드 스크립트 구문과 실제 산출물의 양성·음성 검증을 수행했다.
+
+근거: [Apple의 앱별 Keychain 접근과 서명 시 application-identifier 추가](https://developer.apple.com/documentation/security/sharing-access-to-keychain-items-among-a-collection-of-apps), [Xcode 빌드 설정](https://developer.apple.com/documentation/xcode/build-settings-reference).
