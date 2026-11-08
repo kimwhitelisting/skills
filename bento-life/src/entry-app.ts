@@ -32,4 +32,8 @@ async function boot(): Promise<void> {
 void boot().catch(() => {
   const app = document.getElementById('app')!;
   app.textContent = '안전한 로그인 저장소를 열지 못했어요. 기기 잠금을 해제하고 앱을 다시 열어 주세요. 진행 원본은 바꾸지 않았어요.';
+  const retry = document.createElement('button');
+  retry.textContent = '앱 다시 열기';
+  retry.addEventListener('click', () => location.reload());
+  app.append(retry);
 });

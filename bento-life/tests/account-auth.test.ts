@@ -3,11 +3,12 @@ import { signedRemote } from '../src/account/remote.ts';
 import { readGuestSnapshot } from '../src/account/account.ts';
 import { nativeAuthStorage } from '../src/account/native-auth.ts';
 import { SecureStorage, KeychainAccess } from '@aparajita/capacitor-secure-storage';
+import { Capacitor } from '@capacitor/core';
 vi.mock('@aparajita/capacitor-secure-storage', () => ({
   KeychainAccess: { whenUnlockedThisDeviceOnly: 1 },
-  SecureStorage: { setSynchronize: vi.fn(async () => {}), setKeyPrefix: vi.fn(async () => {}), setDefaultKeychainAccess: vi.fn(async () => {}), get: vi.fn(async () => null), set: vi.fn(async () => {}), remove: vi.fn(async () => true) },
+  SecureStorage: { setSynchronize: vi.fn(async () => {}), setKeyPrefix: vi.fn(async () => {}), setDefaultKeychainAccess: vi.fn(async () => {}), get: vi.fn(async () => null), set: vi.fn(async () => {}), setItem: vi.fn(async () => {}), remove: vi.fn(async () => true) },
 }));
-afterEach(() => vi.clearAllMocks());
+afterEach(() => { vi.clearAllMocks(); vi.restoreAllMocks(); });
 describe('auth boundaries', () => {
   it('refuses old account queued work under a new session or no session', async () => {
     const request = vi.fn();
@@ -34,6 +35,8 @@ describe('auth boundaries', () => {
     expect(SecureStorage.set).toHaveBeenCalledWith('bento-auth:v1', 'session-json', false, false, KeychainAccess.whenUnlockedThisDeviceOnly);
     vi.mocked(SecureStorage.get).mockRejectedValueOnce(new Error('locked'));
     await expect(storage.getItem('bento-auth:v1')).rejects.toThrow('locked');
+    await expect(storage.removeItem('bento-auth:v1')).rejects.toThrow('readable');
+    await expect(storage.getItem('bento-auth:v1')).resolves.toBeNull();
     await storage.removeItem('bento-auth:v1'); expect(SecureStorage.remove).toHaveBeenCalledWith('bento-auth:v1', false);
   });
   it('does not read auth/other-account data during guest inspection or alter malformed originals', () => {
@@ -43,5 +46,16 @@ describe('auth boundaries', () => {
     expect(map.get('bento-life:run:v2')).toBe('{"version":2}');
     expect(read.mock.calls.map(([key]) => key)).not.toContain('bento-auth:v1');
     expect(read.mock.calls.some(([key]) => key.startsWith('bento-account:'))).toBe(false);
+  });
+  it('writes the orphan Android auth tombstone through encrypted SecureStorage only', async () => {
+    vi.spyOn(Capacitor, 'getPlatform').mockReturnValue('android');
+    const storage = await nativeAuthStorage();
+    const error = Object.assign(new Error('Invalid data'), { code: 'invalidData' });
+    vi.mocked(SecureStorage.get).mockRejectedValueOnce(error).mockRejectedValueOnce(error).mockRejectedValueOnce(error).mockResolvedValueOnce(null);
+    vi.mocked(SecureStorage.remove).mockResolvedValueOnce(false);
+    await expect(storage.getItem('bento-auth:v1')).rejects.toThrow();
+    expect(await storage.recovery.resetConfirmed(true)).toBe(true);
+    expect(SecureStorage.setItem).toHaveBeenCalledExactlyOnceWith('bento-auth:v1', 'null');
+    expect(SecureStorage.set).not.toHaveBeenCalled();
   });
 });

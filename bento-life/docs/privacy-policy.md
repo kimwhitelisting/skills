@@ -19,7 +19,7 @@
 
 ## 2. 운영체제 백업과 기기 이전
 
-기기 설정에 따라 게임 데이터가 Android의 자동 백업·기기 간 전송 또는 Apple의 iCloud·컴퓨터 백업에 포함될 수 있습니다. Android의 현재 앱 설정은 백업을 허용합니다. iCloud 백업은 앱 데이터를 포함하며 컴퓨터 백업도 대부분의 기기 데이터·설정을 포함합니다. 이는 운영체제와 이용자가 선택한 백업 서비스가 수행하는 처리이며, 위 계정 기반 게임 저장과 별개의 사본입니다. [Android 공식 안내](https://developer.android.com/identity/data/autobackup), [Apple iCloud 백업 안내](https://support.apple.com/en-us/108770), [Apple 백업 방법 안내](https://support.apple.com/en-us/108771)
+기기 설정에 따라 게임 데이터가 Android의 자동 백업·기기 간 전송 또는 Apple의 iCloud·컴퓨터 백업에 포함될 수 있습니다. Android의 현재 앱 설정은 게임 데이터의 백업을 허용하지만, 보안 로그인 정보를 담는 파일은 자동 백업·기기 간 전송 대상에서 제외합니다. iCloud 백업은 앱 데이터를 포함하며 컴퓨터 백업도 대부분의 기기 데이터·설정을 포함합니다. 이는 운영체제와 이용자가 선택한 백업 서비스가 수행하는 처리이며, 위 계정 기반 게임 저장과 별개의 사본입니다. [Android 공식 안내](https://developer.android.com/identity/data/autobackup), [Apple iCloud 백업 안내](https://support.apple.com/en-us/108770), [Apple 백업 방법 안내](https://support.apple.com/en-us/108771)
 
 백업 여부와 시점·포함 범위·복원 결과는 기기·OS 버전·설정에 따라 달라집니다. 재설치나 기기 변경 뒤 데이터가 복원될 수 있지만, 최신 진행의 보존이나 복원을 보장하지 않습니다. 백업 관리와 삭제는 사용 중인 기기 및 백업 서비스의 설정에서 확인해 주세요.
 
@@ -66,7 +66,7 @@ Developer: **[TO BE CONFIRMED]**. Contact: **[TO BE CONFIRMED]**. Effective date
 The current test branch supports guest play and email/password accounts with account-scoped cloud saves using Supabase Auth and a dedicated database. Email, authentication identity/session and game progress are processed for login, autosave and restoration. Native session tokens use a separate Keychain/Keystore adapter; web sessions use browser auth storage. Passwords and tokens are excluded from game snapshots and recovery exports. Existing guest progress is copied only after an explicit choice. There are no advertising, analytics or payment SDKs. The album contains generated game scenes, not device photos.
 
 Previously verified account play can queue offline progress locally, but login and initial restoration require a connection. Unacknowledged progress can be lost if local data is removed. Current hosted email delivery is restricted to permitted test addresses. Provider processing region, operational log retention, backup deletion periods and final processor disclosures must be confirmed before release.
-Depending on device settings, Android backup/device transfer or Apple iCloud/computer backups may include app data. These services are distinct from developer-operated cloud saves. See the official Android and Apple sources above. Backup or restoration of the latest progress is not guaranteed.
+Depending on device settings, Android backup/device transfer or Apple iCloud/computer backups may include app data. Android backup rules exclude the secure login storage file while retaining game-data backup eligibility. These services are distinct from developer-operated cloud saves. See the official Android and Apple sources above. Backup or restoration of the latest progress is not guaranteed.
 
 The game may retain a previous valid save and damaged originals for recovery. Distinct damaged originals are not automatically removed. A user-triggered export requests a browser JSON download or opens the native OS share sheet using one reusable cache file. The user chooses a recipient or file destination; nothing is automatically sent to the developer. Cancellation or failure does not erase originals. Check the chosen destination to confirm receipt; exported copies are managed there. An import feature is not currently provided.
 

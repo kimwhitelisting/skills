@@ -139,3 +139,9 @@ ZIP을 만들기 전 `scripts/verify-ios-simulator.mjs`가 Simulator 플랫폼, 
 시험 후 UI 로그아웃과 빈 게스트 홈을 확인하고 Simulator 테스트 앱을 삭제했다. 이전에 남아 있던 로컬 테스트 세션 정리도 완료했다. 이번 독립 테스트 계정의 서버 사용자·인증 연결·세션·저장·전송 작업 기록은 모두 제거했고 기존 사용자와 저장 digest가 유지됨을 확인했다. 실제 iPhone 앱은 변경하지 않았으며 무료 개발 프로파일의 주기적 재서명 안내는 계속 적용된다. 이 후속 시험에서 런타임 코드는 변경하지 않았다.
 
 근거: [Apple의 앱별 Keychain 접근과 서명 시 application-identifier 추가](https://developer.apple.com/documentation/security/sharing-access-to-keychain-items-among-a-collection-of-apps), [Xcode 빌드 설정](https://developer.apple.com/documentation/xcode/build-settings-reference).
+
+## 2026-11-09 Native 손상 인증 보호 후보 빌드
+
+전체 **186개 테스트**(기존 2,000판 포함), TypeScript/Vite 웹 빌드, Android 공식 sync와 `assembleDebug` 244 tasks, iOS 공식 sync와 기존 ad-hoc Simulator 스크립트를 통과했다. Android merged manifest·APK의 compiled XML에서 정확한 로그인 파일 백업 제외를 확인했고, APK v2 debug 서명·logging none을 확인했다. iOS 16.0 최소 버전·서명/entitlement·logging none 가드와 ZIP 생성을 통과했다. 의존성·lockfile·패키지 ID·실기기 서명 설정은 바꾸지 않았다.
+
+이 결과는 새 손상 복구 UI의 실제 Android/iPhone 실행 검증이 아니다. Simulator 설치·GUI 실행·Owner 계정 접근 및 기존 iPhone 앱 업데이트도 하지 않았다. 기존 Native 로그인·재설치 시험의 결과와 이번 합성 오류 회귀를 구분한다. 실제 iPhone 개인 계정 복원, iOS 16 런타임, OS 백업·기기 전송 및 무료 개발 프로파일의 주기적 재서명은 남아 있다.

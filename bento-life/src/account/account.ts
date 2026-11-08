@@ -7,8 +7,9 @@ import { signedRemote } from './remote.ts';
 import { accountPrefix, configureSaveScope } from './scope.ts';
 import { initializeStorage, currentSnapshot, writeKey, SNAPSHOT_KEY, flushStorage, storageStatus, subscribeStorage, validSnapshot, type Snapshot, type NativeStorage } from '../game/save.ts';
 import { validRun, validDex, validPrefs } from '../game/validate-save.ts';
+import { NativeAuthRecoveryPrompt, type NativeAuthRecovery } from './native-auth-recovery.ts';
 
-interface AuthStorage { getItem(key: string): string | null | Promise<string | null>; setItem(key: string, value: string): void | Promise<void>; removeItem(key: string): void | Promise<void> }
+interface AuthStorage { recovery?: NativeAuthRecovery; getItem(key: string): string | null | Promise<string | null>; setItem(key: string, value: string): void | Promise<void>; removeItem(key: string): void | Promise<void> }
 const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const publishable = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
 let client: SupabaseClient | undefined;
@@ -29,6 +30,7 @@ let draftEmail = '';
 let booted = false;
 let installedAfterBoot = false;
 let runtimeReadyAtBoot = false;
+let nativeRecoveryPrompt: NativeAuthRecoveryPrompt | undefined;
 let nativeStore: (NativeStorage & { keys?(): Promise<string[]> }) | undefined;
 let authChanged = false;
 const listeners = new Set<() => void>();
@@ -106,6 +108,21 @@ export async function bootAccount(native?: NativeStorage & { keys?(): Promise<st
   }
   // The browser releases the lease when this document is destroyed/reloaded. Do not release on pagehide:
   // checkpoint/native flush callbacks can still be writing then, and hidden tabs may resume.
+  if (authStorage?.recovery) {
+    const recovery = authStorage.recovery;
+    nativeRecoveryPrompt = new NativeAuthRecoveryPrompt(recovery, () => { renderPanel(); notify(); });
+    recovery.subscribe(() => {
+      if (recovery.hasFailure) {
+        sync?.stop();
+        fatal = '보안 로그인 정보를 읽지 못했어요. 게임 기록은 그대로 보관하고 있어요.';
+        opened = true;
+        queueMicrotask(() => {
+          void client?.auth.stopAutoRefresh().catch(() => {});
+          notify();
+        });
+      }
+    });
+  }
   try {
     for (const key of Object.keys(localStorage)) if (key.startsWith('bento-deleted:')) await removeDeletedLocal(key.slice('bento-deleted:'.length));
     if (url && publishable) {
@@ -141,7 +158,13 @@ export async function bootAccount(native?: NativeStorage & { keys?(): Promise<st
       window.addEventListener('bento-background', () => { void sync?.flush(); });
       window.addEventListener('pagehide', () => { void sync?.flush(); });
     }
-  } catch { fatal = '안전하게 계정 저장을 열지 못했어요. 원본을 바꾸지 않았어요. 연결과 기기 저장소를 확인한 뒤 앱을 다시 열어 주세요.'; opened = true; }
+  } catch {
+    // SDK initialization can restart refresh in its finally block. Stop again after
+    // it settles, as well as when a runtime storage failure is first observed.
+    if (authStorage?.recovery?.hasFailure) await client?.auth.stopAutoRefresh().catch(() => {});
+    fatal = '안전하게 계정 저장을 열지 못했어요. 원본을 바꾸지 않았어요. 연결과 기기 저장소를 확인한 뒤 앱을 다시 열어 주세요.';
+    opened = true;
+  }
   booted = true;
   if (!fatal && !suspended && !authChanged && (!user || sync?.mode === 'ready')) {
     gameWrites.activate();
@@ -169,7 +192,7 @@ function renderPanel(): void {
     if (sync?.mode === 'conflict') content += `<p>두 기록을 보관했어요. 하나를 선택하며 하트와 도감을 합치지 않아요.</p><p>기기: ${esc(summary(sync.localCandidate))}</p><p>계정: ${esc(summary(sync.remoteCandidate))}</p>${sync.localCandidate ? button('local', '이 기기 진행으로 이어가기') : ''}${sync.remoteCandidate ? button('remote', '계정 진행으로 이어가기', true) : ''}`;
     content += button('retry', '계정 저장 다시 확인') + button('logout', '로그아웃 · 기기 기록으로 돌아가기') + button('delete', '계정 삭제');
   }
-  panel.innerHTML = `<div class="account-card"><h2>계정과 저장</h2>${content}${feedback ? `<p role="status" class="account-message">${esc(feedback)}</p>` : ''}${!fatal && (!user || sync?.mode === 'ready') && !recovery ? button('close', '게임으로 돌아가기') : ''}</div>`;
+  panel.innerHTML = `<div class="account-card"><h2>계정과 저장</h2>${content}${nativeRecoveryPrompt?.markup() ?? ''}${feedback ? `<p role="status" class="account-message">${esc(feedback)}</p>` : ''}${!fatal && (!user || sync?.mode === 'ready') && !recovery ? button('close', '게임으로 돌아가기') : ''}</div>`;
 }
 async function retry(): Promise<void> {
   if (!sync) return;
@@ -187,6 +210,13 @@ function friendly(error: unknown): string {
 async function act(action: string): Promise<void> {
   if (action === 'restart') { location.reload(); return; }
   if (busy || suspended) return;
+  if (action.startsWith('native-reset') && nativeRecoveryPrompt) {
+    if (await nativeRecoveryPrompt.act(action)) {
+      gameWrites.freeze(); sync?.stop(); suspended = true;
+      location.reload();
+    }
+    return;
+  }
   if (action === 'close') { opened = false; feedback = ''; renderPanel(); notify(); return; }
   if (action === 'repair') { repairConfirm = true; renderPanel(); return; }
   if (action === 'repair-cancel') { repairConfirm = false; renderPanel(); return; }

@@ -103,3 +103,9 @@ GitHub 출시 작업은 자동이다 (위). PC에서 빌드할 때는 `cd androi
 - AdMob 계정과 앱 등록은 본인이 직접. 광고 단위 ID를 받으면 코드에 연결한다
 - 광고를 넣으면 개인정보처리방침·데이터 보안 양식을 고쳐야 한다 (광고 ID 수집)
 - 타깃 연령에 아동이 포함되면 광고 정책이 크게 달라진다 → 대상은 **성인(부모)**으로
+
+## Native 로그인 정보와 OS 백업
+
+2026-11-09 후보는 `allowBackup=true`를 유지하면서 `WSSecureStorageSharedPreferences.xml`만 legacy `fullBackupContent`와 Android 12+ `dataExtractionRules`의 cloud-backup/device-transfer에서 제외한다. 게임의 `CapacitorStorage.xml`은 제외하지 않는다. Keystore 키와 암호문을 서로 다른 기기에 복사해서 생기는 인증 오류를 줄이려는 설정이며, 계정 클라우드 저장과 OS 백업은 별개다.
+
+고정 secure-storage 플러그인은 Keystore 별칭이 없으면 null을 반환할 수도 있다. 모든 복원에 오류가 발생한다고 단정하지 않는다. 확인된 손상만 이용자가 로그인 정보를 복구할 수 있고 게임·게스트·미전송 기록은 유지한다. [동작과 회귀 범위](ACCOUNT-IMPLEMENTATION.md#2026-11-09-native-로그인-정보-손상-보호). 실제 Android OS 백업·기기 전송·재로그인은 아직 시험하지 않았다. 공식 근거: [Android Auto Backup](https://developer.android.com/identity/data/autobackup), [사용 중인 secure-storage](https://github.com/aparajita/capacitor-secure-storage) (2026-11-09 확인).

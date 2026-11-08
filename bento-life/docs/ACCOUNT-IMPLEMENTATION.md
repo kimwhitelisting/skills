@@ -52,3 +52,11 @@
 - 재현 순서: `npm ci` → `npm test` → `npm run build` → `npm run build:preview` → `npx cap sync android` / `npx cap sync ios`. Native 빌드/서명과 iPhone 설치는 기존 빌드 문서에 따른다.
 
 근거(2026-11-06 확인): [Supabase 로그인](https://supabase.com/docs/reference/javascript/auth-signinwithpassword), [비밀번호 재설정](https://supabase.com/docs/reference/javascript/auth-resetpasswordforemail), [secure-storage의 Native/Web 저장 차이](https://github.com/aparajita/capacitor-secure-storage). Supabase changelog의 CLI v3 변경은 이번 앱 SDK 경로에 해당하지 않으며 TLS 변경은 실제 HTTPS 연결 검증 대상으로 둔다.
+
+## 2026-11-09 Native 로그인 정보 손상 보호
+
+- Android OS 백업에서 보안 로그인 저장 파일만 제외한다. 게임 저장·게스트·계정별 캐시·미전송 journal은 이 변경으로 삭제하거나 초기화하지 않는다. [백업 범위](ANDROID.md#native-로그인-정보와-os-백업).
+- Native 저장소의 `invalidData`, 또는 고정된 Android 플러그인의 `AEADBadTagException`만 손상 복구 대상으로 분류한다. iOS 잠김·일반 OS 오류·알 수 없는 오류에는 잠금 해제/다시 열기를 안내하며 자동 삭제하지 않는다. Android 키가 없을 때 플러그인이 null을 반환하는 경우도 있어 모든 OS 복원이 실패한다고 가정하지 않는다.
+- 관찰한 오류 키에는 SDK의 후속 쓰기·삭제도 차단한다. 작업을 직렬화하고 확인 중 새 작업을 막아 늦은 로그인 응답이 손상 원본을 덮지 못하게 한다. 오류 시 게임 입력·타이머와 계정 동기화를 멈추고 인증 자동 갱신도 중지한다. 기존 계정 범위의 로컬 마지막 진행 보존은 유지한다.
+- 이용자가 안내→확인 두 단계를 거친 경우에만 알려진 인증 키 하나를 다시 검사한다. 정상으로 회복된 값은 지우지 않는다. 삭제 뒤 null 읽기를 확인해야 재시작하며 실패를 완료로 표시하지 않는다. Android 플러그인이 삭제 false를 반환하고 같은 손상이 남으면 그 키에만 **암호화된 JSON null**을 기록하고 다시 검사한다. 평문 Preferences로 토큰을 우회하지 않는다.
+- 회귀 테스트는 합성 저장소와 실제 계정 패널 이벤트 연결을 사용한다. 취소·중복 확인·읽기/삭제 실패·늦은 SDK 응답·다중 오류 키와 비인증 데이터의 바이트 보존을 검사했다. 실제 기기의 키 손상·잠김·OS 전송을 재현한 것은 아니며 이 Native UI의 실기기 확인은 남아 있다.
