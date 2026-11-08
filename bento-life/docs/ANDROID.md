@@ -61,7 +61,7 @@ keyPassword=…
 
 출시 워크플로우는 `npm run build:release`를 사용한다. Settings → Secrets and variables → Actions의 **Variables**에 `BENTO_SUPABASE_URL`, `BENTO_SUPABASE_PUBLISHABLE_KEY`, `BENTO_AUTH_REDIRECT_URL`을 준비해야 한다. 워크플로우가 이를 대응하는 `VITE_` 변수로 명시적으로 전달한다. 공개 클라이언트 키만 사용하며 서버 secret/service_role 키는 넣지 않는다. 이 코드 변경은 GitHub 변수나 실제 서버 설정을 생성하지 않았다.
 
-로컬에서는 Git에서 제외된 `.env.release.local` 또는 프로세스 환경으로 같은 `VITE_` 세 값을 제공한다. `release` 모드는 기존 `.env.local`도 읽으므로 대상 서버·메일 복귀 주소를 별도로 확인한다. 비어 있거나 형식이 잘못된 프로젝트 주소/공개 키/HTTPS 복귀 주소는 빌드 전에 거부하고 값은 오류에 출력하지 않는다. 검사는 서버 연결·메일 허용 목록·공개 SMTP 준비를 증명하지 않는다.
+로컬에서는 Git에서 제외된 `.env.release.local` 또는 프로세스 환경으로 같은 `VITE_` 세 값을 제공한다. `release` 모드는 기존 `.env.local`도 읽으므로 대상 서버·메일 복귀 주소를 별도로 확인한다. 세 변수 외 다른 `VITE_` 변수, 누락/잘못된 프로젝트 주소·공개 키, 비밀 키는 출시 빌드에서 거부한다. 메일 복귀 주소는 공개 HTTPS 도메인 형식이어야 하며 IP 주소·localhost·Tailscale `*.ts.net`과 알려진 사설/예약 도메인은 거부한다. 따라서 개인 미리보기 주소만 있는 로컬 설정은 출시 명령을 통과하지 못한다. 값은 오류에 출력하지 않는다. 구문 검사는 DNS/서버 연결·메일 허용 목록·공개 SMTP 준비를 증명하지 않는다.
 
 `npm run android:bundle`도 이 검사 경로를 거친다. `npm run build`/`android:sync`/preview는 개발·게스트 테스트를 위해 설정 없이 사용할 수 있으며 스토어 제출 경로로 대신 사용하지 않는다. Xcode에서 배포용 Archive를 만들 때도 먼저 `npm run ios:sync:release`를 사용한다. 서명·스토어 제출은 별도다.
 

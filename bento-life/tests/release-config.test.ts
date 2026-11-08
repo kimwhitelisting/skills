@@ -4,7 +4,7 @@ import { assertReleaseConfig } from '../scripts/release-config.ts';
 const configured = () => ({
   VITE_SUPABASE_URL: 'https://testproject.supabase.co',
   VITE_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_synthetic_test_value',
-  VITE_AUTH_REDIRECT_URL: 'https://example.com/account/return',
+  VITE_AUTH_REDIRECT_URL: 'https://play.release-demo.com/account/return',
 });
 
 describe('release-only account configuration', () => {
@@ -32,7 +32,20 @@ describe('release-only account configuration', () => {
   });
   it('rejects accidentally exposed secret variables as well as the selected public key', () => {
     expect(() => assertReleaseConfig('release', { ...configured(), VITE_SUPABASE_SERVICE_ROLE_KEY: serviceRole })).toThrow('서버 비밀');
-    expect(() => assertReleaseConfig('release', { ...configured(), VITE_EXTRA: 'sb_secret_synthetic' })).toThrow('서버 비밀');
+    expect(() => assertReleaseConfig('release', { ...configured(), VITE_EXTRA: '  sb_secret_synthetic  ' })).toThrow('서버 비밀');
+  });
+  it('rejects alternate public variables even if a credential is not recognizable by prefix', () => {
+    expect(() => assertReleaseConfig('release', { ...configured(), VITE_TOKEN: serviceRole })).toThrow('세 가지');
+    expect(() => assertReleaseConfig('release', { ...configured(), VITE_UNUSED: '' })).toThrow('세 가지');
+  });
+  it.each([
+    'https://macbook.tail-example.ts.net:8443/',
+    'https://192.168.1.5/', 'https://10.0.0.5/', 'https://172.16.0.5/', 'https://100.64.0.5/',
+    'https://8.8.8.8/', 'https://[::1]/', 'https://[2001:4860:4860::8888]/',
+    'https://preview.local/', 'https://preview.localhost/', 'https://preview.internal/', 'https://preview.lan/',
+    'https://preview.test/', 'https://preview.invalid/', 'https://preview.example/', 'https://example.com/',
+  ])('rejects private, reserved or literal callback hosts (%#)', value => {
+    expect(() => assertReleaseConfig('release', { ...configured(), VITE_AUTH_REDIRECT_URL: value })).toThrow('공개 HTTPS');
   });
   it.each(['http://example.com', 'https://localhost', 'https://127.0.0.1', 'https://user:pass@example.com', 'https://example.com/#access_token=synthetic', ' https://example.com/', 'not a url'])('rejects unsafe or invalid return URL (%#)', value => {
     expect(() => assertReleaseConfig('release', { ...configured(), VITE_AUTH_REDIRECT_URL: value })).toThrow('VITE_AUTH_REDIRECT_URL');
