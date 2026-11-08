@@ -1,5 +1,8 @@
 # 냠냠졸졸 작업 지침
 
+- 이 폴더에서 시작한 새 세션도 공용 운영 원본 [kimwhitelisting/agent-studio](https://github.com/kimwhitelisting/agent-studio)의 `AGENTS.md`, `operations/WORKSPACE.md`, `operations/work-items.yaml`을 확인한다. 현재 작업 ID·담당·작업 브랜치를 총괄(Studio Lead)과 확인한 뒤 배정된 범위에서 작업한다.
+- Studio에 접근할 수 없으면 쓰기 담당을 임의로 지정하지 않는다. 읽기 전용으로 프로젝트를 탐색한 뒤 총괄에 상황을 반환한다.
+- Studio의 비공개 절대 경로·계정 정보·작업 상세는 이 공개 저장소에 복제하지 않는다. 공용 운영 규칙은 Studio 원본을 참조한다.
 - 먼저 README.md, docs/HANDOFF.md, docs/ANDROID.md, docs/MAC-BUILD.md를 읽는다. 문서 상태는 현재 Git 이력과 대조한다.
 - 이 프로젝트의 작업 범위는 `bento-life/`다. 상위 저장소의 다른 스킬·제품은 변경하지 않는다.
 - 한 작업 폴더의 작성자는 한 명. 다른 에이전트는 읽기 전용 검토를 맡고, 동시 구현은 별도 branch/worktree로 분리한다.
