@@ -145,3 +145,9 @@ ZIP을 만들기 전 `scripts/verify-ios-simulator.mjs`가 Simulator 플랫폼, 
 전체 **186개 테스트**(기존 2,000판 포함), TypeScript/Vite 웹 빌드, Android 공식 sync와 `assembleDebug` 244 tasks, iOS 공식 sync와 기존 ad-hoc Simulator 스크립트를 통과했다. Android merged manifest·APK의 compiled XML에서 정확한 로그인 파일 백업 제외를 확인했고, APK v2 debug 서명·logging none을 확인했다. iOS 16.0 최소 버전·서명/entitlement·logging none 가드와 ZIP 생성을 통과했다. 의존성·lockfile·패키지 ID·실기기 서명 설정은 바꾸지 않았다.
 
 이 결과는 새 손상 복구 UI의 실제 Android/iPhone 실행 검증이 아니다. Simulator 설치·GUI 실행·Owner 계정 접근 및 기존 iPhone 앱 업데이트도 하지 않았다. 기존 Native 로그인·재설치 시험의 결과와 이번 합성 오류 회귀를 구분한다. 실제 iPhone 개인 계정 복원, iOS 16 런타임, OS 백업·기기 전송 및 무료 개발 프로파일의 주기적 재서명은 남아 있다.
+
+### 같은 후보의 미리보기 갱신과 격리 DOM 검사
+
+후보 **4c5ed87**을 기존 기능 브랜치에 보존하고 원격 SHA 일치를 확인했다. 별도 검토에서도 최신 Simulator 패키징 가드가 통과했다. 기존 비공개 미리보기는 같은 origin·같은 계정 서버/공개 키 설정을 유지해 원자 교체했으며 이전 HTML도 보관했다. 로컬 HTTP와 기존 비공개 HTTPS 모두 200 응답 및 후보 HTML SHA256 `d8d9237c2abd4b6a3763f2adde2e5a976293392b6f2a04395907d8ec9bd1b239` 일치를 확인했다. 이 과정에서 사용자 데이터나 로그인에 접근하지 않았다.
+
+네트워크를 차단한 격리 Chromium 158에서는 light/dark 초기 화면과 계정 패널의 로그인 폼·닫기를 DOM 이벤트로 확인했다. 320/390px에서 문서 가로 넘침이 없었고 uncaught 오류는 0개였다. 다만 최소 HTML·기존 앱·후보 모두 해당 headless 환경에서 native `requestAnimationFrame` 콜백이 실행되지 않아 스크린샷·포인터·게임 진행 검증은 하지 못했다. 따라서 이 결과를 시각적 대비·실제 터치·로그인 성공으로 확대하지 않는다. 비공개 검증 기록은 `browser-dom-smoke.json`과 `preview-deployment.json`에 보관했다.
