@@ -12,6 +12,7 @@ const stats = (v: unknown) => object(v) && ['health', 'smarts', 'happy', 'fitnes
 const delta = (v: unknown) => object(v) && Object.values(v).every(finite);
 const lunch = (v: unknown) => Number.isInteger(v) && (v as number) >= 0 && (v as number) <= 3;
 const ingredientIds = (v: unknown) => strings(v) && v.every(id => INGREDIENTS.some(i => i.id === id));
+const ingredientId = (v: unknown) => typeof v === 'string' && INGREDIENTS.some(i => i.id === v);
 const known = (v: unknown) => object(v) && strings(v.likes) && ingredientIds(v.dislikes) && typeof v.talent === 'boolean';
 const selection = (v: unknown) => object(v) && ['base', 'main', 'side'].every(slot => INGREDIENTS.some(i => i.id === v[slot] && i.slot === slot));
 const photo = (v: unknown) => object(v) && ['id', 'expr', 'caption', 'name'].every(k => text(v[k])) && finite(v.age) && ['boy', 'girl'].includes(v.gender) && optional(v.theme, text) && optional(v.hat, text);
@@ -23,6 +24,8 @@ function today(v: unknown): boolean {
     if (v.phase !== 'morning') {
         const p = v.pack;
         if (!object(p) || !selection(p.sel) || !lunch(p.lunch) || !['happy', 'neutral', 'grumpy'].includes(p.mood) || !object(p.meal) || !object(p.meal.menu) || !text(p.meal.menu.key) || !text(p.meal.menu.name) || !strings(p.meal.lines))
+            return false;
+        if (!optional(p.liked, ingredientId) || !optional(p.disliked, ingredientId))
             return false;
     }
     if (v.phase === 'evening' && (!object(v.evening) || !lunch(v.evening.lunch) || !strings(v.evening.says) || !strings(v.evening.extra) || !delta(v.evening.delta)))

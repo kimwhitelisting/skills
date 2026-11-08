@@ -1,7 +1,7 @@
 import { beforeEach, afterEach, describe, it, expect, vi } from 'vitest';
 import { available } from '../src/game/bento.ts';
 import { newGame } from '../src/game/state.ts';
-import { startGame, chooseEventOption, continueAfterEvent } from '../src/game/engine.ts';
+import { startGame, chooseEventOption, continueAfterEvent, packToday, chooseLeave } from '../src/game/engine.ts';
 import { validRun, validDex, validPrefs } from '../src/game/validate-save.ts';
 import { captureCheckpoint, restoreCheckpoint } from '../src/game/checkpoint.ts';
 import { captureFollow, restoreFollow, type FollowState } from '../src/proto/follow-checkpoint.ts';
@@ -29,6 +29,46 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllGlobals());
 describe('durable save and recovery', () => {
+    const leaveSave = () => {
+        const run = newGame(1);
+        run.age = 4;
+        run.step = 'day';
+        run.today = { reqs: [], forgot: false, phase: 'morning' };
+        packToday(run, {
+            base: available(run, 'base')[0].id,
+            main: available(run, 'main')[0].id,
+            side: available(run, 'side')[0].id,
+        });
+        return run;
+    };
+    it.each(['liked', 'disliked'] as const)('preserves a corrupt pack.%s original instead of accepting a save that crashes settlement', async field => {
+        const run = leaveSave();
+        delete run.today!.pack!.disliked;
+        run.today!.pack![field] = 'missing-food';
+        expect(() => chooseLeave(structuredClone(run), 'trust')).toThrow('unknown ingredient');
+        expect(validRun(run)).toBe(false);
+
+        const storage = await fresh();
+        const raw = JSON.stringify({ version: 1, run, dex: dex(), prefs: prefs() });
+        data.set(storage.SNAPSHOT_KEY, raw);
+        await storage.initializeStorage();
+        expect(storage.storageStatus().blocked).toBe(true);
+        expect(storage.loadRun()).toBeUndefined();
+        storage.saveSnapshot(undefined, dex(), prefs());
+        expect(data.get(storage.SNAPSHOT_KEY)).toBe(raw);
+        expect(Object.values(JSON.parse(storage.recoveryExport()))).toContain(raw);
+    });
+    it('keeps historical absent and valid food preference IDs usable for settlement', () => {
+        for (const field of ['liked', 'disliked'] as const) {
+            for (const value of [undefined, 'rice']) {
+                const run = leaveSave();
+                delete run.today!.pack!.disliked;
+                run.today!.pack![field] = value;
+                expect(validRun(run)).toBe(true);
+                expect(() => chooseLeave(run, 'trust')).not.toThrow();
+            }
+        }
+    });
     it('migrates legacy keys without deleting originals and commits run/wallet/settings in one snapshot', async () => {
         const old = newGame(1);
         data.set(RUN, JSON.stringify(old));
