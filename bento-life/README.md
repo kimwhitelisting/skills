@@ -22,7 +22,8 @@ npm install
 npm run dev        # http://localhost:5173 — 휴대폰으로 같은 와이파이에서 접속 가능
 npm test           # 단위 테스트 + 2,000판 자동 플레이 (멈춤/버그 검사)
 npm run balance    # 플레이 성향별 평균 스탯·엔딩 분포 리포트
-npm run build      # dist/ 에 배포용 빌드
+npm run build      # dist/ 에 개발 검증용 웹 빌드 (계정 설정 선택)
+npm run build:release # 스토어 후보: 필수 공개 계정 설정을 검사한 뒤 빌드
 npm run build:preview  # dist-preview/*.standalone.html (브라우저용), *.single.html (임베드용)
 ```
 
@@ -87,4 +88,5 @@ npx cap open android      # Android Studio에서 서명된 AAB 빌드 → Play C
 - [ ] 등급 분류: 두 스토어 모두 자체 설문(IARC 등)으로 처리 — 국내 게임물 등급도 이걸로 대체됨
 - [ ] 개인정보처리방침 URL (데이터 수집이 없어도 필요), Play 데이터 보안 양식
 - [ ] 광고/결제 SDK를 넣으면: 광고 ID 고지, iOS ATT 팝업, 인앱결제 상품 등록
-- [ ] 앱 아이콘, 스크린샷(폰 세로), 스토어 소개 문구, 저장 데이터를 `@capacitor/preferences`로 이전(`save.ts`만 수정)
+- [x] 통합 저장·Preferences 미러·계정 저장 구현 — [저장/복구 제한](docs/STORAGE.md), [실제 검증 범위](docs/ACCOUNT-IMPLEMENTATION.md)
+- [ ] 최종 아이콘·세로 스크린샷·스토어 소개와 [출시 계정 설정](docs/ANDROID.md#출시-계정-설정-2026-11-09)을 대조하고 출시 후보 빌드/서명 검증

@@ -7,7 +7,7 @@
 |---|---|---|
 | 앱 설정 | 앱 이름 「냠냠졸졸」, 웹 파일 위치 `dist`, 배경색 | `capacitor.config.ts` |
 | 패키지 이름 | **`com.paranstudio.dosirak`** (확정 · 스튜디오 파란). iOS 번들 ID도 같은 이름으로 | `capacitor.config.ts` |
-| 저장 | 웹뷰 저장소 + 앱 저장소(@capacitor/preferences)에 같이 쓴다. 기기 저장 공간이 부족해 웹뷰 저장소가 지워져도 진행·도감·하트가 남는다 | `src/entry-app.ts`, `src/game/save.ts` |
+| 저장 | 웹뷰의 통합 저장을 Preferences에 미러링하고 로그인 계정에 동기화한다. 복원 범위와 미전송 기록·저장 실패 제한은 [ACCOUNT-IMPLEMENTATION.md](ACCOUNT-IMPLEMENTATION.md), [STORAGE.md](STORAGE.md)를 따른다 | `src/entry-app.ts`, `src/game/save.ts` |
 | 뒤로가기 | 창이 열려 있으면 닫기, 등굣길 도중엔 그대로, 타이틀이면 앱을 내린다 | `src/entry-app.ts`, `src/main.ts` |
 | 아이콘 | 보자기 도시락 뒤로 빼꼼 보는 아이 (도트). 적응형 아이콘 + 예전 방식 네모·동그라미 | `scripts/android-assets.ts` |
 | 시작 화면 | 크림색 바탕 + 두 아이와 보자기 도시락 | 〃 |
@@ -23,6 +23,7 @@
 ## 명령
 ```bash
 npm run android:sync     # 웹 빌드 → android 폴더로 복사 (코드를 고칠 때마다)
+npm run android:sync:release # 출시 계정 설정 검사 → 웹 빌드 → android 복사
 npm run android:open     # Android Studio로 열기 (PC에서)
 npm run android:bundle   # 출시용 AAB 빌드 (서명 설정이 있어야 함)
 npm run android:assets   # 아이콘·시작 화면·세로 고정·글자 배율 다시 넣기
@@ -55,6 +56,16 @@ keyAlias=upload
 keyPassword=…
 ```
 `android/app/build.gradle`에는 이 파일이 있으면 읽어서 서명하는 설정이 이미 들어 있다 (없으면 서명 없이 빌드). 시험용 키로 `bundleRelease`가 서명된 AAB를 만드는 것까지 확인했다. `*.jks`·`keystore.properties`는 `android/.gitignore`에 들어 있다. Play Console에서 **Play 앱 서명**을 켜 두면 실제 배포 키는 Google이 보관한다.
+
+## 출시 계정 설정 (2026-11-09)
+
+출시 워크플로우는 `npm run build:release`를 사용한다. Settings → Secrets and variables → Actions의 **Variables**에 `BENTO_SUPABASE_URL`, `BENTO_SUPABASE_PUBLISHABLE_KEY`, `BENTO_AUTH_REDIRECT_URL`을 준비해야 한다. 워크플로우가 이를 대응하는 `VITE_` 변수로 명시적으로 전달한다. 공개 클라이언트 키만 사용하며 서버 secret/service_role 키는 넣지 않는다. 이 코드 변경은 GitHub 변수나 실제 서버 설정을 생성하지 않았다.
+
+로컬에서는 Git에서 제외된 `.env.release.local` 또는 프로세스 환경으로 같은 `VITE_` 세 값을 제공한다. `release` 모드는 기존 `.env.local`도 읽으므로 대상 서버·메일 복귀 주소를 별도로 확인한다. 비어 있거나 형식이 잘못된 프로젝트 주소/공개 키/HTTPS 복귀 주소는 빌드 전에 거부하고 값은 오류에 출력하지 않는다. 검사는 서버 연결·메일 허용 목록·공개 SMTP 준비를 증명하지 않는다.
+
+`npm run android:bundle`도 이 검사 경로를 거친다. `npm run build`/`android:sync`/preview는 개발·게스트 테스트를 위해 설정 없이 사용할 수 있으며 스토어 제출 경로로 대신 사용하지 않는다. Xcode에서 배포용 Archive를 만들 때도 먼저 `npm run ios:sync:release`를 사용한다. 서명·스토어 제출은 별도다.
+
+근거(확인 2026-11-09): [Vite 환경·mode](https://vite.dev/guide/env-and-mode), [Supabase 공개/비밀 키](https://supabase.com/docs/guides/getting-started/api-keys).
 
 ## PC 없이 출시하기 (GitHub Actions · 휴대폰만으로)
 키 만들기와 AAB 빌드를 GitHub이 대신 한다. 작업 파일: 저장소 맨 위 `.github/workflows/android-keygen.yml`, `android-release.yml`.

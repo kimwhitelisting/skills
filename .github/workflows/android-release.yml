@@ -49,8 +49,12 @@ jobs:
           npm test
 
       - name: 웹 빌드 → 안드로이드로 복사
+        env:
+          VITE_SUPABASE_URL: ${{ vars.BENTO_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.BENTO_SUPABASE_PUBLISHABLE_KEY }}
+          VITE_AUTH_REDIRECT_URL: ${{ vars.BENTO_AUTH_REDIRECT_URL }}
         run: |
-          npm run build
+          npm run build:release
           npx cap sync android
 
       - name: 서명 설정
