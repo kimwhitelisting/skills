@@ -2,6 +2,7 @@
 set -euo pipefail
 mkdir -p build
 exec > >(tee build/xcodebuild-simulator.log) 2>&1
+node scripts/verify-ios-config.mjs
 xcodebuild -version
 xcodebuild -resolvePackageDependencies -project ios/App/App.xcodeproj -scheme App
 # Keep Xcode's Simulator entitlements: disabling signing breaks Keychain writes (-34018).

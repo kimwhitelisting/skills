@@ -110,7 +110,13 @@ DEVELOPMENT_TEAM = YOUR_TEAM_ID
 
 ### 출시 전 호환성 잔여 항목
 
-현재 배포 대상 설정은 iOS 15.0이지만 계정 경로는 `navigator.locks`와 `AbortSignal.timeout()`을 사용한다. Web Locks는 Safari 15.4부터이며 `AbortSignal.timeout()`의 Safari 16 지원 범위도 고려해야 한다. iOS 15.0 전체를 지원한다고 보고하지 않는다. 최소 버전 상향 또는 검증된 대체 구현을 별도 결정·시험하며, 이번 로깅·서명 설정에서는 배포 대상이나 게임 코드를 바꾸지 않았다. [WebKit의 Safari 15.4 안내](https://webkit.org/blog/12445/new-webkit-features-in-safari-15-4/), [AbortSignal.timeout 호환성](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal/timeout_static)
+초기 설정의 iOS 15.0은 이미 사용하는 `navigator.locks`/`AbortSignal.timeout()` 지원 범위와 맞지 않았다. **2026-11-09에는 최소 iOS 16.0으로 정합화**했다. Xcode 프로젝트와 App의 Debug/Release 네 곳을 맞추고 공식 `cap sync ios`로 생성한 CapApp-SPM도 `.iOS(.v16)`인지 확인한다. 플러그인 버전·패키지 ID·로컬 서명 설정은 유지한다. iOS 15 지원을 주장하지 않으며 저장 잠금 안전성을 낮추는 fallback은 추가하지 않았다.
+
+`npm run ios:verify`와 공식 `capacitor:sync:after` hook이 네 곳과 생성된 SPM을 검사하고 불일치하면 실패한다. Simulator 빌드 시작 전 같은 검사를 수행하고, 패키징 가드는 실제 `.app/Info.plist`의 `MinimumOSVersion`도 16.0인지 확인한다. 의존 패키지의 더 낮은 최소 OS 선언은 앱의 지원 OS를 낮추지 않는다. 설치된 Capacitor CLI 8.6.0의 `getMajoriOSVersion`/SPM 생성 코드를 대조했으며 sync가 앱 선언에서 v16을 재생성하는 것을 확인했다.
+
+2026-11-09 검증: 전체 테스트 **143개** 통과(최소 버전 회귀 7개 포함), `npm run ios:simulator`의 웹 빌드→공식 sync→설정 hook→ad-hoc Simulator 빌드→패키징 가드 통과. Xcode의 실제 Debug/Release build settings와 앱 `MinimumOSVersion`은 모두 16.0이며 ZIP의 42개 파일은 빌드 앱과 일치했다. 이 실행은 앱 설치나 GUI 실행을 하지 않았다. 기존 실제 iPhone 앱·계정 데이터·개인 서명 설정을 바꾸지 않았다.
+
+최소 버전 설정·패키징 검사는 **iOS 16.0 실제 런타임에서의 전체 동작 검증이 아니다**. iOS 16 기기/Simulator에서 계정·잠금·네트워크 시간제한·복귀 검증이 남으며, 기존 iOS 27.2 Simulator와 iOS 26.6.1 실제 기기 결과를 그 대신 사용하지 않는다. [WebKit의 Web Locks 지원 안내](https://webkit.org/blog/12445/new-webkit-features-in-safari-15-4/), [AbortSignal.timeout 호환성](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal/timeout_static), [공식 Capacitor CLI hooks](https://capacitorjs.com/docs/cli/hooks).
 
 공식 문서와 설치된 Capacitor 8 설정 대조일: 2026-11-07.
 

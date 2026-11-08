@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { assertIOSMinimum } from './verify-ios-config.mjs';
 
 class VerificationError extends Error {}
 
@@ -13,6 +14,8 @@ export function verifySimulator(app) {
   const plist = raw => JSON.parse(run('/usr/bin/plutil', ['-convert', 'json', '-o', '-', '--', '-'], raw));
   const info = plist(readFileSync(join(app, 'Info.plist')));
   if (!info.CFBundleSupportedPlatforms?.includes('iPhoneSimulator')) throw new VerificationError('Expected a Simulator app.');
+  try { assertIOSMinimum(info.MinimumOSVersion); }
+  catch { throw new VerificationError('Packaged Simulator app must require iOS 16.0.'); }
   run('/usr/bin/codesign', ['--verify', '--deep', '--strict', app]);
   // Xcode embeds Simulator entitlements in each Mach-O slice, not in the codesign blob.
   // Inspect the packaged executable itself; an intermediate .xcent alone is insufficient.
