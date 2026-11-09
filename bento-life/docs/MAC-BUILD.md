@@ -151,3 +151,13 @@ ZIP을 만들기 전 `scripts/verify-ios-simulator.mjs`가 Simulator 플랫폼, 
 후보 **4c5ed87**을 기존 기능 브랜치에 보존하고 원격 SHA 일치를 확인했다. 별도 검토에서도 최신 Simulator 패키징 가드가 통과했다. 기존 비공개 미리보기는 같은 origin·같은 계정 서버/공개 키 설정을 유지해 원자 교체했으며 이전 HTML도 보관했다. 로컬 HTTP와 기존 비공개 HTTPS 모두 200 응답 및 후보 HTML SHA256 `d8d9237c2abd4b6a3763f2adde2e5a976293392b6f2a04395907d8ec9bd1b239` 일치를 확인했다. 이 과정에서 사용자 데이터나 로그인에 접근하지 않았다.
 
 네트워크를 차단한 격리 Chromium 158에서는 light/dark 초기 화면과 계정 패널의 로그인 폼·닫기를 DOM 이벤트로 확인했다. 320/390px에서 문서 가로 넘침이 없었고 uncaught 오류는 0개였다. 다만 최소 HTML·기존 앱·후보 모두 해당 headless 환경에서 native `requestAnimationFrame` 콜백이 실행되지 않아 스크린샷·포인터·게임 진행 검증은 하지 못했다. 따라서 이 결과를 시각적 대비·실제 터치·로그인 성공으로 확대하지 않는다. 비공개 검증 기록은 `browser-dom-smoke.json`과 `preview-deployment.json`에 보관했다.
+
+## 2026-11-09 인증 보조 키 복구와 Android 후속 시험
+
+설치 auth-js 2.119.0의 PKCE index·동적 슬롯을 정확한 키 문법과 최대 5개 흐름으로 한정해 명시적 손상 복구에 포함했다. 전체 **222개 테스트**(2,000판 포함), TypeScript/Vite 웹 빌드, Android sync·debug 빌드 244 tasks·APK 서명 검증을 통과했다. APK SHA256: `34d1fee33dc416a84ebf061f508620d65660c152a834ffbcdab1aef0ac57915e`. 독립 Claude 읽기 검토의 차단 지적은 없었다. 설명 주석만 수정한 뒤 생성 웹 14개 파일이 기존 APK와 바이트 단위로 같음을 확인했다.
+
+자체 Android AVD에서 기존 앱을 지우지 않고 업데이트한 뒤, 원래 없던 정확한 인증 키 하나에 합성 손상 암호문을 넣었다. 실제 Native `invalidData` → UI 취소/원문 보존 → 명시 확인/암호화된 null fallback·읽기 확인 → 강제종료/재시작 후 기존 게스트 진행과 앨범 보존을 통과했다. Native Preferences 전체와 비인증 WebView 저장 바이트/digest가 유지됐다. 주입한 키·alias만 정리해 원래 보안 파일 부재 상태를 복원하고 AVD를 종료했다. 계정 미전송 키는 애초 없었으므로 부재 보존만 검증했으며, 기존 계정 미전송 데이터가 있는 Native 시험은 아니다. [상세 범위와 한계](ACCOUNT-IMPLEMENTATION.md#android-자체-테스트-앱의-손상-복구-확인)를 따른다.
+
+같은 소스로 iOS 공식 sync·기존 ad-hoc Simulator 빌드/서명·entitlement 가드와 ZIP 생성을 통과했다. 실제 앱의 최소 iOS 16.0, `loggingBehavior: 'none'`, UserDefaults `CA92.1`·FileTimestamp `C617.1` 사유를 확인했다. ZIP의 42개 파일이 앱과 일치하며 웹 14개 파일은 Android APK·웹 dist와도 동일하다. ZIP SHA256: `a718475cea270391374997d761669289da02858cad351613a8d2aeadee9b841a`. 이번 iOS 실행은 컴파일·패키징만 수행했고 Simulator를 시작하거나 앱을 설치하지 않았다.
+
+현재 PKCE index·동적 슬롯 및 늦은 SDK 쓰기는 설치 SDK와 합성 포트의 회귀 증거다. iOS 실제 손상 복구·하드웨어 잠김·OS 백업/기기 전송·실제 iPhone 개인 계정 복원·오프라인 재연결은 미검증으로 남는다. 호스트 Keychain·서버 계정·실제 iPhone 앱·개인 서명 설정과 의존성은 바꾸지 않았다.

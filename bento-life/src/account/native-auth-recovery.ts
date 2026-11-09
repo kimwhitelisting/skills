@@ -1,4 +1,22 @@
-const AUTH_KEYS = new Set(['bento-auth:v1', 'bento-auth:v1-user', 'bento-auth:v1-code-verifier']);
+const AUTH_KEY = 'bento-auth:v1';
+const FLOW_INDEX_KEY = `${AUTH_KEY}-flows-code-verifier`;
+const AUTH_KEYS = new Set([AUTH_KEY, `${AUTH_KEY}-user`, `${AUTH_KEY}-code-verifier`, FLOW_INDEX_KEY]);
+// Pinned auth-js 2.119.0 helpers.ts / constants.ts. No prefix enumeration or wipe.
+const FLOW_PREFIX = `${AUTH_KEY}-flow-`;
+const FLOW_SUFFIX = '-code-verifier';
+const MAX_FLOWS = 5;
+function validFlowId(value: unknown): value is string {
+  // Explicit length and character checks match the pinned SDK flow-ID grammar.
+  return typeof value === 'string' && value.length >= 8 && value.length <= 64
+    && !/[^a-zA-Z0-9_-]/.test(value);
+}
+function isFlowKey(key: string): boolean {
+  return key.startsWith(FLOW_PREFIX) && key.endsWith(FLOW_SUFFIX)
+    && validFlowId(key.slice(FLOW_PREFIX.length, -FLOW_SUFFIX.length));
+}
+function isAuthKey(key: string): boolean {
+  return AUTH_KEYS.has(key) || isFlowKey(key);
+}
 export interface SecureAuthPort {
   get(key: string): Promise<unknown>;
   set(key: string, value: string | null): Promise<void>;
@@ -39,11 +57,16 @@ export class NativeAuthRecovery {
     if (typeof value !== 'string') throw invalidData();
     // Supabase writes JSON strings. Do not let its absent/invalid-session fallback
     // silently replace damaged secure credentials before the user chooses recovery.
-    if (AUTH_KEYS.has(key)) {
+    if (isAuthKey(key)) {
       let parsed: unknown;
       try { parsed = JSON.parse(value); } catch { throw invalidData(); }
-      if (key === 'bento-auth:v1' && (!parsed || typeof parsed !== 'object'
+      if (key === AUTH_KEY && (!parsed || typeof parsed !== 'object'
         || !['access_token', 'refresh_token', 'expires_at'].every(field => field in parsed))) throw invalidData();
+      // The SDK filters malformed indexes. Preserve their original bytes instead
+      // of letting cleanup silently discard entries or traverse an unbounded ring.
+      if (key === FLOW_INDEX_KEY && (!Array.isArray(parsed) || parsed.length > MAX_FLOWS
+        || !parsed.every(validFlowId) || new Set(parsed).size !== parsed.length)) throw invalidData();
+      if (isFlowKey(key) && typeof parsed !== 'string') throw invalidData();
     }
     return value;
   }
@@ -54,7 +77,7 @@ export class NativeAuthRecovery {
         if (this.failures.delete(key)) this.notify();
         return value;
       } catch (error) {
-        this.failures.set(key, { corrupt: AUTH_KEYS.has(key) && confirmedCredentialCorruption(error, this.platform) });
+        this.failures.set(key, { corrupt: isAuthKey(key) && confirmedCredentialCorruption(error, this.platform) });
         this.notify();
         throw error;
       }

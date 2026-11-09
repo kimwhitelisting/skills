@@ -1,5 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
+import { createRequire } from 'node:module';
 import { NativeAuthRecovery, NativeAuthRecoveryPrompt, confirmedCredentialCorruption } from '../src/account/native-auth-recovery.ts';
+
+// Exercise the installed SDK's storage contract, not a copied cleanup algorithm.
+const { removeAllPKCEVerifiers, storePKCEVerifier, retrievePKCEVerifier } = createRequire(import.meta.url)(
+  '../node_modules/@supabase/auth-js/dist/main/lib/helpers.js',
+);
 
 const key = 'bento-auth:v1';
 const invalid = () => Object.assign(new Error('Invalid data'), { code: 'invalidData' });
@@ -129,6 +135,153 @@ describe('confirmed native credential recovery', () => {
     await expect(f.recovery.getItem(key)).rejects.toMatchObject({ code: 'invalidData' });
     expect(f.recovery.canReset).toBe(true); expect(f.data.get(key)).toBe(raw);
     expect(f.port.remove).not.toHaveBeenCalled(); f.unchanged();
+  });
+});
+
+describe('pinned SDK PKCE authentication key recovery', () => {
+  const indexKey = `${key}-flows-code-verifier`;
+  const slot = (id: string) => `${key}-flow-${id}-code-verifier`;
+  const ids = Array.from({ length: 6 }, (_, i) => `flow-id-${i}`);
+  function flowFixture() {
+    const f = fixture();
+    f.fail(undefined);
+    f.data.set(key, session);
+    // Parent fixture's remove/set fault switches only affect the primary key.
+    return f;
+  }
+
+  it.each([key, `${key}-user`, `${key}-code-verifier`, indexKey])('retains explicit per-key recovery for fixed key %s', async name => {
+    const f = flowFixture();
+    f.data.set(name, 'broken-json');
+    const before = new Map(f.data);
+    await expect(f.recovery.getItem(name)).rejects.toMatchObject({ code: 'invalidData' });
+    expect(await f.recovery.resetConfirmed(false)).toBe(false);
+    expect(f.data).toEqual(before);
+    expect(await f.recovery.resetConfirmed(true)).toBe(true);
+    before.delete(name);
+    expect(f.data).toEqual(before);
+    expect(f.port.remove).toHaveBeenCalledExactlyOnceWith(name);
+  });
+
+  it('matches actual SDK five-slot eviction and healthy logout cleanup without touching progress', async () => {
+    const f = flowFixture();
+    for (const [i, id] of ids.entries()) {
+      await storePKCEVerifier(f.recovery, key, id, `synthetic-verifier-${i}`);
+    }
+    expect(JSON.parse(f.data.get(indexKey) as string)).toEqual(ids.slice(1));
+    expect(f.data.has(slot(ids[0]))).toBe(false);
+    await expect(retrievePKCEVerifier(f.recovery, key, ids[5])).resolves.toEqual({
+      verifier: 'synthetic-verifier-5', flowId: ids[5],
+    });
+    await removeAllPKCEVerifiers(f.recovery, key);
+    expect(f.data.get(key)).toBe(session);
+    expect(f.recovery.hasFailure).toBe(false);
+    // Normal SDK cleanup may remove healthy slots without reading each one.
+    expect(f.port.remove.mock.calls.map(([name]) => name)).toEqual([
+      slot(ids[0]), ...ids.slice(1).map(slot), indexKey, `${key}-code-verifier`,
+    ]);
+    f.unchanged();
+  });
+
+  it('reproduces real SDK teardown blocked by unreadable index, then resets only that confirmed key', async () => {
+    const f = flowFixture();
+    f.data.set(indexKey, 'original-unreadable-index');
+    f.data.set(slot(ids[0]), JSON.stringify('preserved-slot'));
+    const before = new Map(f.data);
+    const get = f.port.get.getMockImplementation()!;
+    f.port.get.mockImplementation(async name => {
+      if (name === indexKey && f.data.has(name)) throw invalid();
+      return get(name);
+    });
+    await expect(removeAllPKCEVerifiers(f.recovery, key)).rejects.toMatchObject({ code: 'invalidData' });
+    expect(f.recovery.canReset).toBe(true);
+    expect(new NativeAuthRecoveryPrompt(f.recovery, vi.fn()).markup()).toContain('data-account="native-reset"');
+    expect(await f.recovery.resetConfirmed(false)).toBe(false);
+    expect(f.data).toEqual(before);
+    expect(f.port.remove).not.toHaveBeenCalled();
+    expect(await f.recovery.resetConfirmed(true)).toBe(true);
+    before.delete(indexKey);
+    expect(f.data).toEqual(before);
+    expect(f.port.remove).toHaveBeenCalledExactlyOnceWith(indexKey);
+    await expect(f.recovery.setItem(indexKey, '[]')).rejects.toThrow('Reopen');
+  });
+
+  it.each([
+    'not-json', 'null', '{}', '["flow-id-0",42]', '["flow-id-0","flow-id-0"]',
+    JSON.stringify(ids), JSON.stringify(['short']), JSON.stringify(['a'.repeat(65)]),
+    JSON.stringify(['valid-id\n']), JSON.stringify(['path/flow']),
+  ])('preserves malformed or excessive index %s before any SDK cleanup', async raw => {
+    const f = flowFixture();
+    f.data.set(indexKey, raw);
+    f.data.set(slot(ids[0]), JSON.stringify('preserved-slot'));
+    const before = new Map(f.data);
+    await expect(removeAllPKCEVerifiers(f.recovery, key)).rejects.toMatchObject({ code: 'invalidData' });
+    expect(f.recovery.canReset).toBe(true);
+    await expect(f.recovery.removeItem(indexKey)).rejects.toThrow('readable');
+    expect(f.port.remove).not.toHaveBeenCalled();
+    expect(f.data).toEqual(before);
+    expect(await f.recovery.resetConfirmed(true)).toBe(true);
+    before.delete(indexKey);
+    expect(f.data).toEqual(before);
+  });
+
+  it.each(['a'.repeat(8), 'Z_-01234', 'b'.repeat(64)])('recovers only an observed valid dynamic slot %s', async id => {
+    const f = flowFixture();
+    f.data.set(slot(id), '{broken');
+    f.data.set(indexKey, JSON.stringify([id]));
+    const before = new Map(f.data);
+    await expect(retrievePKCEVerifier(f.recovery, key, id)).rejects.toMatchObject({ code: 'invalidData' });
+    // Once observed, even normal SDK teardown cannot erase the corrupt slot.
+    await expect(removeAllPKCEVerifiers(f.recovery, key)).rejects.toThrow('readable');
+    expect(f.port.remove).not.toHaveBeenCalled();
+    expect(f.data).toEqual(before);
+    expect(await f.recovery.resetConfirmed(true)).toBe(true);
+    before.delete(slot(id));
+    expect(f.data).toEqual(before);
+    expect(f.port.remove).toHaveBeenCalledExactlyOnceWith(slot(id));
+  });
+
+  it.each(['null', '42', '{}', '[]'])('preserves non-string verifier payload %s', async raw => {
+    const f = flowFixture();
+    f.data.set(slot(ids[0]), raw);
+    await expect(retrievePKCEVerifier(f.recovery, key, ids[0])).rejects.toMatchObject({ code: 'invalidData' });
+    expect(f.recovery.canReset).toBe(true);
+    expect(f.data.get(slot(ids[0]))).toBe(raw);
+    expect(f.port.remove).not.toHaveBeenCalled();
+    expect(f.port.set).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    slot('a'.repeat(7)), slot('b'.repeat(65)), slot('abcdefgh\n'), slot('abcdefg.'),
+    slot('abc/defg'), slot('abc defg'), `${slot('abcdefgh')}\n`,
+    `other-${slot('abcdefgh')}`, `${key}-flows-code-verifier-extra`,
+    'bento-life:snapshot:v1', 'bento-cloud:owner:journal:v1',
+  ])('refuses reset of unknown or malformed key %s even on plugin invalidData', async name => {
+    const f = flowFixture();
+    f.port.get.mockRejectedValue(invalid());
+    const before = new Map(f.data);
+    await expect(f.recovery.getItem(name)).rejects.toThrow();
+    expect(f.recovery.canReset).toBe(false);
+    expect(await f.recovery.resetConfirmed(true)).toBe(false);
+    expect(f.port.remove).not.toHaveBeenCalled();
+    expect(f.port.set).not.toHaveBeenCalled();
+    expect(f.data).toEqual(before);
+  });
+
+  it.each([indexKey, slot('abcdefgh')])('preserves temporary lock and newly healthy data for %s', async name => {
+    const f = flowFixture();
+    f.port.get.mockRejectedValue(osError('UserNotAuthenticatedException'));
+    await expect(f.recovery.getItem(name)).rejects.toThrow();
+    expect(f.recovery.canReset).toBe(false);
+    f.port.get.mockRejectedValue(invalid());
+    await expect(f.recovery.getItem(name)).rejects.toThrow();
+    expect(f.recovery.canReset).toBe(true);
+    const healthy = name === indexKey ? '[]' : JSON.stringify('restored-verifier');
+    f.port.get.mockResolvedValue(healthy);
+    expect(await f.recovery.resetConfirmed(true)).toBe(true);
+    expect(f.port.remove).not.toHaveBeenCalled();
+    expect(f.port.set).not.toHaveBeenCalled();
+    f.unchanged();
   });
 });
 
