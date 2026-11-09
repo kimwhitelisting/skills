@@ -9,6 +9,8 @@
 
 Vitest 4.1.12 exact와 기존 npm의 재현 설치로 240개 테스트를 통과했다. 현재 audit 전체/production은 0이며 runtime 의존성과 일반·미리보기 출력은 유지됐다. [업데이트 근거·검증 범위](MAC-BUILD.md#2026-11-10-테스트-도구-보안-업데이트)를 따른다. 테스트 코드나 앱 동작은 변경하지 않았다.
 
+의존성을 추가·업데이트할 때 npm 10의 `install`에서 `edgesOut` 오류가 재현되면, MAC-BUILD의 격리 resolver로 lockfile을 계산한 뒤 기존 `npm ci`로 재현 검증하는 절차를 따른다.
+
 ## 출시 패키지 검사 (2026-11-10)
 
 [RELEASE-PACKAGING.md](RELEASE-PACKAGING.md)에 실제 Vite 파일·계정 설정·원본 provenance와 직접 Gradle Release/Xcode Archive의 내용 검사를 정리했다. 개발 자산 거부와 기존 Debug 빌드 호환을 검증했으며, 실제 서명된 출시 패키지·공개 SMTP/메일 복귀·스토어 제출은 아직 별도 조건이다. 개인 iPhone 계정 확인을 새로 요청하거나 완료로 취급하지 않는다.
