@@ -37,7 +37,7 @@ npm run android:reset    # android 폴더를 지우고 새로 만든다 (⚠ 서
 
 ## PC에서 처음 빌드하기
 1. **Android Studio** 설치 (JDK와 SDK가 같이 들어 있다). 또는 JDK 21 + Android SDK(platform 36, build-tools 36)
-2. `npm install` → `npm run android:sync`
+2. `npm ci` → `npm run android:sync`
 3. `npm run android:open` → Android Studio에서 ▶ 실행 (USB로 연결한 휴대폰이나 에뮬레이터)
    - 명령줄: `cd android && ./gradlew assembleDebug` → `android/app/build/outputs/apk/debug/app-debug.apk`
 

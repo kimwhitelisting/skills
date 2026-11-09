@@ -20,7 +20,7 @@ iOS Simulator에서는 Native 로그인·보안 토큰 쓰기·계정 저장, �
 
 ```bash
 cd bento-life
-npm install
+npm ci
 npm run dev        # http://localhost:5173 — 휴대폰으로 같은 와이파이에서 접속 가능
 npm test           # 단위 테스트 + 2,000판 자동 플레이 (멈춤/버그 검사)
 npm run balance    # 플레이 성향별 평균 스탯·엔딩 분포 리포트

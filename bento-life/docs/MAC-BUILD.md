@@ -47,8 +47,8 @@ npm run ios:simulator
 번들 ID는 기존 앱 ID와 같은 `com.paranstudio.dosirak`이다. 서명 팀이나 계정을 코드에 넣지 않았다.
 Preferences manifest 근거: https://capacitorjs.com/docs/apis/preferences
 
-현재 npm audit의 개발용 Vitest/tinypool 계열에 critical2/moderate1 경고가 있고,
-`npm audit --omit=dev` 결과는 0개다. 일괄 강제 업그레이드는 하지 않았으며 테스트 도구 업데이트를 별도 검증할 후속 항목으로 둔다.
+초기 검증 당시 npm audit의 개발용 Vitest/tinypool 계열에 critical2/moderate1 경고가 있었고,
+당시 `npm audit --omit=dev` 결과는 0개였다. 일괄 강제 업그레이드를 하지 않고 별도 검증으로 미뤘으며, 후속 해결 결과는 아래 **2026-11-10 테스트 도구 보안 업데이트**에 기록한다.
 
 Claude 읽기 전용 검토의 문서 불일치를 정정했다. 출시 전에 기본 armv7 capability·영문 개발 지역·시작 배경색도 실제 Xcode/기기에서 검토한다.
 
@@ -172,3 +172,18 @@ ZIP을 만들기 전 `scripts/verify-ios-simulator.mjs`가 Simulator 플랫폼, 
 일반 Android Debug 컴파일·서명과 iOS Simulator Debug 컴파일·ad-hoc 서명/실행 파일 entitlement 검사는 통과했다. 두 패키지의 웹 파일 각 16개는 기존 copied inputs와 일치했다. QA의 복사 입력 35개는 전후 같았다. 이는 기존 copied JS를 이용한 **hook/빌드 호환** 증거이며 새 release runtime의 기기 실행 시험이 아니다. 실제 기기·Simulator 앱 실행, sync, 계정 로그인·클라우드 변경은 하지 않았다.
 
 후속 출력 옵션 보호는 Vite plugin과 회귀만 보강했다. 위에서 실측한 native hook·검사기 바이트는 그대로 유지했다. 일반 dist는 같은 기존 계정 설정의 새 소스 개발 빌드로 갱신했으며 개인 미리보기와 Android/iOS 복사 자산은 바꾸지 않았다. 서명된 출시 APK/AAB·Archive의 성공 생성과 스토어 제출, 실제 운영 서버/SMTP 준비, Owner가 미룬 개인 iPhone 계정 확인은 미완료로 유지한다. finalizer 실패 뒤 남은 과거 APK/AAB를 새 배포 후보로 사용하지 않는다.
+
+
+## 2026-11-10 테스트 도구 보안 업데이트
+
+개발 전용 Vitest를 지원되는 **4.1.12 exact**로 갱신했다. 공식 지원 정책은 4.1에 중요·보안 수정 backport를 제공하며, 4.1.12에는 mocker 수정이 포함된다. 기존 Tinypool 의존성은 Vitest 4 전환으로 제거됐다. `npm audit`의 critical 2·moderate 1은 업데이트 후 **전체 0, production 0**으로 확인했다. 이는 현재 registry 권고 목록 결과이며 앱 전체의 무결점·보안 보증은 아니다.
+
+격리된 작업 폴더에서 업데이트 전후 각각 기존 npm으로 `npm ci` → **240개 테스트**(2,000판 포함) → 일반 웹 빌드 → 여섯 미리보기 빌드를 통과했다. 출시 설정·실제 Vite 합성 출력·compiled config consumer 회귀도 같은 테스트에 포함된다. 테스트/앱 코드를 수정하거나 판정을 완화하지 않았다. 직접 사용하는 vite-node의 읽기 전용 `npm run endings`도 통과했다.
+
+기존 production lock 항목 **27개**의 version/resolved/integrity, Vite **6.4.5**, vite-node **3.2.4**, Capacitor 패키지는 모두 동일하다. lockfile 형식 3을 유지했고 변경은 Vitest/Chai 등 테스트 의존성 체인으로 한정했다. 일반 웹 **14개 파일**과 미리보기 **30개 파일**의 전후 SHA256이 모두 같다. 이 비교는 설정을 복사하지 않은 같은 게스트 환경에서의 결과다. 운영 미리보기·네이티브 복사 자산·개인 설정을 교체하지 않았다.
+
+기존 npm **10.9.9**는 업데이트 의존성을 계산할 때 `edgesOut` 내부 오류를 냈고, Vitest/Vite/Node 타입만 둔 최소 프로젝트에서도 재현됐다. 강제 설치·legacy-peer-deps·override 없이, 공식 tarball의 integrity를 확인한 **npm 11.21.2를 임시 격리해 lockfile 계산에만** 사용했다. 이후 기존 Node **22.23.4**와 npm **10.9.9**의 일반 `npm ci`, 전체 테스트/빌드, `npm ls --all`로 다시 검증했다. 이 임시 resolver는 lockfile 업데이트 계산에만 사용했다. 전역 npm을 바꾸지 않았으며 일반 개발·재현 설치에서는 기존 `npm ci`를 사용하고 별도 npm 업그레이드를 요구하지 않는다.
+
+이번 변경은 네이티브 컴파일·실제 기기 실행·계정 복원·서명된 출시 패키지 검증이 아니다. 웹 내용이 같아도 package/lock provenance가 바뀌었으므로 실제 출시 후보는 [출시 검사 절차](RELEASE-PACKAGING.md)에 따라 새 release 빌드와 sync가 필요하다. 기존 개인 iPhone 확인과 출시 운영 조건은 그대로 남는다.
+
+공식 근거(2026-11-10): [지원 버전](https://vitest.dev/releases), [Vitest 4 이전 요구사항](https://v4.vitest.dev/guide/migration), [4.1.12 수정](https://github.com/vitest-dev/vitest/releases/tag/v4.1.12), [mocker 코드 주입](https://github.com/advisories/GHSA-qxg6-89mg-rqv8), [mocker 파일 읽기](https://github.com/advisories/GHSA-82fw-gwwq-j7x9), [Tinypool worker 옵션](https://github.com/advisories/GHSA-5gmw-xhrv-c9v3), [Tinypool run 옵션](https://github.com/advisories/GHSA-85c8-ppgw-ccpr), [npm optional-peer 오류 보고](https://github.com/npm/cli/issues/9787).
