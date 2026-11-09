@@ -61,6 +61,35 @@ dependencies {
 
 apply from: 'capacitor.build.gradle'
 
+// Direct Gradle Release calls must inspect the copied content, not just npm's mode.
+def verifyBentoRelease = tasks.register('verifyBentoRelease', Exec) {
+    workingDir rootProject.file('..')
+    commandLine 'node', '--experimental-strip-types', 'scripts/verify-release-native.ts',
+        '--assets', 'android/app/src/main/assets/public', '--capacitor', 'android/app/src/main/assets/capacitor.config.json'
+}
+// Independent verifier tasks have no outputs, so incremental packaging still checks.
+def bentoPackageChecks = [:]
+['packageRelease', 'packageReleaseBundle', 'signReleaseBundle'].each { producerName ->
+    bentoPackageChecks[producerName] = tasks.register("verifyBento${producerName.capitalize()}Content") {
+        doLast {
+            def artifacts = tasks.named(producerName).get().outputs.files.asFileTree.matching {
+                include '**/*.apk', '**/*.aab'
+            }.files
+            if (artifacts.empty) throw new GradleException('Release task produced no inspectable APK/AAB.')
+            artifacts.each { artifact ->
+                exec {
+                    workingDir rootProject.file('..')
+                    commandLine 'node', '--experimental-strip-types', 'scripts/verify-release-native.ts', '--archive', artifact.absolutePath
+                }
+            }
+        }
+    }
+}
+tasks.configureEach { task ->
+    if (task.name == 'preReleaseBuild') task.dependsOn verifyBentoRelease
+    if (bentoPackageChecks.containsKey(task.name)) task.finalizedBy bentoPackageChecks[task.name]
+}
+
 try {
     def servicesJSON = file('google-services.json')
     if (servicesJSON.text) {

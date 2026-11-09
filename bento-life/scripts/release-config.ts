@@ -4,7 +4,7 @@ const CLIENT_VARIABLES = new Set(['VITE_SUPABASE_URL', 'VITE_SUPABASE_PUBLISHABL
 function publicWebHost(host: string): boolean {
   if (/^[0-9.]+$/.test(host) || host.includes(':')) return false; // URL normalizes IPv4/IPv6 literals.
   if (!/^(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/.test(host)) return false;
-  return !/(?:^|\.)(?:ts\.net|local|localhost|internal|lan|localdomain|home|corp|onion|arpa|test|invalid|example|example\.(?:com|net|org))$/.test(host);
+  return !/(?:^|\.)(?:ts\.net|local|localhost|internal|lan|localdomain|home|corp|onion|arpa|alt|test|invalid|example|example\.(?:com|net|org))$/.test(host);
 }
 
 /** Validate syntax without contacting the server or printing configuration values. */

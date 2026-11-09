@@ -161,3 +161,14 @@ ZIP을 만들기 전 `scripts/verify-ios-simulator.mjs`가 Simulator 플랫폼, 
 같은 소스로 iOS 공식 sync·기존 ad-hoc Simulator 빌드/서명·entitlement 가드와 ZIP 생성을 통과했다. 실제 앱의 최소 iOS 16.0, `loggingBehavior: 'none'`, UserDefaults `CA92.1`·FileTimestamp `C617.1` 사유를 확인했다. ZIP의 42개 파일이 앱과 일치하며 웹 14개 파일은 Android APK·웹 dist와도 동일하다. ZIP SHA256: `a718475cea270391374997d761669289da02858cad351613a8d2aeadee9b841a`. 이번 iOS 실행은 컴파일·패키징만 수행했고 Simulator를 시작하거나 앱을 설치하지 않았다.
 
 현재 PKCE index·동적 슬롯 및 늦은 SDK 쓰기는 설치 SDK와 합성 포트의 회귀 증거다. iOS 실제 손상 복구·하드웨어 잠김·OS 백업/기기 전송·실제 iPhone 개인 계정 복원·오프라인 재연결은 미검증으로 남는다. 호스트 Keychain·서버 계정·실제 iPhone 앱·개인 서명 설정과 의존성은 바꾸지 않았다.
+
+
+## 2026-11-10 출시 패키지 내용 검사
+
+[출시 검사 경로](RELEASE-PACKAGING.md)를 추가했다. `npm ci` → 전체 **240개 테스트**(기존 2,000판 포함) → TypeScript/Vite 일반 빌드를 통과했다. 실제 Vite 합성 release 출력에서 파일 누락·추가·변조·설정/원본 불일치와 출력 폴더 보호를 확인했고, 별도로 컴파일한 설정 소비 모듈이 JSON만 읽고 누락 시 실패하는 것을 네트워크 없이 실행했다. 합성 출력은 비배포 표식으로 native 검사에서 거절된다.
+
+독립 검증에서 문법상 올바른 합성 공개 설정을 제공한 직접 Gradle Release와 Xcode Release build·Debug 구성의 install action은 **기존 복사 자산에 release provenance가 없어서** 거절됐다. 설정 누락으로만 실패한 시험이 아니다. 실제 packageRelease/packageReleaseBundle/signReleaseBundle graph의 finalizer와 자체 출력 없음도 확인했다. 성공한 producer의 UP-TO-DATE 재호출에서 finalizer 실행까지 실측한 것은 아니다.
+
+일반 Android Debug 컴파일·서명과 iOS Simulator Debug 컴파일·ad-hoc 서명/실행 파일 entitlement 검사는 통과했다. 두 패키지의 웹 파일 각 16개는 기존 copied inputs와 일치했다. QA의 복사 입력 35개는 전후 같았다. 이는 기존 copied JS를 이용한 **hook/빌드 호환** 증거이며 새 release runtime의 기기 실행 시험이 아니다. 실제 기기·Simulator 앱 실행, sync, 계정 로그인·클라우드 변경은 하지 않았다.
+
+후속 출력 옵션 보호는 Vite plugin과 회귀만 보강했다. 위에서 실측한 native hook·검사기 바이트는 그대로 유지했다. 일반 dist는 같은 기존 계정 설정의 새 소스 개발 빌드로 갱신했으며 개인 미리보기와 Android/iOS 복사 자산은 바꾸지 않았다. 서명된 출시 APK/AAB·Archive의 성공 생성과 스토어 제출, 실제 운영 서버/SMTP 준비, Owner가 미룬 개인 iPhone 계정 확인은 미완료로 유지한다. finalizer 실패 뒤 남은 과거 APK/AAB를 새 배포 후보로 사용하지 않는다.

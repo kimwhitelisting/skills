@@ -43,7 +43,7 @@ describe('release-only account configuration', () => {
     'https://192.168.1.5/', 'https://10.0.0.5/', 'https://172.16.0.5/', 'https://100.64.0.5/',
     'https://8.8.8.8/', 'https://[::1]/', 'https://[2001:4860:4860::8888]/',
     'https://preview.local/', 'https://preview.localhost/', 'https://preview.internal/', 'https://preview.lan/',
-    'https://preview.test/', 'https://preview.invalid/', 'https://preview.example/', 'https://example.com/',
+    'https://preview.alt/', 'https://preview.test/', 'https://preview.invalid/', 'https://preview.example/', 'https://example.com/',
   ])('rejects private, reserved or literal callback hosts (%#)', value => {
     expect(() => assertReleaseConfig('release', { ...configured(), VITE_AUTH_REDIRECT_URL: value })).toThrow('공개 HTTPS');
   });

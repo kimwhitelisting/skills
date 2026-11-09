@@ -68,6 +68,8 @@ keyPassword=…
 
 근거(확인 2026-11-09): [Vite 환경·mode](https://vite.dev/guide/env-and-mode), [Supabase 공개/비밀 키](https://supabase.com/docs/guides/getting-started/api-keys).
 
+2026-11-10부터 직접 Gradle Release와 Xcode Archive도 실제 복사된 자산·설정·원본 provenance를 검사한다. [출시 패키지 검사](RELEASE-PACKAGING.md)의 같은 설정 전달·검증 범위를 따른다.
+
 ## PC 없이 출시하기 (GitHub Actions · 휴대폰만으로)
 키 만들기와 AAB 빌드를 GitHub이 대신 한다. 작업 파일: 저장소 맨 위 `.github/workflows/android-keygen.yml`, `android-release.yml`.
 ⚠ 두 작업은 **기본 브랜치(main)에 합쳐진 뒤에야** Actions 탭에 "Run workflow" 버튼이 생긴다.

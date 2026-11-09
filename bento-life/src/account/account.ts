@@ -1,3 +1,4 @@
+import { accountBuildConfig } from './build-config.ts';
 import './account.css';
 import { createClient, type SupabaseClient, type User } from '@supabase/supabase-js';
 import { AccountSync } from './sync.ts';
@@ -10,8 +11,9 @@ import { validRun, validDex, validPrefs } from '../game/validate-save.ts';
 import { NativeAuthRecoveryPrompt, type NativeAuthRecovery } from './native-auth-recovery.ts';
 
 interface AuthStorage { recovery?: NativeAuthRecovery; getItem(key: string): string | null | Promise<string | null>; setItem(key: string, value: string): void | Promise<void>; removeItem(key: string): void | Promise<void> }
-const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const publishable = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
+const buildConfig = accountBuildConfig();
+const url = buildConfig.VITE_SUPABASE_URL;
+const publishable = buildConfig.VITE_SUPABASE_PUBLISHABLE_KEY;
 let client: SupabaseClient | undefined;
 let user: User | undefined;
 let sync: AccountSync | undefined;
@@ -90,7 +92,7 @@ function remoteFor(owner: string) {
 }
 export async function bootAccount(native?: NativeStorage & { keys?(): Promise<string[]> }, authStorage?: AuthStorage): Promise<boolean> {
   nativeStore = native;
-  redirectURL = authStorage ? import.meta.env.VITE_AUTH_REDIRECT_URL : `${location.origin}${location.pathname}`;
+  redirectURL = authStorage ? buildConfig.VITE_AUTH_REDIRECT_URL : `${location.origin}${location.pathname}`;
   if (redirectURL && !/^https?:\/\//.test(redirectURL)) redirectURL = undefined;
   const loading = document.getElementById('app');
   if (loading) loading.textContent = '계정과 저장 기록을 불러오는 중이에요…';

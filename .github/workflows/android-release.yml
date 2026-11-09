@@ -72,6 +72,9 @@ jobs:
 
       - name: AAB 빌드
         env:
+          VITE_SUPABASE_URL: ${{ vars.BENTO_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.BENTO_SUPABASE_PUBLISHABLE_KEY }}
+          VITE_AUTH_REDIRECT_URL: ${{ vars.BENTO_AUTH_REDIRECT_URL }}
           VERSION_NAME: ${{ inputs.versionName }}
           VERSION_CODE: ${{ github.run_number }}
         working-directory: bento-life/android
