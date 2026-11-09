@@ -32,7 +32,8 @@ npm run android:reset    # android 폴더를 지우고 새로 만든다 (⚠ 서
 
 ## 확인된 것
 - 이 저장소의 클라우드 환경(JDK 21, Android SDK platform 36 · build-tools 36)에서 `./gradlew assembleDebug` 빌드 성공 — 디버그 APK 4.8MB, 패키지 `com.paranstudio.dosirak`, 앱 이름 「냠냠졸졸」, 세로 고정, targetSdk 36
-- 실제 기기·에뮬레이터 실행은 아직 안 해 봤다 (디버그 APK를 휴대폰에 설치해서 확인)
+- 2026-11-09에는 **4c5ed87 Debug APK**를 Android 16/API 36 ARM64 에뮬레이터에 설치해 새 게스트의 첫해 플레이·즉시 올해 사진 반영·Android BACK·강제 종료 후 같은 진행/도감 복원·설정 복귀를 확인했다. [환경·APK 식별·실제 동선과 한계](PLAYTEST.md#android-게스트-첫해-실행결산-문구-2026-11-09).
+- 실제 Android 기기, 최소 API 24, 계정·네트워크 전환·오디오/진동·복구 파일 공유·OS 백업/기기 이전은 미검증이다. 고정 APK 이후 결산 문구만 수정했으며 새 Native 산출물이나 배포 검증으로 간주하지 않는다.
 
 ## PC에서 처음 빌드하기
 1. **Android Studio** 설치 (JDK와 SDK가 같이 들어 있다). 또는 JDK 21 + Android SDK(platform 36, build-tools 36)

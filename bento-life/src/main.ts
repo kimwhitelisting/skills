@@ -529,7 +529,7 @@ export function mountGame(): void {
     return HEIGHT[s.child.gender][Math.min(age, 19)] + Math.round(bonus);
   }
   const YEAR_WORD: Record<StatKey, [string, string]> = {
-    health: ['쑥쑥 잘 먹은 한 해', '자주 아팠던 한 해'],
+    health: ['쑥쑥 자란 한 해', '자주 아팠던 한 해'],
     smarts: ['궁금한 게 많았던 한 해', '공부가 손에 안 잡힌 한 해'],
     happy: ['많이 웃은 한 해', '시무룩한 날이 많았던 한 해'],
     fitness: ['신나게 뛰어다닌 한 해', '기운이 없던 한 해'],

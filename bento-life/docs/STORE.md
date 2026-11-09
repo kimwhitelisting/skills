@@ -77,7 +77,8 @@
 - iOS 최소 버전을 이미 사용하는 Web Locks/AbortSignal.timeout에 맞춰 **16.0**으로 정합화했다. 프로젝트·타깃 Debug/Release·sync 생성 SPM 검사와 실제 앱 패키지의 최소 버전 가드를 추가했다. iOS 16 런타임 검증은 남으며 잠금 정책은 유지한다. [호환성 검증 범위](MAC-BUILD.md#출시-전-호환성-잔여-항목).
 - 현재 `npm audit --omit=dev`는 0건이다. 전체 audit에는 개발 도구 Vitest/@vitest/mocker/tinypool 관련 3건(critical 2, moderate 1)이 있어 별도 도구 업데이트·회귀 검토가 남는다. 자동 강제 업데이트는 하지 않았다.
 - Native 로그인 정보 손상 보호 후보: **186개 테스트**, 웹 빌드, Android Debug 244 tasks, 공식 iOS sync 및 ad-hoc Simulator 빌드·패키징 검사 통과. Android merged manifest와 APK 안의 백업 XML이 보안 로그인 파일만 제외하고 게임 백업을 유지함을 확인했다. APK v2 debug 서명, 두 플랫폼의 bridge logging 비활성화와 iOS 최소 16.0 검사를 통과했다. 실제 잠김·손상·기기 전송 UI 시험은 별도다. [복구 정책과 테스트 범위](ACCOUNT-IMPLEMENTATION.md#2026-11-09-native-로그인-정보-손상-보호).
-- 공개 SMTP·문의 연락처/시행일·출시 서명, 실제 Android와 네트워크 단절/재연결·복구 파일 공유 검증은 남아 있다. Simulator의 로그인·재시작·재설치 복원과 실제 iPhone 앱 설치/열림은 확인됐지만, Owner가 미뤄 둔 **실제 iPhone 개인 계정 Native 복원**과 다른 물리 기기 복원을 완료로 취급하지 않는다.
+- **4c5ed87 Debug APK의 Android 16/API 36 ARM64 에뮬레이터**에서 게스트 첫해 플레이, 결산 직후 올해 사진, Android BACK, 강제 종료/이어하기의 진행·도감 보존과 설정 복귀를 확인했다. [실제 동선과 한계](PLAYTEST.md#android-게스트-첫해-실행결산-문구-2026-11-09). 후속 결산 문구 수정은 웹 빌드만 검증하며 이 고정 APK·기존 미리보기에 반영됐다고 보고하지 않는다.
+- 공개 SMTP·문의 연락처/시행일·출시 서명, 실제 Android 기기와 네트워크 단절/재연결·복구 파일 공유 검증은 남아 있다. Simulator의 로그인·재시작·재설치 복원과 실제 iPhone 앱 설치/열림은 확인됐지만, Owner가 미뤄 둔 **실제 iPhone 개인 계정 Native 복원**과 다른 물리 기기 복원을 완료로 취급하지 않는다.
 
 ### 최종 배포 체크
 
