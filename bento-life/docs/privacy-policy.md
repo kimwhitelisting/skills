@@ -33,7 +33,8 @@
 
 - **새로 키우기:** 확인 후 현재 판을 새 판으로 바꾸지만 도감·하트 등 누적 수집과 설정은 유지합니다. 전체 데이터 삭제 기능이 아닙니다. 이전 정상 저장·이전 형식의 저장·복구 원본에도 과거 진행이 남을 수 있습니다.
 - **손상 저장 복구 초기화:** 정상 백업 복구를 우선하며, 복구할 수 없을 때에만 설명과 두 번의 확인을 거쳐 초기화합니다. 진행만 손상된 구형 저장은 확인된 정상 도감·하트·설정을 유지하고, 통합 저장이 손상되면 전체 초기화 범위를 안내합니다. 손상 원본은 보관합니다.
-- **계정 삭제:** 계정 화면에서 현재 비밀번호로 재확인한 뒤 서버 계정·게임 기록 삭제를 요청할 수 있습니다. 성공 응답을 확인하면 현재 기기의 해당 계정 캐시도 정리합니다. 다른 계정·게스트·외부로 내보낸 파일 및 다른 기기의 오프라인 사본은 함께 지우지 않습니다. 서버 운영 백업의 삭제 반영 기간은 운영 설정을 확인해 출시 전 고지해야 합니다.
+- **앱 안 계정 삭제:** 계정 화면에서 현재 비밀번호로 재확인한 뒤 서버 계정·게임 기록 삭제를 요청할 수 있습니다. 성공 응답을 확인하면 현재 기기의 해당 계정 캐시도 정리합니다. 다른 계정·게스트·외부로 내보낸 파일 및 다른 기기의 오프라인 사본은 함께 지우지 않습니다. 서버 운영 백업의 삭제 반영 기간은 운영 설정을 확인해 출시 전 고지해야 합니다.
+- **앱 밖 웹 계정 삭제 후보:** 별도 페이지에서 이메일·비밀번호로 로그인하고 현재 암호 재확인과 최종 동의를 거쳐 같은 서버 삭제를 요청하는 구현을 준비했습니다. 세션은 해당 페이지 메모리에만 보관하며 앱/브라우저 게임 저장은 읽거나 지우지 않습니다. 계정·서버의 현재 저장/작업 기록과 기기 캐시·외부 백업·운영 로그/백업의 범위를 구분합니다. 응답 유실은 완료로 단정하지 않습니다. 아직 공식 공개 URL·지원 연락처·SMTP와 운영 배포는 미완료입니다. [구현·검증 범위](ACCOUNT-WEB.md)를 따릅니다.
 - **기기 저장 제거:** OS의 앱 데이터 삭제 또는 앱 삭제, 웹 미리보기의 사이트 데이터 삭제로 해당 로컬 저장을 제거할 수 있습니다. 앱에는 모든 보관 원본을 포함한 영구 삭제 버튼이 없습니다.
 - **남은 사본:** 로컬 삭제가 OS 백업·다른 기기·내려받은 JSON까지 삭제하지는 않습니다. 각 백업 서비스와 파일 저장 위치에서 별도로 관리해야 합니다. 이후 OS 복원으로 이전 저장이 다시 나타날 수도 있습니다.
 
@@ -52,7 +53,7 @@
 검증일 **2026-11-06**, 코드 기준 **BENTO-ACCOUNT-IMPL-001 기능 브랜치의 계정 저장 구현 후보**. 현재 코드 확인과 OS 공식 문서에 근거한 초안이며 실제 Android/iPhone의 파일 공유·백업·복원·삭제 검증은 아직 완료하지 않았다.
 
 - `package.json`, `src/entry-app.ts`: 광고·분석 SDK 없음, Supabase Auth/게임 저장과 Native 보안 토큰 저장 어댑터 사용. `src/game/save.ts`, `src/main.ts`: 저장·복구 원본·내보내기 및 새 게임 처리. 상세 저장 동작은 [STORAGE.md](STORAGE.md).
-- `android/app/src/main/AndroidManifest.xml`: `android:allowBackup="true"`; 앱의 별도 `fullBackupContent`/`dataExtractionRules` 지정 없음. 따라서 “기기 밖으로 절대 나가지 않는다”는 고지를 사용하지 않는다.
+- 2026-11-06 초기 메모에서는 `android:allowBackup="true"`만 확인했다. **2026-11-10 현재 원본 재확인:** [AndroidManifest.xml](../android/app/src/main/AndroidManifest.xml)은 [backup_rules.xml](../android/app/src/main/res/xml/backup_rules.xml)과 [data_extraction_rules.xml](../android/app/src/main/res/xml/data_extraction_rules.xml)을 지정하며 보안 로그인 파일만 제외한다. 게임 데이터의 백업 가능성은 남아 있으므로 “기기 밖으로 절대 나가지 않는다”는 고지를 사용하지 않는다.
 - Android 공식 근거: [Back up user data with Auto Backup](https://developer.android.com/identity/data/autobackup) — 기본 저장 범위, 백업 허용, 클라우드·기기 간 전송 및 복원 조건.
 - Apple 공식 근거: [What does iCloud back up?](https://support.apple.com/en-us/108770), [Backup methods for iPhone or iPad](https://support.apple.com/en-us/108771) — 앱 데이터의 iCloud 백업 및 컴퓨터 백업.
 - 운영자 이름·이메일·시행일, 최종 앱/SDK, 실제 삭제·백업 결과, 공개 웹 주소 및 스토어 신고를 확인하기 전에는 배포하지 않는다.
@@ -70,6 +71,6 @@ Depending on device settings, Android backup/device transfer or Apple iCloud/com
 
 The game may retain a previous valid save and damaged originals for recovery. Distinct damaged originals are not automatically removed. A user-triggered export requests a browser JSON download or opens the native OS share sheet using one reusable cache file. The user chooses a recipient or file destination; nothing is automatically sent to the developer. Cancellation or failure does not erase originals. Check the chosen destination to confirm receipt; exported copies are managed there. An import feature is not currently provided.
 
-Starting a new game preserves collections, hearts and settings, and does not erase historical recovery copies. A confirmed corruption reset explains its scope and preserves originals first. Removing local app/site data does not remove OS backups, copies on other devices or exported files; those require separate management. OS restoration may bring older saves back. Account deletion requires the current password and a successful server response before this device’s account cache is removed. It does not erase guest data, other accounts, exports or offline copies on other devices. There is no single button that deletes every external copy.
+Starting a new game preserves collections, hearts and settings, and does not erase historical recovery copies. A confirmed corruption reset explains its scope and preserves originals first. Removing local app/site data does not remove OS backups, copies on other devices or exported files; those require separate management. OS restoration may bring older saves back. In-app account deletion requires the current password and a successful server response before this device’s account cache is removed. A separate web deletion candidate uses memory-only authentication and never reads or clears game storage on the device; its public URL, support contact, SMTP and deployment are still pending. It does not erase guest data, other accounts, exports or offline copies on other devices. There is no single button that deletes every external copy.
 
 Advertising or analytics, if introduced, requires an updated policy and store disclosures before that release. The intended audience is adults; final store declarations, contact handling, native backup/deletion testing and this policy remain pending. Do not publish this draft as an effective policy until the missing information and release checks are completed.
