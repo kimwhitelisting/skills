@@ -87,6 +87,16 @@ export function createAccountWebPort(config: AccountWebConfig, fetcher: typeof f
       if (error || active !== client) throw new Error('recovery_failed');
       return (await currentUser()).user;
     },
+    async confirmSignup(tokens: RecoveryTokens) {
+      try {
+        const active = get();
+        const { error } = await active.auth.setSession(tokens);
+        if (error || active !== client) throw new Error('confirmation_failed');
+        await currentUser();
+        // Only the server-verified confirmed account is evidence. Never hand this session to the game.
+        await active.auth.signOut({ scope: 'local' });
+      } finally { discard(); }
+    },
     async sendReset(email) {
       const { error } = await get().auth.resetPasswordForEmail(email, { redirectTo: config.returnURL });
       if (error) throw new Error('reset_failed');

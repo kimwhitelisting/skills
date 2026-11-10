@@ -186,7 +186,7 @@ function renderPanel(): void {
   else if (recovery) content = `<p>새 비밀번호를 정해 주세요.</p><label>새 비밀번호<input id="account-password" type="password" autocomplete="new-password" minlength="8"></label>${button('password', '비밀번호 바꾸기', true)}`;
   else if (!user) content = `<p>로그인하면 이 계정에 진행을 보관하고 다른 기기에서 이어갈 수 있어요. 기존 기기 기록은 로그인 후 직접 선택할 때만 가져와요.</p>
     <form><label>이메일<input id="account-email" type="email" autocomplete="username" value="${esc(draftEmail)}" required></label><label>비밀번호<input id="account-password" type="password" autocomplete="current-password" minlength="8" required></label><button type="submit" class="primary" ${busy ? 'disabled' : ''}>로그인</button></form>
-    ${button('signup', '처음이라면 가입하기')}${button('resend', '가입 확인 메일 다시 받기')}${button('reset', '비밀번호 재설정 메일 받기')}<p class="account-note">가입 후 이메일 확인이 필요해요. 현재 초대된 테스트 이메일만 메일을 받을 수 있어요. 비밀번호는 저장 기록이나 복구 파일에 넣지 않아요.</p>`;
+    ${button('signup', '처음이라면 가입하기')}${button('resend', '가입 확인 메일 다시 받기')}${button('reset', '비밀번호 재설정 메일 받기')}<p class="account-note">가입 후 이메일 확인이 필요해요. 메일이 오지 않으면 받은편지함·스팸함을 확인하고 잠시 뒤 다시 요청해 주세요. 비밀번호는 저장 기록이나 복구 파일에 넣지 않아요.</p>`;
   else if (deleting) content = `<p>계정과 서버의 게임 기록을 삭제할까요? 되돌릴 수 없어요. 이 기기의 해당 계정 기록도 삭제해요. 다른 기기의 오프라인 사본이나 이미 내보낸 파일은 별도로 관리해 주세요. 다른 계정·게스트 기록은 지우지 않아요.</p><label>현재 비밀번호<input id="account-password" type="password" autocomplete="current-password"></label>${button('delete-yes', '확인 · 내 계정과 기록 삭제')}${button('delete-cancel', '취소')}`;
   else {
     content = `<p>${esc(user.email ?? '로그인한 계정')}</p><p class="account-message">${esc(accountSummary())}</p>`;
@@ -207,7 +207,7 @@ function friendly(error: unknown): string {
   if (/invalid login/i.test(message)) return '이메일과 비밀번호를 확인해 주세요.';
   if (/email not confirmed/i.test(message)) return '가입 확인 메일의 링크를 먼저 열어 주세요.';
   if (/rate limit|too many/i.test(message)) return '요청이 잠시 많아요. 잠시 후 다시 시도해 주세요.';
-  return '요청을 마치지 못했어요. 연결 상태와 입력을 확인해 주세요. 확인 메일이 오지 않으면 테스트 초대 여부도 확인해 주세요.';
+  return '요청을 마치지 못했어요. 연결 상태와 입력을 확인해 주세요. 확인 메일이 오지 않으면 스팸함을 확인하고 잠시 뒤 다시 요청해 주세요.';
 }
 async function act(action: string): Promise<void> {
   if (action === 'restart') { location.reload(); return; }

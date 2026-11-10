@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { accountWebConfig } from '../scripts/account-web-config.ts';
-import { AccountWebController, PasswordRejected, consumeRecoveryURL, type AccountWebPort, type WebState } from '../src/account-web/controller.ts';
+import { AccountWebController, PasswordRejected, consumeAccountURL, type AccountWebPort, type WebState } from '../src/account-web/controller.ts';
 import { boundedFetch, createAccountWebPort } from '../src/account-web/client.ts';
 import { createServer } from 'node:http';
 import { readFileSync } from 'node:fs';
@@ -14,7 +14,7 @@ const env = {
 const user = { id: 'synthetic-user', email: 'person@example.test' };
 function harness(overrides: Partial<AccountWebPort> = {}) {
   const port: AccountWebPort = {
-    login: vi.fn(async () => user), recover: vi.fn(async () => user), sendReset: vi.fn(async () => {}),
+    login: vi.fn(async () => user), recover: vi.fn(async () => user), confirmSignup: vi.fn(async () => {}), sendReset: vi.fn(async () => {}),
     changePassword: vi.fn(async () => {}), deleteAccount: vi.fn(async () => true),
     close: vi.fn(async () => {}), discard: vi.fn(), ...overrides,
   };
@@ -48,28 +48,69 @@ describe('standalone account web config', () => {
 describe('recovery URL consumption', () => {
   it('accepts the actual Auth optional empty sb marker but not duplicates or nonempty values', () => {
     const base = 'https://accounts.bentoqa.com/#access_token=aa.bb.cc&expires_at=2000000000&expires_in=3600&refresh_token=refresh&token_type=bearer&type=recovery';
-    for (const marker of ['&sb', '&sb=']) expect(consumeRecoveryURL(base + marker, vi.fn()))
-      .toEqual({ access_token: 'aa.bb.cc', refresh_token: 'refresh' });
+    for (const marker of ['&sb', '&sb=']) expect(consumeAccountURL(base + marker, vi.fn()))
+      .toEqual({ type: 'recovery', tokens: { access_token: 'aa.bb.cc', refresh_token: 'refresh' } });
     for (const marker of ['&sb=value', '&sb=&sb=']) {
       const scrub = vi.fn();
-      expect(() => consumeRecoveryURL(base + marker, scrub)).toThrow();
+      expect(() => consumeAccountURL(base + marker, scrub)).toThrow();
+      expect(scrub).toHaveBeenCalledExactlyOnceWith('https://accounts.bentoqa.com/');
+    }
+  });
+  it('accepts only the supported signup and recovery callback types, preserving their purpose', () => {
+    for (const type of ['signup', 'recovery']) {
+      const scrub = vi.fn();
+      expect(consumeAccountURL(`https://accounts.bentoqa.com/#type=${type}&token_type=bearer&access_token=aa.bb.cc&refresh_token=refresh&sb=`, scrub))
+        .toEqual({ type, tokens: { access_token: 'aa.bb.cc', refresh_token: 'refresh' } });
       expect(scrub).toHaveBeenCalledExactlyOnceWith('https://accounts.bentoqa.com/');
     }
   });
   it('scrubs before parsing and only accepts unambiguous recovery tokens', () => {
     const clean = vi.fn();
-    expect(consumeRecoveryURL('https://accounts.bentoqa.com/#type=recovery&token_type=bearer&access_token=aa.bb.cc&refresh_token=refresh', clean))
-      .toEqual({ access_token: 'aa.bb.cc', refresh_token: 'refresh' });
+    expect(consumeAccountURL('https://accounts.bentoqa.com/#type=recovery&token_type=bearer&access_token=aa.bb.cc&refresh_token=refresh', clean))
+      .toEqual({ type: 'recovery', tokens: { access_token: 'aa.bb.cc', refresh_token: 'refresh' } });
     expect(clean).toHaveBeenCalledExactlyOnceWith('https://accounts.bentoqa.com/');
-    for (const hash of ['#type=signup&token_type=bearer&access_token=a&refresh_token=b', '#type=recovery&token_type=bearer&access_token=a&access_token=c&refresh_token=b', '#error=expired', '?code=secret', '#type=recovery&token_type=bearer&access_token=a&refresh_token=b&redirect_to=https://bad.test']) {
+    for (const hash of ['#type=email&token_type=bearer&access_token=a&refresh_token=b', '#type=magiclink&token_type=bearer&access_token=a&refresh_token=b', '#type=invite&token_type=bearer&access_token=a&refresh_token=b', '#type=recovery&token_type=bearer&access_token=a&access_token=c&refresh_token=b', '#error=expired', '?code=secret', '#type=recovery&token_type=bearer&access_token=a&refresh_token=b&redirect_to=https://bad.test']) {
       const scrub = vi.fn();
-      expect(() => consumeRecoveryURL('https://accounts.bentoqa.com/' + hash, scrub)).toThrow();
+      expect(() => consumeAccountURL('https://accounts.bentoqa.com/' + hash, scrub)).toThrow();
       expect(scrub).toHaveBeenCalledExactlyOnceWith('https://accounts.bentoqa.com/');
     }
   });
 });
 
 describe('explicit deletion and recovery state machine', () => {
+  it('signup confirmation clears authentication and never offers password change or deletion', async () => {
+    const { controller, port, states } = harness();
+    await controller.confirmSignup({ access_token: 'private-token', refresh_token: 'private-refresh' });
+    expect(controller.state.stage).toBe('confirmed');
+    expect(controller.state.email).toBe('');
+    expect(states[0].stage).toBe('verifying');
+    expect(states.some(state => ['confirm', 'password'].includes(state.stage))).toBe(false);
+    await controller.changePassword('passwordA', 'passwordA');
+    await controller.deleteAccount('passwordA', true);
+    expect(port.changePassword).not.toHaveBeenCalled();
+    expect(port.deleteAccount).not.toHaveBeenCalled();
+    expect(port.discard).toHaveBeenCalled();
+    expect(JSON.stringify(states)).not.toContain('private-token');
+  });
+  it.each(['signup', 'recovery'])('failed %s verification is never success or deletion UI', async type => {
+    const fail = vi.fn(async () => { throw new Error('private error'); });
+    const { controller, port } = harness({ confirmSignup: fail, recover: fail });
+    await (type === 'signup' ? controller.confirmSignup : controller.recover).call(controller, { access_token: 'a', refresh_token: 'r' });
+    expect(controller.state.stage).toBe('link-error');
+    expect(controller.state.message).not.toContain('private error');
+    expect(port.discard).toHaveBeenCalled();
+    expect(port.deleteAccount).not.toHaveBeenCalled();
+  });
+  it('invalid URLs hide deletion and dispose late confirmation without success UI', async () => {
+    const invalid = harness(); invalid.controller.invalidLink();
+    expect(invalid.controller.state.stage).toBe('link-error');
+    let resolve!: () => void;
+    const { controller, states } = harness({ confirmSignup: () => new Promise<void>(r => { resolve = r; }) });
+    const pending = controller.confirmSignup({ access_token: 'a', refresh_token: 'r' });
+    controller.dispose(); resolve(); await pending;
+    expect(controller.state.stage).toBe('closed');
+    expect(states.some(state => state.stage === 'confirmed')).toBe(false);
+  });
   it('login never deletes; cancel preserves everything and requires new login', async () => {
     const { controller, port, states } = harness();
     await controller.login(user.email, 'private-password');
@@ -153,6 +194,7 @@ describe('real pinned SDK adapter with isolated fetch', () => {
   const serverUser = { ...user, email_confirmed_at: '2026-01-01T00:00:00Z', app_metadata: {}, user_metadata: {}, aud: 'authenticated', created_at: '2026-01-01T00:00:00Z' };
   function sdkHarness() {
     let liveId = user.id;
+    let emailConfirmed = true;
     let deletion: unknown = { deleted: true };
     let passwordError: { code: string; status: number } | null = null;
     const requests: { path: string; body: unknown; authorization: string | null }[] = [];
@@ -166,14 +208,26 @@ describe('real pinned SDK adapter with isolated fetch', () => {
       else if (url.pathname.endsWith('/user') && init?.method === 'PUT' && passwordError) {
         return new Response(JSON.stringify({ code: passwordError.code, message: 'upstream private message', weak_password: { reasons: ['length'] } }), { status: passwordError.status, headers: { 'Content-Type': 'application/json', 'X-Supabase-Api-Version': '2024-01-01' } });
       }
-      else if (url.pathname.endsWith('/user')) response = { ...serverUser, id: liveId };
+      else if (url.pathname.endsWith('/user')) response = { ...serverUser, id: liveId, email_confirmed_at: emailConfirmed ? serverUser.email_confirmed_at : null };
       else if (url.pathname.endsWith('/bento-delete-account')) response = deletion;
       else response = {};
       return new Response(JSON.stringify(response), { status: 200, headers: { 'Content-Type': 'application/json' } });
     };
     const port = createAccountWebPort(accountWebConfig('account-web', env), fetcher);
-    return { port, requests, changeUser: () => { liveId = 'other-user'; }, setDeletion: (value: unknown) => { deletion = value; }, setPasswordError: (code: string, status: number) => { passwordError = { code, status }; } };
+    return { port, requests, unconfirm: () => { emailConfirmed = false; }, changeUser: () => { liveId = 'other-user'; }, setDeletion: (value: unknown) => { deletion = value; }, setPasswordError: (code: string, status: number) => { passwordError = { code, status }; } };
   }
+  it('signup completion requires the live server-confirmed account and closes its temporary session', async () => {
+    const encode = (value: unknown) => Buffer.from(JSON.stringify(value)).toString('base64url');
+    const access_token = `${encode({alg: 'HS256'})}.${encode({sub: user.id, exp: Math.floor(Date.now() / 1000) + 3600})}.${encode('signature')}`;
+    const good = sdkHarness();
+    await good.port.confirmSignup({ access_token, refresh_token: 'synthetic-refresh' });
+    expect(good.requests.some(request => request.path.endsWith('/user'))).toBe(true);
+    expect(good.requests.some(request => request.path.endsWith('/logout'))).toBe(true);
+    expect(good.requests.some(request => request.path.includes('/functions/'))).toBe(false);
+    const bad = sdkHarness(); bad.unconfirm();
+    await expect(bad.port.confirmSignup({ access_token, refresh_token: 'synthetic-refresh' })).rejects.toThrow();
+    expect(bad.requests.some(request => request.path.includes('/functions/'))).toBe(false);
+  });
   it('never touches browser storage; uses verified identity and password-only deletion payload', async () => {
     const storage = { getItem: vi.fn(() => { throw new Error('forbidden'); }), setItem: vi.fn(() => { throw new Error('forbidden'); }), removeItem: vi.fn(() => { throw new Error('forbidden'); }) };
     vi.stubGlobal('localStorage', storage); vi.stubGlobal('sessionStorage', storage);

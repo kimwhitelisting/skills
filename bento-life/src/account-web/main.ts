@@ -1,4 +1,4 @@
-import { AccountWebController, consumeRecoveryURL, type WebState } from './controller.ts';
+import { AccountWebController, consumeAccountURL, type WebState } from './controller.ts';
 import { createAccountWebPort } from './client.ts';
 import type { AccountWebConfig } from '../../scripts/account-web-config.ts';
 import './style.css';
@@ -7,13 +7,14 @@ declare const __BENTO_ACCOUNT_WEB_CONFIG__: AccountWebConfig;
 const config = __BENTO_ACCOUNT_WEB_CONFIG__;
 const panel = document.querySelector<HTMLElement>('#panel')!;
 const feedback = document.querySelector<HTMLElement>('#feedback')!;
-let tokens = null;
-let badRecovery = false;
-try { tokens = consumeRecoveryURL(location.href, clean => history.replaceState(null, '', clean)); }
-catch { badRecovery = true; }
+let link = null;
+let badLink = false;
+try { link = consumeAccountURL(location.href, clean => history.replaceState(null, '', clean)); }
+catch { badLink = true; }
 const callback = new URL(config.returnURL);
 // A copied deployment at another origin/path must not send credentials to an unexpected configured service.
 if (location.origin !== callback.origin || location.pathname !== callback.pathname) {
+  link = null;
   panel.textContent = '설정된 계정 관리 주소와 현재 주소가 달라요. 운영자가 공식 주소 설정을 확인해야 합니다.';
 } else {
   const support = document.querySelector<HTMLAnchorElement>('#support')!;
@@ -27,9 +28,15 @@ if (location.origin !== callback.origin || location.pathname !== callback.pathna
     const initial = renderedStage === '';
     const stageChanged = renderedStage !== state.stage;
     renderedStage = state.stage;
+    document.querySelector<HTMLElement>('#delete-scope')!.hidden = !['login', 'confirm', 'unknown'].includes(state.stage);
+    document.querySelector<HTMLElement>('h1')!.textContent = state.stage === 'confirmed' ? '이메일 확인 완료' : state.stage === 'password' ? '비밀번호 재설정' : '계정 안내';
     feedback.textContent = state.message || (state.busy ? '처리 중이에요. 잠시 기다려 주세요.' : '');
     if (stageChanged) {
-      if (state.stage === 'login' || state.stage === 'unknown') {
+      if (state.stage === 'verifying') {
+        panel.innerHTML = '<h2 id="form-title">인증 링크 확인 중</h2><p>서버에서 확인하고 있어요.</p>';
+      } else if (state.stage === 'confirmed' || state.stage === 'link-error') {
+        panel.innerHTML = `<h2 id="form-title">${state.stage === 'confirmed' ? '게임에서 이어서 로그인해 주세요' : '인증 링크 확인 필요'}</h2><p>이 페이지는 게임에 자동 로그인하거나 진행 기록을 가져오지 않아요. 가입 확인 메일이 필요하면 게임의 ‘계정과 저장’에서 다시 요청해 주세요.</p><button type="button" data-action="cancel" class="secondary">비밀번호 재설정·계정 삭제 안내 보기</button>`;
+      } else if (state.stage === 'login' || state.stage === 'unknown') {
         panel.innerHTML = `<h2 id="form-title">${state.stage === 'unknown' ? '삭제 결과 확인 필요' : '본인 계정 확인'}</h2><form id="login-form"><label>이메일<input name="email" type="email" autocomplete="username" required maxlength="254"></label><label>비밀번호<input name="password" type="password" autocomplete="current-password" required maxlength="1024"></label><button type="submit">로그인 · 삭제 전 확인</button><button type="button" data-action="reset" class="secondary">비밀번호 재설정 메일 받기</button></form>`;
         panel.querySelector<HTMLInputElement>('[name=email]')!.value = email;
       } else if (state.stage === 'confirm') {
@@ -51,7 +58,7 @@ if (location.origin !== callback.origin || location.pathname !== callback.pathna
     panel.setAttribute('aria-busy', String(state.busy));
   };
   const controller = new AccountWebController(port, render);
-  render(controller.state);
+  if (!link && !badLink) render(controller.state);
   panel.addEventListener('submit', event => {
     event.preventDefault();
     const form = event.target as HTMLFormElement;
@@ -80,6 +87,10 @@ if (location.origin !== callback.origin || location.pathname !== callback.pathna
   });
   addEventListener('pagehide', () => { controller.dispose(); panel.replaceChildren(); feedback.textContent = ''; });
   addEventListener('pageshow', event => { if (event.persisted) location.reload(); });
-  if (badRecovery) controller.invalidRecovery();
-  else if (tokens) { void controller.recover(tokens); tokens = null; }
+  if (badLink) controller.invalidLink();
+  else if (link) {
+    if (link.type === 'signup') void controller.confirmSignup(link.tokens);
+    else void controller.recover(link.tokens);
+    link = null;
+  }
 }

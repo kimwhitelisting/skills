@@ -1,6 +1,10 @@
-# 앱 밖 계정 삭제 · 비밀번호 복구
+# 앱 밖 가입 확인 · 계정 삭제 · 비밀번호 복구
 
-2026-11-10 구현 후보. **공개 운영 주소·지원 이메일·SMTP는 아직 확정/배포하지 않았다.** 이 문서는 공개 삭제 URL이 준비됐거나 스토어 요구사항을 모두 충족했다는 뜻이 아니다.
+2026-11-11 구현 후보. 지원 이메일 수신과 [custom SMTP](AUTH-MAIL.md)는 연결했다. **공개 계정 웹 배포·Auth 복귀 등록·실제 메일 복귀 검증은 아직 남아 있다.** 이 문서는 공개 삭제 URL이 준비됐거나 스토어 요구사항을 모두 충족했다는 뜻이 아니다.
+
+## 가입 확인
+
+가입 확인 메일에서 이 페이지로 돌아오면 서버가 확인한 이메일 인증 상태를 검증한 후 ‘이메일 확인 완료’를 표시한다. 임시 인증은 `scope: local` 로그아웃과 메모리 폐기로 정리하며 게임으로 전달하지 않는다. 사용자는 게임으로 돌아가 직접 로그인한다. 가입 확인 화면에는 삭제 범위나 삭제 로그인 폼을 먼저 노출하지 않으며, 게임 저장·자동 가져오기·계정 진행 선택을 실행하지 않는다. 확인 실패·만료·이미 사용된 링크는 별도 오류 화면으로 안내한다. 확인 결과만으로 계정 삭제나 비밀번호 변경 권한을 열지 않는다.
 
 ## 이용 흐름과 삭제 범위
 
@@ -17,7 +21,7 @@
 
 - 기존 Supabase JS 2.119.0을 별도 client로 사용한다. 게임 `account.ts`, 저장소, 작성 잠금, Native 모듈을 import하지 않는다.
 - `persistSession: false`, `autoRefreshToken: false`, `detectSessionInUrl: false`, 독립 `storageKey`를 사용한다. 비밀번호·세션은 이 페이지 메모리에만 있으며 게임 snapshot·localStorage·sessionStorage·IndexedDB·로그에 넣지 않는다. 페이지 종료/새로고침 후 재로그인한다.
-- 메일은 공식 implicit 복구 흐름이다. recovery fragment만 엄격히 받아 즉시 주소에서 제거하고, `setSession` 이후 서버 `getUser`를 확인한다. URL에서 받은 이메일/사용자 ID를 권위로 쓰지 않는다. 다른 종류 링크·중복 필드·query 토큰은 거부한다.
+- 메일은 공식 implicit 흐름이다. 실제 Auth가 반환하는 `type=signup`과 `type=recovery` fragment만 목적별로 엄격히 받아 즉시 주소에서 제거하고, `setSession` 이후 서버 `getUser`를 확인한다. URL에서 받은 이메일/사용자 ID를 권위로 쓰지 않는다. `email`, `invite`, `magiclink` 등 다른 종류 링크·중복 필드·query 토큰은 거부한다. `signup`은 서버의 확인 완료 상태만 표시한 뒤 세션을 폐기하고, `recovery`만 비밀번호 입력으로 이어진다.
 - 비밀번호 변경 성공/결과 불명 뒤 인증을 정리한다. 고정 SDK의 `weak_password`·`same_password`와 명시적 400/422 응답만 수정 입력을 위해 복구 화면에 머문다. 취소의 서버 로그아웃은 `scope: local`이며 다른 기기의 세션을 임의 취소하지 않는다. 페이지 종료 시 진행 중 요청을 중단하고 메모리 client를 폐기한다. 이미 서버에 도착한 삭제 요청은 취소로 되돌릴 수 없다.
 - 요청과 응답 본문 읽기에 시간 제한을 둔다. 오류 원문·비밀번호·토큰은 화면/로그에 노출하지 않는다. 사용자 이메일은 `textContent`로 표시한다.
 - self JS/CSS와 지정된 API만 쓰는 CSP meta, `no-referrer`, URL 경로/출처 일치 검사를 포함한다. 실제 호스트에도 HTTPS, `Cache-Control: no-store`, `Referrer-Policy: no-referrer`, CSP의 `frame-ancestors 'none'`, `X-Frame-Options: DENY` 등 응답 헤더를 설정하고 별도 검증한다. 분석 스크립트/외부 추적기를 추가하지 않는다.
@@ -42,19 +46,27 @@ npm run build:account-web       # 공개 설정 필수 → dist-account-web/
 | `BENTO_WEB_RETURN_URL` | 이 페이지 자체의 정확한 공개 HTTPS 주소. Auth redirect allowlist에 등록해야 함 |
 | `BENTO_WEB_SUPPORT_EMAIL` | 실제 운영자가 확인하고 응답할 지원 이메일 |
 
-누락·비밀 값·알 수 없는 `BENTO_WEB_` 변수·사설/예약 주소·잘못된 메일·query/fragment가 있는 복귀 주소는 출력 디렉터리를 비우기 전에 거부한다. 호스팅의 루트/index 리다이렉트도 `BENTO_WEB_RETURN_URL`의 정확한 경로로 끝나는지 확인한다. 문법 검사로 주소 소유권·접속 가능성·SMTP 작동을 보장하지 않는다. 공개 설정이 없으므로 현재 공개 빌드는 의도적으로 실패한다. 운영 정보가 결정된 후 실제 계정 서비스·공식 주소와 대조한다.
+누락·비밀 값·알 수 없는 `BENTO_WEB_` 변수·사설/예약 주소·잘못된 메일·query/fragment가 있는 복귀 주소는 출력 디렉터리를 비우기 전에 거부한다. 호스팅의 루트/index 리다이렉트도 `BENTO_WEB_RETURN_URL`의 정확한 경로로 끝나는지 확인한다. 문법 검사로 주소 소유권·접속 가능성·SMTP 작동을 보장하지 않는다. 공개 후보를 만들 때 실제 공개 클라이언트 키와 계정 서비스·공식 주소를 대조한다. 공개 빌드 성공만으로 배포·Auth allowlist 등록·운영 메일 복귀가 완료된 것은 아니다.
 
 `npm run build:account-web:local`은 두 주소를 **HTTP loopback**으로 제한하고 로컬 anon JWT만 추가로 허용한다. `dist-account-web-local/`에 ‘로컬 시험용’ 안내가 있는 후보를 만든다. 기존 hosted 설정을 그대로 사용하면 거부한다. 로컬 산출물은 공개 배포하지 않는다. 설정은 별도 네 변수만 읽으며 기존 앱의 `VITE_` 설정은 사용하지 않는다.
 
 별도 웹 출력이 게임 번들을 바꾸지는 않지만, `src`·`package.json` 변경은 기존 앱의 출시 provenance source digest에 포함된다. 이전 출시 provenance를 재사용하지 말고 다음 실제 Native 출시 후보는 기존 `build:release` → sync → 패키지 검증 절차를 다시 따른다. 이 작업은 Native 재컴파일·서명·설치를 하지 않는다.
 
-## 검증과 공개 전 남은 조건
+## 2026-11-11 가입 확인 확장 검증
+
+- 기존 npm 재현 설치 뒤 전체 **263개 테스트/15개 파일**(2,000판 자동 플레이 포함), 앱 TypeScript/Vite 빌드와 별도 계정 웹 로컬 빌드를 통과했다. 실제 고정 SDK의 서버 확인 전 성공 금지, 가입 확인 후 세션 폐기, 결과 화면에서 비밀번호 변경·삭제 금지, 잘못된 링크/늦은 응답 처리 회귀를 포함한다.
+- 새 격리 Supabase CLI 3.0 native Auth와 Mailpit에서 합성 계정으로 실제 가입을 요청했다. 메일의 verify 링크를 거친 callback은 `type=signup`이었다. 390px headless Chromium에서 서버 사용자 확인 → 완료 안내 → 해당 세션 로그아웃 → refresh token 거부를 확인했다. URL 토큰 제거, 저장 공간 보존, 게임 API/삭제 호출 없음과 삭제 폼 비노출도 확인했다.
+- 소모된 가입 링크의 실제 `otp_expired` 오류를 안전한 안내로 처리하고 주소를 지웠다. 미지원 `magiclink`는 Auth 요청 전에 거부했다. 같은 합성 계정의 실제 Mailpit 복구 → `type=recovery` → 새 비밀번호 변경 → 옛 암호 거부/새 암호 로그인 → 별도 로그인·재입력·동의 후 제품 Edge 삭제를 검증했다. 기존 로컬 게스트 기록은 보존됐다.
+- 첫 QA의 소모 링크 검사는 이미 열린 동일 페이지에 fragment만 바꾸는 탐색 때문에 스크립트가 재실행되지 않아 대기시간이 초과됐다. 메일 링크에서 돌아오는 새 문서 탐색으로 시험 도구를 바로잡은 후 기존 계정으로 이어 검증했다. 서로 다른 후보의 전체 흐름 재실행이라고 주장하지 않는다.
+- 공개 운영 설정, 실제 발송/수신함, iPhone Safari/Native와 개인 계정 복원은 이 로컬 검증에 포함하지 않는다. 앱의 ‘초대 이메일만’ 문구는 중립적인 메일 재요청·스팸함 안내로 수정했지만 기존 미리보기/설치 앱 자산·현재 Native callback은 그대로다.
+
+## 초기 후보 검증과 공개 전 남은 조건
 
 - 실제 메일 시험에서 Auth의 빈 `sb` fragment 필드를 거부하는 호환 문제를 발견했다. [공식 서버 변경](https://github.com/supabase/auth/commit/2d3dbc6)을 확인해 선택적인 빈 필드 하나만 허용하고 중복/비어 있지 않은 값은 거부한다. 이 표시는 인증 근거로 사용하지 않으며 서버 사용자 확인은 그대로 유지한다.
 - 단위 검증: 필수 설정/비밀/hosted 로컬 유출 거절, 복구 링크 주소 제거·중복/잘못된 타입 거절, 취소·중복 클릭·결과 불명·암호 변경 후 재로그인, 종료 뒤 늦은 응답 차단, 실제 고정 SDK의 메모리 인증·live user 일치·password-only 삭제 요청. 실제 loopback 응답 본문 stall의 시간 제한도 검사한다.
 - 기존 `npm ci` → 전체 **257개 테스트/15개 파일**(자동 플레이 2,000판 포함) → 앱 빌드와 별도 로컬 웹 빌드를 통과했다. 실제 공개 빌드는 설정 누락/secret 두 경우 모두 출력 생성 전에 거절됐다. 합성 공개 형식 네 값으로 공개 모드의 빌드 성공도 확인했고 local 안내 표시 차이·CSP API 대상·동일 CSS/파일 종류를 대조했다. 이 산출물은 외부 요청 없이 별도 시험 보관소로 옮겨 비배포용으로 표시했으며 실제 도메인·운영 설정의 준비를 뜻하지 않는다. 기존 앱 dist 14개, preview 30개, iOS/Android public 각 16개 파일은 전후 바이트가 같고 lockfile도 유지됐다.
 - 별도 로컬 Auth/DB/Edge의 합성 계정으로 실제 HTTP 삭제 10개·복구 9개 검사를 통과했다. 첫 브라우저 후보는 취소·미확인 체크박스·틀린 암호·실제 삭제 후 old JWT 거부·다른 계정 보존·390px 키보드/넘침 등 **12개 확인 뒤** 위 `sb` 호환 결함에서 중단됐다. 이를 고친 최종 후보에서 실제 Mailpit 새 탭 복구, weak/same 암호 거부 후 재입력, 새 암호 로그인, 저장 보존 및 실제 삭제, 서버가 삭제했지만 응답을 유실한 경우의 결과 불명/자동 재시도 없음, 320px dark/키보드 등 **후속 16개 검사**를 통과했다. 두 후보의 증거를 최종 후보 전체 동선 재실행으로 합쳐 주장하지 않는다.
 - 해당 headless Chromium 시험에서 game/journal 합성 저장과 localStorage·sessionStorage·쿠키·IndexedDB 상태가 전후 같았고, 페이지 uncaught 오류는 없었다. 예상한 API 거부/네트워크 실패는 별도로 발생했다. 모든 요청은 새 시험용 loopback 대상이었다. 시험 후 합성 users/identities/sessions/saves/operations가 모두 0임을 확인하고 시험 서버와 테스트 자격증명을 정리했다. 합성 테스트는 운영 SMTP, 실제 개인 계정, iPhone Safari 또는 Native 기기 검증을 대체하지 않는다.
-- 공개 전: 운영자·지원 메일·도메인 확인, 정적 호스팅/보안 헤더, 기존 Auth redirect allowlist 및 실제 SMTP, 공식 메일의 새 탭 복구, 삭제 결과/문의 처리, 스토어 외부 삭제 URL 등록이 필요하다. 정책의 로그/백업 보존 기간을 임의로 작성하지 않는다.
+- 공개 전 남은 조건: 계정 웹의 정적 호스팅/보안 헤더, Auth redirect allowlist 등록, 운영 SMTP의 실제 확인·복구 메일 수신과 새 탭 복귀, 삭제 결과/문의 처리, 스토어 외부 삭제 URL 등록이 필요하다. 지원 수신·SMTP 연결은 [후속 메일 기록](AUTH-MAIL.md)을 따른다. 정책의 로그/백업 보존 기간을 임의로 작성하지 않는다.
 
 공식 근거(2026-11-10 확인): [Supabase 비밀번호 복구](https://supabase.com/docs/guides/auth/passwords), [implicit flow](https://supabase.com/docs/guides/auth/sessions/implicit-flow), [resetPasswordForEmail](https://supabase.com/docs/reference/javascript/auth-resetpasswordforemail), [updateUser](https://supabase.com/docs/reference/javascript/auth-updateuser), [Google Play 계정 삭제 요구사항](https://support.google.com/googleplay/android-developer/answer/13327111?hl=en). 현재 changelog의 CLI/Flutter 변경을 앱 SDK 업그레이드로 혼동하지 않는다.

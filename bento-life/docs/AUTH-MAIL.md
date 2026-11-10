@@ -49,8 +49,8 @@ API key는 서버 SMTP 설정과 승인된 비밀 저장소에서만 취급한�
 
 이번 후보는 두 템플릿 각각 320/390/600px·light/dark의 격리 Chromium DOM/레이아웃 **12개 경우**를 통과했다. 공식 변수 3곳과 정확한 확인 링크, 한국어 문서·제목·44px 이상 버튼 높이, 가로 넘침 없음, 외부 요청 0건을 확인했다. HTML 구조·공식 변수 보존·외부 리소스 부재와 브라우저 레이아웃 범위이며 시각 스크린샷/실제 메일 클라이언트 시험은 아니다. DNS/SMTP와 템플릿 저장·일반 메일의 제공자 Delivered 상태는 위 범위에서 확인했다. Gmail/iOS Mail의 수신함·렌더링·보안 스캐너 동작과 실제 Auth 링크·개인 계정 복구는 아직 미검증이다. 로컬 메일함(Mailpit)의 성공도 실제 발송 성공을 대신하지 않는다. 공개 가입 준비 완료는 위 실제 수신/복귀와 [앱 밖 계정 웹](ACCOUNT-WEB.md)의 공개 운영 조건까지 확인한 후 판정한다.
 
-## 다음 앱 변경
+## 앱 안내 후속 반영 (2026-11-11)
 
-`src/account/account.ts`의 가입 안내와 일반 오류 문구에는 아직 “초대된 테스트 이메일만” 또는 “테스트 초대 여부” 표현이 남아 있다. custom SMTP 적용 뒤에는 그 설명을 현재 운영 조건과 맞춰야 한다. 다음 앱 소스 변경과 새 출시 빌드에서 수정·검증할 항목이며, 이번 SMTP/문서 반영으로 앱 코드나 이전 Native 패키지가 갱신된 것은 아니다. 실제 발송/복귀 확인 전 무제한 공개 가입이 가능하다는 문구로 바꾸지 않는다.
+`src/account/account.ts`의 “초대된 테스트 이메일만”과 “테스트 초대 여부” 문구를 받은편지함·스팸함 확인과 잠시 뒤 재요청하는 안내로 수정했다. [계정 웹](ACCOUNT-WEB.md)은 실제 로컬 Auth/Mailpit의 가입 확인·복구 흐름을 검증했다. 이는 운영 SMTP의 실제 Auth 메일 수신/복귀 검증이나 무제한 공개 가입 출시를 뜻하지 않는다. 기존 Native 패키지와 미리보기는 갱신하지 않았으며 다음 앱 빌드에 반영해야 한다.
 
 공식 근거(2026-11-10): [Supabase SMTP](https://supabase.com/docs/guides/auth/auth-smtp), [메일 템플릿·변수·prefetch](https://supabase.com/docs/guides/auth/auth-email-templates), [Resend SMTP 연동](https://resend.com/docs/send-with-supabase-smtp), [발송 도메인](https://resend.com/docs/dashboard/domains/introduction), [키 권한](https://resend.com/docs/api-reference/api-keys/create-api-key), [요금](https://resend.com/pricing).
