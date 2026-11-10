@@ -41,7 +41,7 @@ describe('read-only native guest boundary', () => {
     expect([...s.nativeMap].some(([key, value]) => key.includes(':recovery:') && value === later)).toBe(true);
     expect(guestNeedsResolution(await inspectGuestRecords(s.native, s.web))).toBe(false);
   });
-  it('blocks unreadable sources, changed selections, account changes and failed archive durability before canonical writes', async () => {
+  it('blocks unreadable sources, changed selections, account changes and failed archive read-back before canonical writes', async () => {
     const s = stores([[SNAPSHOT_KEY, JSON.stringify(snapshot(2))]], [[SNAPSHOT_KEY, JSON.stringify(snapshot(9))]]);
     const records = await inspectGuestRecords(s.native, s.web);
     await expect(activateGuestRecord(records, 'native', s.native, s.web, () => false)).rejects.toThrow('Account changed');
@@ -151,7 +151,7 @@ async function boot(s: ReturnType<typeof stores>, signedIn = true, cloud: Snapsh
   const panel = { innerHTML: '', hidden: true, setAttribute: vi.fn(), contains: () => false, addEventListener: (event: string, fn: (e: unknown) => void) => handlers.set(event, fn) };
   const app = { textContent: '' };
   const put = vi.fn();
-  let authChange: (event: string, session: unknown) => void = () => {}; 
+  let authChange: (event: string, session: unknown) => void = () => {};
   vi.stubGlobal('localStorage', s.web);
   vi.stubGlobal('navigator', { onLine: true, locks: { request: (_name: string, _opts: unknown, fn: (lock: object) => Promise<void>) => fn({}) } });
   vi.stubGlobal('location', { origin: 'https://guest.test', pathname: '/', hash: '', reload });
