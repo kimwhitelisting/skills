@@ -1,5 +1,6 @@
 import { accountBuildConfig } from './build-config.ts';
 import './account.css';
+import { saveStatusLabel } from './save-status.ts';
 import { createClient, type SupabaseClient, type User } from '@supabase/supabase-js';
 import { AccountSync } from './sync.ts';
 import { gameWrites, needsFreshRuntime } from './runtime-gate.ts';
@@ -38,7 +39,8 @@ let authChanged = false;
 const listeners = new Set<() => void>();
 const esc = (s: string) => s.replace(/[&<>"']/g, ch => `&#${ch.charCodeAt(0)};`);
 export const accountBlocked = () => suspended || !!fatal || opened || (!!user && sync?.mode !== 'ready');
-export const accountSummary = () => user ? sync?.message ?? '계정 저장 확인 중' : '이 기기에 저장 중 · 로그인하면 계정에 보관';
+export const isGuestAccount = () => !user;
+export const accountSummary = () => saveStatusLabel({ local: storageStatus(), signedIn: !!user, unavailable: !!fatal || suspended, online: navigator.onLine !== false, sync });
 export const subscribeAccount = (fn: () => void) => { listeners.add(fn); return () => listeners.delete(fn); };
 function notify(): void {
   if (user && sync && sync.mode !== 'ready') opened = true;
@@ -172,6 +174,9 @@ export async function bootAccount(native?: NativeStorage & { keys?(): Promise<st
     gameWrites.activate();
     runtimeReadyAtBoot = true;
   }
+  subscribeStorage(notify);
+  window.addEventListener('online', notify);
+  window.addEventListener('offline', notify);
   renderPanel(); notify();
   return true;
 }
@@ -184,12 +189,12 @@ function renderPanel(): void {
   if (fatal) content = `<p>${esc(fatal)}</p>${button('restart', '다시 열기')}${journalDamaged ? (repairConfirm ? '<p>손상된 전송 기록의 원본을 보관하고 계정 저장을 다시 확인해요. 현재 기기 진행은 남기며 서버 기록과 다르면 선택할 수 있어요.</p>' + button('repair-yes', '확인 · 원본 보관 후 다시 확인') + button('repair-cancel', '취소') : button('repair', '원본 보관 후 계정 저장 다시 확인')) : ''}`;
   else if (!client) content = '<p>아직 계정 저장 연결이 준비되지 않았어요. 지금은 이 기기에만 저장돼요.</p>';
   else if (recovery) content = `<p>새 비밀번호를 정해 주세요.</p><label>새 비밀번호<input id="account-password" type="password" autocomplete="new-password" minlength="8"></label>${button('password', '비밀번호 바꾸기', true)}`;
-  else if (!user) content = `<p>로그인하면 이 계정에 진행을 보관하고 다른 기기에서 이어갈 수 있어요. 기존 기기 기록은 로그인 후 직접 선택할 때만 가져와요.</p>
+  else if (!user) content = `<p>로그인한 뒤 보관할 진행을 선택하고 ‘계정에 저장됨’까지 확인하면 다른 기기에서 이어갈 수 있어요. 기존 기기 기록은 직접 선택할 때만 가져와요.</p>
     <form><label>이메일<input id="account-email" type="email" autocomplete="username" value="${esc(draftEmail)}" required></label><label>비밀번호<input id="account-password" type="password" autocomplete="current-password" minlength="8" required></label><button type="submit" class="primary" ${busy ? 'disabled' : ''}>로그인</button></form>
     ${button('signup', '처음이라면 가입하기')}${button('resend', '가입 확인 메일 다시 받기')}${button('reset', '비밀번호 재설정 메일 받기')}<p class="account-note">가입 후 이메일 확인이 필요해요. 메일이 오지 않으면 받은편지함·스팸함을 확인하고 잠시 뒤 다시 요청해 주세요. 비밀번호는 저장 기록이나 복구 파일에 넣지 않아요.</p>`;
   else if (deleting) content = `<p>계정과 서버의 게임 기록을 삭제할까요? 되돌릴 수 없어요. 이 기기의 해당 계정 기록도 삭제해요. 다른 기기의 오프라인 사본이나 이미 내보낸 파일은 별도로 관리해 주세요. 다른 계정·게스트 기록은 지우지 않아요.</p><label>현재 비밀번호<input id="account-password" type="password" autocomplete="current-password"></label>${button('delete-yes', '확인 · 내 계정과 기록 삭제')}${button('delete-cancel', '취소')}`;
   else {
-    content = `<p>${esc(user.email ?? '로그인한 계정')}</p><p class="account-message">${esc(accountSummary())}</p>`;
+    content = `<p>${esc(user.email ?? '로그인한 계정')}</p><p class="account-message">${esc(accountSummary())}</p>${sync && sync.message !== accountSummary() ? `<p>${esc(sync.message)}</p>` : ''}`;
     if (sync?.mode === 'choose') content += `<p>계정에 처음 저장할 진행을 선택해 주세요. 기기 기록의 원본은 남겨 두고 하트를 합치지 않아요.</p>${guest() ? `<p>이 기기의 기록: ${esc(summary(guest()))}</p>${button('import', '이 기기 기록을 계정으로 가져오기', true)}` : ''}${button('fresh', '계정에서 새로 시작')}`;
     if (sync?.mode === 'conflict') content += `<p>두 기록을 보관했어요. 하나를 선택하며 하트와 도감을 합치지 않아요.</p><p>기기: ${esc(summary(sync.localCandidate))}</p><p>계정: ${esc(summary(sync.remoteCandidate))}</p>${sync.localCandidate ? button('local', '이 기기 진행으로 이어가기') : ''}${sync.remoteCandidate ? button('remote', '계정 진행으로 이어가기', true) : ''}`;
     content += button('retry', '계정 저장 다시 확인') + button('logout', '로그아웃 · 기기 기록으로 돌아가기') + button('delete', '계정 삭제');

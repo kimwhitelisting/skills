@@ -28,7 +28,7 @@ import { menuKey } from './game/menus.ts';
 import { loadDex, loadRun, saveSnapshot, storageStatus, subscribeStorage, retryStorage, flushStorage, recoveryExport, hasRecoveryOriginals, recoveryResetPlan, confirmRecoveryReset, storageReloadRequired, hasInvalidWrite, type Dex } from './game/save.ts';
 import { captureCheckpoint, restoreCheckpoint, type EventResult } from './game/checkpoint.ts';
 import { gameWrites } from './account/runtime-gate.ts';
-import { accountBlocked, accountSummary, openAccount, subscribeAccount } from './account/account.ts';
+import { accountBlocked, accountSummary, isGuestAccount, openAccount, subscribeAccount } from './account/account.ts';
 import { TransitionGuard } from './ui/transition-guard.ts';
 import { RecoveryExporter } from './ui/recovery-export.ts';
 import { newGame } from './game/state.ts';
@@ -59,7 +59,7 @@ export function mountGame(): void {
   mounted = true;
   // ───────────────────────── 상태 ─────────────────────────
   type Screen = 'title' | 'intro' | 'game';
-  type Overlay = 'stats' | 'menu' | 'notebook' | 'dex' | 'settings' | 'shop' | 'album' | 'new-confirm';
+  type Overlay = 'stats' | 'menu' | 'notebook' | 'dex' | 'settings' | 'shop' | 'album' | 'new-confirm' | 'guest-start';
 
   const app = document.getElementById('app')!;
   app.classList.add('pixel-ui', 'fit'); // fit = 한 화면에 딱 (game.css)
@@ -69,6 +69,7 @@ export function mountGame(): void {
   setMusicEnabled(prefs.music);
   let screen: Screen = 'title';
   let overlay: Overlay | undefined;
+  let overlayReusesGame = false;
   let game: GameState | undefined = loadRun();
   const dex: Dex = loadDex();
   let eventResult: EventResult | undefined;
@@ -78,6 +79,7 @@ export function mountGame(): void {
   let busy = false;
   let introPage = 0;
   let commuteOn = false;
+  let guestReminderDismissed = prefs.seenTips.includes('guest-account-save');
 
   const MORNING_TIME = 30;
   let timer = MORNING_TIME;
@@ -589,6 +591,7 @@ export function mountGame(): void {
     ${stage('growth', esc(birthdayLine(s)), s.age >= FINAL_AGE ? `${shown(s.age)}살 · 마지막 해` : `${shown(s.age)}살 → ${shown(s.age + 1)}살`)}
     <section class="px-panel summary">
       <h2 class="px-h">${word}</h2>
+      ${isGuestAccount() && !guestReminderDismissed && s.age === 0 ? `<aside class="guest-save-reminder"><b>첫 한 해의 기록, 계정에도 보관할까요?</b><p>지금은 이 기기에만 있어요. 앱 삭제·기기 분실·브라우저 데이터 삭제 때 잃을 수 있어요. 로그인 후 보관할 진행을 선택하고 ‘계정에 저장됨’을 확인해 주세요.</p><button class="btn" data-act="guest-reminder-account">계정과 저장 열기</button><button class="btn" data-act="guest-reminder-dismiss">지금은 계속하기</button></aside>` : ''}
       <div class="px-year-facts">
         <span>키 <b>${h0}→${h1}cm</b></span>
         ${days.length ? `<span>점심 <b>${days.map((a) => '★'.repeat(a.lunch) || '☆').join(' ')}</b></span>` : ''}
@@ -885,6 +888,7 @@ export function mountGame(): void {
 
   function renderOverlay(): string {
     if (!overlay) return '';
+    if (overlay === 'guest-start') return sheet('이 기기에만 저장하며 시작할까요?', `<p>로그인 없이도 끝까지 플레이할 수 있어요.</p><p>진행은 이 기기에만 저장돼요. <b>앱 삭제·기기 분실·브라우저 데이터 삭제로 기기 기록이 지워지면 계정에서 복원할 수 없어요.</b></p><p>계정에 보관하려면 로그인 후 진행을 선택하고 ‘계정에 저장됨’까지 확인해 주세요.</p><button class="btn primary wide" data-act="guest-start-account">계정과 저장 열기</button><button class="btn wide" data-act="guest-start-continue">위 내용을 확인하고 로그인 없이 계속</button>`);
     if (overlay === 'new-confirm') return sheet('새로 키울까요?', `
       <p>${esc(game?.child.name ?? '아이')}의 지금 진행은 새 게임으로 바뀌어요. 도감·사진 수집·하트는 유지돼요.</p>
       <button class="btn wide" data-act="close">취소 · 지금 진행 유지</button>
@@ -1069,7 +1073,8 @@ export function mountGame(): void {
 
   // ───────────────────────── 뒤로가기 (안드로이드 뒤로 = 브라우저 뒤로) ─────────────────────────
   function openOverlay(o: Overlay): void {
-    if (overlay) history.replaceState({ o }, '');
+    if (!overlay) overlayReusesGame = o === 'guest-start' && screen === 'game' && game?.step === 'ending';
+    if (overlay || overlayReusesGame) history.replaceState({ o }, '');
     else history.pushState({ o }, '');
     overlay = o;
     sfx('tap');
@@ -1082,7 +1087,11 @@ export function mountGame(): void {
   window.addEventListener('popstate', () => {
     const before = navigationKey();
     if (photoView) photoView = undefined;
-    else if (overlay) overlay = undefined;
+    else if (overlay) {
+      overlay = undefined;
+      if (overlayReusesGame) screen = 'title';
+      overlayReusesGame = false;
+    }
     else if (commuteOn) return void history.pushState({ g: 1 }, ''); // 등굣길 도중엔 나가지 않는다
     else if (screen !== 'title') screen = 'title';
     render();
@@ -1090,7 +1099,7 @@ export function mountGame(): void {
   });
   function enterGame(): void {
     // 엔딩에서 다시 키우기는 같은 게임 화면을 교체한다.
-    if (screen === 'game') history.replaceState({ g: 1 }, '');
+    if (overlay || screen === 'game') history.replaceState({ g: 1 }, '');
     else history.pushState({ g: 1 }, '');
     screen = 'game';
   }
@@ -1104,6 +1113,15 @@ export function mountGame(): void {
     eventResult = undefined; overlay = undefined;
     commuteCheckpoint = undefined;
     resetMorning();
+  }
+
+  function beginNewRun(): void {
+    // Reuse the confirmation entry instead of leaving a dead Back step.
+    enterGame();
+    overlay = undefined;
+    overlayReusesGame = false;
+    if (!prefs.seenIntro) { screen = 'intro'; introPage = 0; return; }
+    startNewGame();
   }
 
   function pickIngredient(s: GameState, id: string): void {
@@ -1131,15 +1149,27 @@ export function mountGame(): void {
     switch (act) {
       case 'new':
         if (game && game.step !== 'ending') { openOverlay('new-confirm'); break; }
-        if (overlay) history.replaceState(null, '');
-        overlay = undefined;
-        if (!prefs.seenIntro) { enterGame(); screen = 'intro'; introPage = 0; break; }
-        startNewGame(); enterGame(); break;
+        if (isGuestAccount()) { openOverlay('guest-start'); break; }
+        beginNewRun(); break;
       case 'new-confirm':
         if (overlay !== 'new-confirm') return;
+        if (isGuestAccount()) { openOverlay('guest-start'); break; }
         startNewGame();
         history.replaceState({ g: 1 }, '');
         screen = 'game';
+        break;
+      case 'guest-start-continue':
+        if (overlay !== 'guest-start') return;
+        beginNewRun(); break;
+      case 'guest-start-account':
+        if (overlay !== 'guest-start') return;
+        openAccount(); return;
+      case 'guest-reminder-account':
+      case 'guest-reminder-dismiss':
+        if (!isGuestAccount() || game?.step !== 'summary' || game.age !== 0) return;
+        guestReminderDismissed = true;
+        if (!prefs.seenTips.includes('guest-account-save')) prefs.seenTips.push('guest-account-save');
+        if (act === 'guest-reminder-account') openAccount();
         break;
       case 'intro-next':
         if (introPage < INTRO.length - 1) { introPage++; sfx('tap'); break; }
@@ -1179,7 +1209,11 @@ export function mountGame(): void {
         dex.equip[slot] = dex.equip[slot] === it.id ? undefined : it.id;
         applyEquip(); sfx('pop'); top = false; break;
       }
-      case 'close': history.back(); return;
+      case 'close':
+        if (!overlayReusesGame) { history.back(); return; }
+        overlay = undefined; overlayReusesGame = false;
+        history.replaceState({ g: 1 }, '');
+        break;
       case 'home':
         // 메뉴 기록과 게임 진입 기록을 함께 되돌려 타이틀 기록이 쌓이지 않게 한다.
         overlay = undefined;
@@ -1358,14 +1392,29 @@ export function mountGame(): void {
     if (action === 'export') void downloadRecovery();
     if (action === 'account') openAccount();
   });
+  const accountSaveBar = document.createElement('button');
+  accountSaveBar.id = 'account-save-bar';
+  accountSaveBar.type = 'button';
+  accountSaveBar.innerHTML = '<span class="account-summary"></span><span aria-hidden="true">계정 ›</span>';
+  document.body.append(accountSaveBar);
+  app.classList.add('has-save-bar');
+  document.body.classList.add('with-save-bar');
+  const renderAccountSaveBar = () => {
+    const label = accountSummary();
+    accountSaveBar.querySelector('.account-summary')!.textContent = label;
+    accountSaveBar.setAttribute('aria-label', label + ' · 계정과 저장 열기');
+  };
+  accountSaveBar.addEventListener('click', () => { if (commuteOn) pauseFollow(); openAccount(); });
+  renderAccountSaveBar();
   let previousAccountBlock = accountBlocked();
   subscribeAccount(() => {
     const blocked = accountBlocked();
     transitionGuard.changed(String(previousAccountBlock), String(blocked), performance.now());
     previousAccountBlock = blocked;
+    renderAccountSaveBar();
     renderSaveNotice();
   });
-  subscribeStorage(renderSaveNotice);
+  subscribeStorage(() => { renderAccountSaveBar(); renderSaveNotice(); });
   renderSaveNotice();
   function checkpointBeforeBackground(): void { if (commuteOn) pauseFollow(); persist(); void flushStorage(); }
   window.addEventListener('bento-account-checkpoint', checkpointBeforeBackground);

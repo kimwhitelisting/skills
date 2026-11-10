@@ -243,3 +243,21 @@ html:has(#app.pixel-ui) { background: #f3e2c6; }
 .follow-paused { z-index: 90; }
 
 #export-notice { z-index: 210; top: max(8px, env(safe-area-inset-top)); bottom: auto; }
+
+/* Persistent save state stays outside renderer-owned game and mini-game DOM. */
+#account-save-bar { position: fixed; z-index: 95; top: 0; left: 0; right: 0; margin: 0 auto; width: min(100%, 480px); height: calc(46px + env(safe-area-inset-top)); padding: calc(5px + env(safe-area-inset-top)) 10px 5px; border: 0; border-bottom: 2px solid #70503a; background: #fff8e9; color: #3b2a24; display: flex; align-items: center; justify-content: space-between; gap: 8px; font: 12px/1.4 'Galmuri11', sans-serif; text-align: left; cursor: pointer; }
+#account-save-bar .account-summary { margin: 0; color: inherit; }
+#account-save-bar > :last-child { white-space: nowrap; font-weight: 700; }
+#app.fit.has-save-bar { margin-top: calc(46px + env(safe-area-inset-top)); height: calc(100dvh - 46px - env(safe-area-inset-top)); }
+.guest-save-reminder { padding: 10px; border: 2px solid #70503a; background: #fff8e9; color: #3b2a24; font: 13px/1.5 'Galmuri11', sans-serif; }
+.guest-save-reminder p { margin: 6px 0; }
+.guest-save-reminder .btn { width: 100%; margin-top: 6px; min-height: 44px; }
+
+/* The fixed bar owns the top safe area; content starts below it. */
+body.with-save-bar { padding-top: 0; }
+#app.has-save-bar .hud, #app.has-save-bar .px-hud { padding-top: 8px; }
+#app.has-save-bar.tight .px-hud { padding-top: 5px; }
+#app.has-save-bar .px-screen.title .px-sign { padding-top: 18px; }
+#app.has-save-bar.tight .px-screen.title .px-sign { padding-top: 10px; }
+#app.has-save-bar .proto-top { padding-top: 10px; }
+#app.has-save-bar.pixel-ui .proto-top { padding-top: 8px; }

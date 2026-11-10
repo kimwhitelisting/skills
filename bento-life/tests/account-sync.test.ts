@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AccountSync, type CloudRemote, type CloudSave, type PutResult } from '../src/account/sync.ts';
+import { saveStatusLabel } from '../src/account/save-status.ts';
 import { configureSaveScope, scopedStorage } from '../src/account/scope.ts';
 import { validSnapshot, type Snapshot } from '../src/game/save.ts';
 import { newGame } from '../src/game/state.ts';
@@ -181,5 +182,39 @@ describe('account-scoped durable sync', () => {
     configureSaveScope(other); expect(scopedStorage.getItem('bento-life:snapshot:v1')).toBeNull(); scopedStorage.setItem('bento-life:snapshot:v1', 'B');
     expect(scopedStorage.length).toBe(1); expect(scopedStorage.key(0)).toBe('bento-life:snapshot:v1');
     configureSaveScope(); expect(scopedStorage.getItem('bento-life:snapshot:v1')).toBe('guest'); expect(data.get('bento-auth:v1')).toBe('token');
+  });
+});
+
+
+describe('visible save evidence', () => {
+  const local = { errors: [] as string[], blocked: false, recovered: false, pending: false };
+  const label = (sync?: AccountSync, overrides: Record<string, unknown> = {}) => saveStatusLabel({ local, signedIn: !!sync, unavailable: false, online: true, sync, ...overrides });
+  it('never equates guest storage or signing in with a confirmed account save', async () => {
+    expect(label()).toBe('이 기기에만 저장 · 계정 보관 안 됨');
+    expect(label(undefined, { signedIn: true })).toBe('계정 저장 확인 중');
+    const { c } = client(); await c.start();
+    expect(label(c)).toBe('계정에 보관할 진행 선택 필요');
+  });
+  it('keeps ambiguous ACK and newer unsent changes pending, then confirms only latest server acknowledgement', async () => {
+    const s = server(snapshot()); const { c } = client(store(), s.remote); await c.start();
+    expect(label(c)).toBe('계정에 저장됨');
+    const realPut = s.remote.put;
+    s.remote.put = async (...args) => { await realPut(...args); throw Error('lost ack'); };
+    c.offer(snapshot(7)); await c.flush();
+    expect(c.mode).toBe('ready'); // This status must not force offline gameplay to stop.
+    expect(label(c)).toBe('기기에 저장됨 · 계정 전송 대기');
+    expect(c.hasConfirmedSave).toBe(false);
+    s.remote.put = realPut; await c.flush();
+    expect(label(c)).toBe('계정에 저장됨');
+    c.offer(snapshot(8));
+    expect(label(c)).toBe('기기에 저장됨 · 계정에 저장 중');
+    expect(label(c, { online: false })).toBe('기기에 저장됨 · 계정 전송 대기');
+  });
+  it('local storage failures and writes take precedence over an earlier cloud ACK', async () => {
+    const { c } = client(store(), server(snapshot()).remote); await c.start();
+    expect(label(c, { local: { ...local, pending: true } })).toBe('기기에 저장 중');
+    expect(label(c, { local: { ...local, errors: ['quota'], pending: true } })).toBe('기기 저장 오류 · 확인이 필요해요');
+    expect(label(c, { local: { ...local, blocked: true } })).toBe('기기 저장 오류 · 확인이 필요해요');
+    expect(label(c, { unavailable: true })).toBe('계정 확인 필요 · 기기 기록은 유지해요');
   });
 });

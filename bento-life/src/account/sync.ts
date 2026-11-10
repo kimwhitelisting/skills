@@ -27,6 +27,7 @@ export class AccountSync {
   mode: SyncMode = 'loading';
   message = '계정 저장을 확인하고 있어요.';
   pending = false;
+  saveIssue = false;
   private stopped = false;
   private timer?: ReturnType<typeof setTimeout>;
   private journal: Journal;
@@ -45,6 +46,7 @@ export class AccountSync {
       this.journal = j;
     }
   }
+  get hasConfirmedSave(): boolean { return this.mode === 'ready' && this.journal.chosen && this.journal.confirmed !== null && !this.dirty; }
   get dirty(): boolean { return !!(this.journal.latest || this.journal.flight); }
   get localCandidate(): Snapshot | undefined { return this.journal.latest ?? this.journal.flight?.snapshot; }
   get remoteCandidate(): Snapshot | null { return this.journal.conflict?.snapshot ?? this.journal.confirmed; }
@@ -69,6 +71,7 @@ export class AccountSync {
       const server = await this.remote.get();
       if (this.stopped) return;
       if (!validCloud(server)) throw Error('invalid cloud');
+      this.saveIssue = false;
       if (local && !this.journal.chosen) {
         this.journal.latest = clone(local);
         this.journal.conflict = server;
@@ -82,6 +85,7 @@ export class AccountSync {
         this.notify('이 계정의 첫 진행을 선택해 주세요.', 'choose');
       }
     } catch {
+      this.saveIssue = true;
       this.notify(local && this.journal.chosen ? '연결이 끊겼어요. 진행은 기기에 보관하고 연결되면 다시 저장해요.' : '계정 저장을 확인하지 못했어요. 연결 후 다시 시도해 주세요.', local && this.journal.chosen ? 'ready' : 'blocked');
     }
   }
@@ -144,12 +148,14 @@ export class AccountSync {
         if (this.safePersist()) this.notify('다른 기기에서 저장한 진행이 있어요. 두 기록 중 이어갈 진행을 선택해 주세요.', 'conflict');
         return;
       }
+      this.saveIssue = false;
       this.journal.revision = result.revision;
       this.journal.confirmed = result.snapshot;
       if (equal(this.journal.latest, flight.snapshot)) delete this.journal.latest;
       delete this.journal.flight;
       if (this.safePersist()) this.notify(this.dirty ? '기기에 저장됨 · 계정에 저장 중' : '계정에 저장됨', 'ready');
     } catch (error) {
+      this.saveIssue = true;
       const code = (error as { code?: string })?.code;
       if (code === '22023') this.notify('진행 형식을 서버에서 확인하지 못했어요. 기기 원본은 유지했어요. 업데이트를 확인해 주세요.', 'blocked');
       else this.notify('연결을 확인해 주세요. 진행은 기기에 보관되어 다시 저장할 수 있어요.');

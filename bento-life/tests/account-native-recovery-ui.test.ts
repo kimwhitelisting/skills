@@ -25,6 +25,7 @@ async function bootWithFailure(error: Error & { code: string }) {
   vi.stubGlobal('location', { origin: 'https://play.release-demo.com', pathname: '/', hash: '', reload });
   vi.stubGlobal('performance', { now: () => time });
   vi.stubGlobal('navigator', { locks: { request: (_name: string, _opts: unknown, fn: (lock: object) => Promise<void>) => fn({}) } });
+  vi.stubGlobal('window', { addEventListener: vi.fn() });
   vi.stubGlobal('document', { getElementById: () => game, createElement: () => panel,
     body: { append: vi.fn() }, querySelectorAll: () => [], activeElement: undefined });
   let damaged = true;
