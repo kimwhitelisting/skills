@@ -8,7 +8,8 @@ import { acquireWriter } from './writer-lock.ts';
 import { signedRemote } from './remote.ts';
 import { accountPrefix, configureSaveScope } from './scope.ts';
 import { initializeStorage, currentSnapshot, writeKey, SNAPSHOT_KEY, flushStorage, storageStatus, subscribeStorage, validSnapshot, type Snapshot, type NativeStorage } from '../game/save.ts';
-import { validRun, validDex, validPrefs } from '../game/validate-save.ts';
+import { activateGuestRecord, guestNeedsResolution, inspectGuestRecords, sameGuestRecords, type GuestRecords, type GuestSource } from './guest-records.ts';
+export { readGuestSnapshot } from './guest-records.ts';
 import { NativeAuthRecoveryPrompt, type NativeAuthRecovery } from './native-auth-recovery.ts';
 
 interface AuthStorage { recovery?: NativeAuthRecovery; getItem(key: string): string | null | Promise<string | null>; setItem(key: string, value: string): void | Promise<void>; removeItem(key: string): void | Promise<void> }
@@ -36,9 +37,11 @@ let runtimeReadyAtBoot = false;
 let nativeRecoveryPrompt: NativeAuthRecoveryPrompt | undefined;
 let nativeStore: (NativeStorage & { keys?(): Promise<string[]> }) | undefined;
 let authChanged = false;
+let guestRecords: GuestRecords = [];
+let guestResolution = false;
 const listeners = new Set<() => void>();
 const esc = (s: string) => s.replace(/[&<>"']/g, ch => `&#${ch.charCodeAt(0)};`);
-export const accountBlocked = () => suspended || !!fatal || opened || (!!user && sync?.mode !== 'ready');
+export const accountBlocked = () => guestResolution || suspended || !!fatal || opened || (!!user && sync?.mode !== 'ready');
 export const isGuestAccount = () => !user;
 export const accountSummary = () => saveStatusLabel({ local: storageStatus(), signedIn: !!user, unavailable: !!fatal || suspended, online: navigator.onLine !== false, sync });
 export const subscribeAccount = (fn: () => void) => { listeners.add(fn); return () => listeners.delete(fn); };
@@ -50,21 +53,6 @@ function notify(): void {
 }
 export function openAccount(): void { opened = true; notify(); renderPanel(); }
 const emptySnapshot = (): Snapshot => ({ version: 1, dex: { menus: [], endings: [], events: [], plays: 0, hearts: 0, owned: [], equip: {}, photos: {} }, prefs: {} });
-/** Read-only view of guest storage; never imports account namespaces or auth storage. */
-export function readGuestSnapshot(store: Pick<Storage, 'getItem'> = localStorage): Snapshot | undefined {
-  const full = store.getItem(SNAPSHOT_KEY);
-  if (full) { const parsed: unknown = JSON.parse(full); if (!validSnapshot(parsed)) throw Error('guest damaged'); return parsed; }
-  const runRaw = store.getItem('bento-life:run:v2');
-  const dexRaw = store.getItem('bento-life:dex:v1');
-  const prefsRaw = store.getItem('bento-life:prefs:v1');
-  if (!runRaw && !dexRaw && !prefsRaw) return undefined;
-  const value = emptySnapshot();
-  if (runRaw) { const run = JSON.parse(runRaw); if (!validRun(run)) throw Error('guest damaged'); value.run = run; }
-  if (dexRaw) { const dex = JSON.parse(dexRaw); if (!validDex(dex)) throw Error('guest damaged'); value.dex = { ...value.dex, ...dex }; }
-  if (prefsRaw) { const prefs = JSON.parse(prefsRaw); if (!validPrefs(prefs)) throw Error('guest damaged'); value.prefs = prefs; }
-  return value;
-}
-function guest(): Snapshot | undefined { try { return readGuestSnapshot(); } catch { return undefined; } }
 function summary(snapshot?: Snapshot | null): string {
   return snapshot?.run ? `${snapshot.run.child.name} · ${snapshot.run.age + 1}살 · 하트 ${snapshot.dex.hearts}` : snapshot ? `새 진행 · 하트 ${snapshot.dex.hearts}` : '저장된 진행 없음';
 }
@@ -148,6 +136,11 @@ export async function bootAccount(native?: NativeStorage & { keys?(): Promise<st
       await client!.auth.signOut({ scope: 'local' });
       user = undefined;
     }
+    guestRecords = await inspectGuestRecords(native);
+    if (!user && guestNeedsResolution(guestRecords)) {
+      guestResolution = true; opened = true; booted = true;
+      renderPanel(); return false;
+    }
     configureSaveScope(user?.id);
     const prefix = accountPrefix(user?.id);
     const backend = native ? { get: (key: string) => native.get(prefix + key), set: (key: string, value: string) => native.set(prefix + key, value), remove: (key: string) => native.remove(prefix + key) } : undefined;
@@ -180,13 +173,33 @@ export async function bootAccount(native?: NativeStorage & { keys?(): Promise<st
   renderPanel(); notify();
   return true;
 }
+function guestDetails(button: (action: string, text: string, primary?: boolean) => string, choosing: boolean): string {
+  const labels = { web: nativeStore ? '앱 화면 저장소' : '이 브라우저', native: '기기 앱 저장소' };
+  const ready = guestRecords.filter(record => record.status === 'ready');
+  const differs = ready.length > 1 && JSON.stringify(ready[0].snapshot) !== JSON.stringify(ready[1].snapshot);
+  const unknown = guestRecords.some(record => record.status === 'unavailable');
+  let html = differs ? '<p>기기에 서로 다른 게스트 기록 두 개가 있어요. 최신 기록을 자동으로 정할 수 없으니 이름·나이·하트를 확인해 선택해 주세요. 원본은 모두 남겨요.</p>' : '';
+  for (const record of guestRecords) {
+    const name = labels[record.source];
+    if (record.status === 'damaged') html += `<p>${name}의 게스트 기록이 손상되어 확인하지 못했어요. 기록 없음으로 처리하지 않으며 원본은 유지해요.</p>`;
+    if (record.status === 'unavailable') html += `<p>${name}의 게스트 기록을 읽지 못했어요. 저장된 기록이 없는지는 아직 알 수 없어요. 기기 잠금·저장 공간을 확인하고 다시 확인해 주세요.</p>`;
+    if (record.status === 'ready') {
+      html += `<p>${name}: ${esc(summary(record.snapshot))}</p>`;
+      if (choosing && (!guestResolution || !unknown)) html += button(`guest-${record.source}`, guestResolution ? `${name} 기록으로 이어가기` : `${name} 기록을 계정으로 가져오기`, true);
+    }
+  }
+  if (guestRecords.length && guestRecords.every(record => record.status === 'absent')) html += '<p>확인한 기기 저장소에 게스트 기록이 없어요.</p>';
+  if (!choosing && ready.length) html += '<p>게스트 원본은 계정 기록과 별도로 보관돼요. 로그아웃하면 기기 기록으로 돌아갈 수 있어요. 현재 계정 기록에 자동으로 합치거나 덮어쓰지 않아요.</p>';
+  return html + button('guest-retry', '게스트 기록 다시 확인');
+}
 function renderPanel(): void {
   if (!panel) return;
   panel.hidden = !opened;
   if (!opened) return;
   const button = (action: string, text: string, primary = false) => `<button type="button" data-account="${action}" ${busy ? 'disabled' : ''} class="${primary ? 'primary' : ''}">${text}</button>`;
   let content = '';
-  if (fatal) content = `<p>${esc(fatal)}</p>${button('restart', '다시 열기')}${journalDamaged ? (repairConfirm ? '<p>손상된 전송 기록의 원본을 보관하고 계정 저장을 다시 확인해요. 현재 기기 진행은 남기며 서버 기록과 다르면 선택할 수 있어요.</p>' + button('repair-yes', '확인 · 원본 보관 후 다시 확인') + button('repair-cancel', '취소') : button('repair', '원본 보관 후 계정 저장 다시 확인')) : ''}`;
+  if (guestResolution) content = '<p>기기 기록을 안전하게 확인한 뒤 시작해요. 선택 전에는 새 게임을 만들거나 저장 원본을 바꾸지 않아요.</p>' + guestDetails(button, true);
+  else if (fatal) content = `<p>${esc(fatal)}</p>${button('restart', '다시 열기')}${journalDamaged ? (repairConfirm ? '<p>손상된 전송 기록의 원본을 보관하고 계정 저장을 다시 확인해요. 현재 기기 진행은 남기며 서버 기록과 다르면 선택할 수 있어요.</p>' + button('repair-yes', '확인 · 원본 보관 후 다시 확인') + button('repair-cancel', '취소') : button('repair', '원본 보관 후 계정 저장 다시 확인')) : ''}`;
   else if (!client) content = '<p>아직 계정 저장 연결이 준비되지 않았어요. 지금은 이 기기에만 저장돼요.</p>';
   else if (recovery) content = `<p>새 비밀번호를 정해 주세요.</p><label>새 비밀번호<input id="account-password" type="password" autocomplete="new-password" minlength="8"></label>${button('password', '비밀번호 바꾸기', true)}`;
   else if (!user) content = `<p>로그인한 뒤 보관할 진행을 선택하고 ‘계정에 저장됨’까지 확인하면 다른 기기에서 이어갈 수 있어요. 기존 기기 기록은 직접 선택할 때만 가져와요.</p>
@@ -195,11 +208,12 @@ function renderPanel(): void {
   else if (deleting) content = `<p>계정과 서버의 게임 기록을 삭제할까요? 되돌릴 수 없어요. 이 기기의 해당 계정 기록도 삭제해요. 다른 기기의 오프라인 사본이나 이미 내보낸 파일은 별도로 관리해 주세요. 다른 계정·게스트 기록은 지우지 않아요.</p><label>현재 비밀번호<input id="account-password" type="password" autocomplete="current-password"></label>${button('delete-yes', '확인 · 내 계정과 기록 삭제')}${button('delete-cancel', '취소')}`;
   else {
     content = `<p>${esc(user.email ?? '로그인한 계정')}</p><p class="account-message">${esc(accountSummary())}</p>${sync && sync.message !== accountSummary() ? `<p>${esc(sync.message)}</p>` : ''}`;
-    if (sync?.mode === 'choose') content += `<p>계정에 처음 저장할 진행을 선택해 주세요. 기기 기록의 원본은 남겨 두고 하트를 합치지 않아요.</p>${guest() ? `<p>이 기기의 기록: ${esc(summary(guest()))}</p>${button('import', '이 기기 기록을 계정으로 가져오기', true)}` : ''}${button('fresh', '계정에서 새로 시작')}`;
+    if (sync?.mode === 'choose') content += `<p>계정에 처음 저장할 진행을 선택해 주세요. 원본은 남겨 두고 하트를 합치지 않아요. 손상되거나 읽지 못한 다른 저장소가 있으면 그 기록이 더 최신일 수도 있어요.</p>${guestDetails(button, true)}${button('fresh', '계정에서 새로 시작')}`;
+    else content += guestDetails(button, false);
     if (sync?.mode === 'conflict') content += `<p>두 기록을 보관했어요. 하나를 선택하며 하트와 도감을 합치지 않아요.</p><p>기기: ${esc(summary(sync.localCandidate))}</p><p>계정: ${esc(summary(sync.remoteCandidate))}</p>${sync.localCandidate ? button('local', '이 기기 진행으로 이어가기') : ''}${sync.remoteCandidate ? button('remote', '계정 진행으로 이어가기', true) : ''}`;
     content += button('retry', '계정 저장 다시 확인') + button('logout', '로그아웃 · 기기 기록으로 돌아가기') + button('delete', '계정 삭제');
   }
-  panel.innerHTML = `<div class="account-card"><h2>계정과 저장</h2>${content}${nativeRecoveryPrompt?.markup() ?? ''}${feedback ? `<p role="status" class="account-message">${esc(feedback)}</p>` : ''}${!fatal && (!user || sync?.mode === 'ready') && !recovery ? button('close', '게임으로 돌아가기') : ''}</div>`;
+  panel.innerHTML = `<div class="account-card"><h2>계정과 저장</h2>${content}${nativeRecoveryPrompt?.markup() ?? ''}${feedback ? `<p role="status" class="account-message">${esc(feedback)}</p>` : ''}${!guestResolution && !fatal && (!user || sync?.mode === 'ready') && !recovery ? button('close', '게임으로 돌아가기') : ''}</div>`;
 }
 async function retry(): Promise<void> {
   if (!sync) return;
@@ -258,8 +272,28 @@ async function act(action: string): Promise<void> {
       sync?.stop(); location.reload();
     }
     if (action === 'retry') await retry();
-    if (['import', 'fresh', 'local', 'remote'].includes(action)) {
-      const chosen = action === 'import' ? guest() : action === 'fresh' ? emptySnapshot() : action === 'remote' ? sync?.remoteCandidate : sync?.localCandidate;
+    if (action === 'guest-retry' || action === 'guest-web' || action === 'guest-native') {
+      const owner = user?.id;
+      const expected = guestRecords;
+      const observed = await inspectGuestRecords(nativeStore);
+      if (suspended || authChanged || user?.id !== owner) throw Error('Account changed');
+      guestRecords = observed;
+      if (action === 'guest-retry') {
+        if (guestResolution && !guestNeedsResolution(observed)) { location.reload(); return; }
+      } else if (!sameGuestRecords(expected, observed)) {
+        feedback = '기기 기록이 바뀌었거나 읽기 상태가 달라졌어요. 다시 표시한 기록을 확인하고 선택해 주세요.';
+      } else {
+        const source: GuestSource = action === 'guest-native' ? 'native' : 'web';
+        if (guestResolution && nativeStore && !user) {
+          await activateGuestRecord(observed, source, nativeStore, localStorage, () => !suspended && !authChanged && !user);
+          location.reload(); return;
+        }
+        const chosen = observed.find(record => record.source === source && record.status === 'ready')?.snapshot;
+        if (user && sync?.mode === 'choose' && chosen && await sync.choose(chosen)) location.reload();
+      }
+    }
+    if (['fresh', 'local', 'remote'].includes(action)) {
+      const chosen = action === 'fresh' ? emptySnapshot() : action === 'remote' ? sync?.remoteCandidate : sync?.localCandidate;
       if (!chosen) throw Error('No snapshot');
       if (await sync!.choose(chosen, action === 'remote')) location.reload();
     }
@@ -275,7 +309,7 @@ async function act(action: string): Promise<void> {
     }
   } catch (error) {
     if (action === 'delete-yes' && suspended) fatal = '서버의 계정 삭제 후 이 기기의 정리를 마치지 못했어요. 앱을 다시 열어 주세요.';
-    feedback = friendly(error);
+    feedback = action.startsWith('guest-') ? '기기 기록 확인·보관을 마치지 못했어요. 원본을 지우지 않았어요. 다시 확인한 뒤 선택해 주세요.' : friendly(error);
   }
   finally { password = ''; busy = false; if (booted) renderPanel(); notify(); }
 }
