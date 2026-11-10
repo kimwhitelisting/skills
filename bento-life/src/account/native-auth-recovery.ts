@@ -1,6 +1,7 @@
+import { validateSocialBundle } from './social-transport.ts';
 const AUTH_KEY = 'bento-auth:v1';
 const FLOW_INDEX_KEY = `${AUTH_KEY}-flows-code-verifier`;
-const AUTH_KEYS = new Set([AUTH_KEY, `${AUTH_KEY}-user`, `${AUTH_KEY}-code-verifier`, FLOW_INDEX_KEY]);
+const AUTH_KEYS = new Set([AUTH_KEY, `${AUTH_KEY}-user`, `${AUTH_KEY}-code-verifier`, FLOW_INDEX_KEY, 'bento-social-transaction:v1']);
 // Pinned auth-js 2.119.0 helpers.ts / constants.ts. No prefix enumeration or wipe.
 const FLOW_PREFIX = `${AUTH_KEY}-flow-`;
 const FLOW_SUFFIX = '-code-verifier';
@@ -60,6 +61,7 @@ export class NativeAuthRecovery {
     if (isAuthKey(key)) {
       let parsed: unknown;
       try { parsed = JSON.parse(value); } catch { throw invalidData(); }
+      if (key === 'bento-social-transaction:v1') { try { if (value.length > 8192) throw Error(); validateSocialBundle(parsed as Parameters<typeof validateSocialBundle>[0]); } catch { throw invalidData(); } }
       if (key === AUTH_KEY && (!parsed || typeof parsed !== 'object'
         || !['access_token', 'refresh_token', 'expires_at'].every(field => field in parsed))) throw invalidData();
       // The SDK filters malformed indexes. Preserve their original bytes instead

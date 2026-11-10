@@ -1,3 +1,7 @@
+import { socialConfig } from './social-runtime-config.ts';
+import { enabledSocialProviders, type SocialProvider } from './social-config.ts';
+import { SocialTransport } from './social-transport.ts';
+import type { SocialEntry } from './social-entry.ts';
 import { accountBuildConfig } from './build-config.ts';
 import './account.css';
 import { saveStatusLabel } from './save-status.ts';
@@ -39,11 +43,18 @@ let runtimeReadyAtBoot = false;
 let nativeRecoveryPrompt: NativeAuthRecoveryPrompt | undefined;
 let nativeStore: (NativeStorage & { keys?(): Promise<string[]> }) | undefined;
 let authChanged = false;
+let social: SocialTransport | undefined;
+let socialHolding = false;
+let socialAdopted = false;
+let socialAdopting = false;
+let socialAdoptionUncertain = false;
+let socialPlatform = 'web';
+let linkProvider: SocialProvider | undefined;
 let guestRecords: GuestRecords = [];
 let guestResolution = false;
 const listeners = new Set<() => void>();
 const esc = (s: string) => s.replace(/[&<>"']/g, ch => `&#${ch.charCodeAt(0)};`);
-export const accountBlocked = () => guestResolution || suspended || !!fatal || opened || (!!user && sync?.mode !== 'ready');
+export const accountBlocked = () => socialHolding || guestResolution || suspended || !!fatal || opened || (!!user && sync?.mode !== 'ready');
 export const isGuestAccount = () => !user;
 export const accountSummary = () => saveStatusLabel({ local: storageStatus(), signedIn: !!user, unavailable: !!fatal || suspended, online: navigator.onLine !== false, sync });
 export const subscribeAccount = (fn: () => void) => { listeners.add(fn); return () => listeners.delete(fn); };
@@ -82,7 +93,7 @@ function remoteFor(owner: string) {
     return data.session;
   }, () => !suspended && user?.id === owner);
 }
-export async function bootAccount(native?: NativeStorage & { keys?(): Promise<string[]> }, authStorage?: AuthStorage): Promise<boolean> {
+export async function bootAccount(native?: NativeStorage & { keys?(): Promise<string[]> }, authStorage?: AuthStorage, socialEntry?: SocialEntry): Promise<boolean> {
   nativeStore = native;
   redirectURL = authStorage ? buildConfig.VITE_AUTH_REDIRECT_URL : `${location.origin}${location.pathname}`;
   if (redirectURL && !/^https?:\/\//.test(redirectURL)) redirectURL = undefined;
@@ -135,6 +146,49 @@ export async function bootAccount(native?: NativeStorage & { keys?(): Promise<st
         }
       });
     }
+    if (socialEntry) {
+      socialPlatform = socialEntry.platform;
+      const supported = enabledSocialProviders(socialConfig, socialPlatform);
+      if (client && supported.length) {
+        if (socialPlatform !== 'web' && !authStorage) throw Error('Native social auth requires secure storage');
+        social = new SocialTransport({ url: url!, publishable: publishable!, config: socialConfig, platform: socialPlatform, origin: location.origin,
+          port: authStorage ?? sessionStorage,
+          session: async () => { const { data, error } = await client!.auth.getSession(); if (error) throw error; return data.session; },
+          checkpoint: async () => {
+            window.dispatchEvent(new Event('bento-account-checkpoint'));
+            gameWrites.freeze(); socialHolding = true; opened = true; notify();
+            await flushStorage();
+            if (storageStatus().blocked || storageStatus().errors.length) throw Error('Checkpoint failed');
+          },
+          adopt: async session => {
+            if (suspended || authChanged) throw Error('Account changed');
+            socialAdopted = true; socialAdopting = true; notify(); renderPanel();
+            try {
+              const { error } = await client!.auth.setSession({ access_token: session.access_token, refresh_token: session.refresh_token });
+              if (error) throw error;
+              location.reload();
+            } catch (error) {
+              socialAdopting = false; socialAdopted = false; socialAdoptionUncertain = true;
+              throw error;
+            }
+          }, open: socialEntry.open, close: socialEntry.close,
+        });
+        await social.restore(); socialHolding = social.pending;
+        if (socialHolding) opened = true;
+      }
+      await socialEntry.connect(async callback => {
+        opened = true;
+        if (!social) { feedback = '아직 사용할 수 없는 소셜 인증 복귀예요. 기존 기록과 로그인은 유지했어요.'; renderPanel(); return; }
+        if (!social.pending) { feedback = '진행 중인 소셜 인증이 없어요. 기존 계정과 게임 기록은 바꾸지 않았어요.'; renderPanel(); return; }
+        socialHolding = true; gameWrites.freeze();
+        try { await social.consume(callback); }
+        catch { feedback = socialAdoptionUncertain ? '' : '소셜 인증을 확인하지 못했어요. 게임 기록은 유지했어요. 인증을 취소하고 다시 시작해 주세요.'; }
+        notify(); renderPanel();
+      }, async () => {
+        if (social?.acceptingBrowserClose) { try { await social.cancel(); location.reload(); } catch { opened = true; feedback = '인증 취소를 확인하지 못했어요. 기존 기록은 유지했어요. 다시 취소하거나 앱을 다시 열어 주세요.'; renderPanel(); } }
+      });
+      if (socialAdopted || socialAdoptionUncertain || authChanged || suspended) return false;
+    }
     if (user && localStorage.getItem(`bento-deleted:${user.id}`) === 'true') {
       await client!.auth.signOut({ scope: 'local' });
       user = undefined;
@@ -165,7 +219,7 @@ export async function bootAccount(native?: NativeStorage & { keys?(): Promise<st
     opened = true;
   }
   booted = true;
-  if (!fatal && !suspended && !authChanged && (!user || sync?.mode === 'ready')) {
+  if (!socialHolding && !fatal && !suspended && !authChanged && (!user || sync?.mode === 'ready')) {
     gameWrites.activate();
     runtimeReadyAtBoot = true;
   }
@@ -201,7 +255,10 @@ function renderPanel(): void {
   if (!opened) return;
   const button = (action: string, text: string, primary = false) => `<button type="button" data-account="${action}" ${busy ? 'disabled' : ''} class="${primary ? 'primary' : ''}">${text}</button>`;
   let content = '';
-  if (guestResolution) content = '<p>기기 기록을 안전하게 확인한 뒤 시작해요. 선택 전에는 새 게임을 만들거나 저장 원본을 바꾸지 않아요.</p>' + guestDetails(button, true);
+  if (socialAdoptionUncertain) content = '<p>로그인 적용을 마쳤는지 확인하지 못했어요. 게임 저장은 멈췄어요. 앱을 다시 열어 보안 로그인 정보와 계정을 확인해 주세요.</p>' + button('restart', '앱 다시 열기 · 로그인 상태 확인');
+  else if (socialAdopting) content = '<p>확인한 로그인을 이 앱에 적용하고 있어요. 잠시 기다려 주세요.</p>';
+  else if (socialHolding) content = '<p>시스템 브라우저에서 인증을 진행하거나 돌아온 결과를 확인하고 있어요. 게임 기록은 먼저 저장하고 잠시 멈췄어요.</p>' + button('social-cancel', '인증 취소 · 저장한 진행으로 돌아가기');
+  else if (guestResolution) content = '<p>기기 기록을 안전하게 확인한 뒤 시작해요. 선택 전에는 새 게임을 만들거나 저장 원본을 바꾸지 않아요.</p>' + guestDetails(button, true);
   else if (fatal) content = `<p>${esc(fatal)}</p>${button('restart', '다시 열기')}${journalDamaged ? (repairConfirm ? '<p>손상된 전송 기록의 원본을 보관하고 계정 저장을 다시 확인해요. 현재 기기 진행은 남기며 서버 기록과 다르면 선택할 수 있어요.</p>' + button('repair-yes', '확인 · 원본 보관 후 다시 확인') + button('repair-cancel', '취소') : button('repair', '원본 보관 후 계정 저장 다시 확인')) : ''}`;
   else if (!client) content = '<p>아직 계정 저장 연결이 준비되지 않았어요. 지금은 이 기기에만 저장돼요.</p>';
   else if (recovery) content = `<p>새 비밀번호를 정해 주세요.</p><label>새 비밀번호<input id="account-password" type="password" autocomplete="new-password" minlength="8"></label>${button('password', '비밀번호 바꾸기', true)}`;
@@ -216,8 +273,15 @@ function renderPanel(): void {
     if (sync?.mode === 'conflict') content += `<p>두 기록을 보관했어요. 하나를 선택하며 하트와 도감을 합치지 않아요.</p><p>기기: ${esc(summary(sync.localCandidate))}</p><p>계정: ${esc(summary(sync.remoteCandidate))}</p>${sync.localCandidate ? button('local', '이 기기 진행으로 이어가기') : ''}${sync.remoteCandidate ? button('remote', '계정 진행으로 이어가기', true) : ''}`;
     content += button('retry', '계정 저장 다시 확인') + button('logout', '로그아웃 · 기기 기록으로 돌아가기') + button('delete', '계정 삭제');
   }
+  if (!socialHolding && !fatal && social && !recovery && !deleting && !guestResolution) {
+    for (const provider of enabledSocialProviders(socialConfig, socialPlatform)) {
+      const name = provider === 'google' ? 'Google' : 'Apple';
+      content += button(`social-${user ? 'link' : 'login'}-${provider}`, user ? `${name}을 현재 계정에 연결` : `${name}로 계속`);
+    }
+    if (linkProvider && user) content += '<p>선택한 로그인을 현재 계정에 연결할까요? 같은 계정의 로그인 수단만 추가하며 다른 계정의 게임 기록은 합치지 않아요.</p>' + button('social-confirm-link', '현재 계정에 연결 계속') + button('social-link-cancel', '연결하지 않기');
+  }
   if (fatal) content += button('guest-export', '읽을 수 있는 게스트 원본 내보내기');
-  panel.innerHTML = `<div class="account-card"><h2>계정과 저장</h2>${content}${nativeRecoveryPrompt?.markup() ?? ''}${feedback ? `<p role="status" class="account-message">${esc(feedback)}</p>` : ''}${!guestResolution && !fatal && (!user || sync?.mode === 'ready') && !recovery ? button('close', '게임으로 돌아가기') : ''}</div>`;
+  panel.innerHTML = `<div class="account-card"><h2>계정과 저장</h2>${content}${nativeRecoveryPrompt?.markup() ?? ''}${feedback ? `<p role="status" class="account-message">${esc(feedback)}</p>` : ''}${!socialHolding && !guestResolution && !fatal && (!user || sync?.mode === 'ready') && !recovery ? button('close', '게임으로 돌아가기') : ''}</div>`;
 }
 async function retry(): Promise<void> {
   if (!sync) return;
@@ -241,6 +305,11 @@ async function act(action: string): Promise<void> {
       location.reload();
     }
     return;
+  }
+  if (action === 'social-link-cancel') { linkProvider = undefined; renderPanel(); return; }
+  if (action === 'social-link-google' || action === 'social-link-apple') {
+    if (user && social) linkProvider = action.endsWith('google') ? 'google' : 'apple';
+    renderPanel(); return;
   }
   if (action === 'close') { opened = false; feedback = ''; renderPanel(); notify(); return; }
   if (action === 'repair') { repairConfirm = true; renderPanel(); return; }
@@ -276,6 +345,14 @@ async function act(action: string): Promise<void> {
       sync?.stop(); location.reload();
     }
     if (action === 'retry') await retry();
+    if (action === 'social-cancel' && social) { await social.cancel(); location.reload(); return; }
+    if (social && (action === 'social-login-google' || action === 'social-login-apple' || action === 'social-confirm-link')) {
+      const linking = action === 'social-confirm-link';
+      const provider = linking ? linkProvider : action.endsWith('google') ? 'google' : 'apple';
+      if (!provider || (linking ? !user : !!user)) throw Error('Wrong social intent');
+      linkProvider = undefined;
+      await social.start(provider, linking ? 'link' : 'login');
+    }
     if (action === 'guest-export') {
       const owner = user?.id;
       const result = await collectGuestRecovery(nativeStore);
@@ -321,7 +398,7 @@ async function act(action: string): Promise<void> {
     }
   } catch (error) {
     if (action === 'delete-yes' && suspended) fatal = '서버의 계정 삭제 후 이 기기의 정리를 마치지 못했어요. 앱을 다시 열어 주세요.';
-    feedback = action.startsWith('guest-') ? '기기 기록 확인·보관을 마치지 못했어요. 원본을 지우지 않았어요. 다시 확인한 뒤 선택해 주세요.' : friendly(error);
+    feedback = action.startsWith('social-') ? '소셜 인증을 진행하지 못했어요. 기존 기록과 계정은 유지했어요. 취소 후 다시 시작해 주세요.' : action.startsWith('guest-') ? '기기 기록 확인·보관을 마치지 못했어요. 원본을 지우지 않았어요. 다시 확인한 뒤 선택해 주세요.' : friendly(error);
   }
   finally { password = ''; busy = false; if (booted) renderPanel(); notify(); }
 }

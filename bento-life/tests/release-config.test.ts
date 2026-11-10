@@ -35,8 +35,8 @@ describe('release-only account configuration', () => {
     expect(() => assertReleaseConfig('release', { ...configured(), VITE_EXTRA: '  sb_secret_synthetic  ' })).toThrow('서버 비밀');
   });
   it('rejects alternate public variables even if a credential is not recognizable by prefix', () => {
-    expect(() => assertReleaseConfig('release', { ...configured(), VITE_TOKEN: serviceRole })).toThrow('세 가지');
-    expect(() => assertReleaseConfig('release', { ...configured(), VITE_UNUSED: '' })).toThrow('세 가지');
+    expect(() => assertReleaseConfig('release', { ...configured(), VITE_TOKEN: serviceRole })).toThrow('승인된');
+    expect(() => assertReleaseConfig('release', { ...configured(), VITE_UNUSED: '' })).toThrow('승인된');
   });
   it.each([
     'https://macbook.tail-example.ts.net:8443/',
@@ -50,4 +50,17 @@ describe('release-only account configuration', () => {
   it.each(['http://example.com', 'https://localhost', 'https://127.0.0.1', 'https://user:pass@example.com', 'https://example.com/#access_token=synthetic', ' https://example.com/', 'not a url'])('rejects unsafe or invalid return URL (%#)', value => {
     expect(() => assertReleaseConfig('release', { ...configured(), VITE_AUTH_REDIRECT_URL: value })).toThrow('VITE_AUTH_REDIRECT_URL');
   });
+});
+
+it('validates optional social readiness while keeping the original three-field release contract', async () => {
+  const social = { providers: { google: true, apple: false }, socialDeletionReady: true, webCallback: 'https://play.release-demo.com/?bento_social=1' };
+  const env = { ...configured(), VITE_SOCIAL_AUTH_CONFIG: JSON.stringify(social) };
+  expect(() => assertReleaseConfig('release', env)).not.toThrow();
+  const { releaseConfig, configJSON, readHTMLConfig, htmlConfigJSON } = await import('../scripts/release-artifact.ts');
+  const value = releaseConfig(env); expect(JSON.parse(configJSON(value))).toEqual(env);
+  expect(readHTMLConfig(`<script id="bento-release-config" type="application/json">${htmlConfigJSON(value)}</script>`)).toEqual(env);
+  expect(Object.keys(releaseConfig(configured()))).length(3);
+  for (const changed of [{ ...social, socialDeletionReady: false }, { ...social, webCallback: 'https://machine.ts.net:8443/?bento_social=1' }]) {
+    expect(() => assertReleaseConfig('release', { ...configured(), VITE_SOCIAL_AUTH_CONFIG: JSON.stringify(changed) })).toThrow();
+  }
 });

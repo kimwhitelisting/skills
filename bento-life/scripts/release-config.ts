@@ -1,5 +1,6 @@
+import { socialConfig, validateSocialConfig } from '../src/account/social-config.ts';
 type Environment = Record<string, string | undefined>;
-const CLIENT_VARIABLES = new Set(['VITE_SUPABASE_URL', 'VITE_SUPABASE_PUBLISHABLE_KEY', 'VITE_AUTH_REDIRECT_URL']);
+const CLIENT_VARIABLES = new Set(['VITE_SUPABASE_URL', 'VITE_SUPABASE_PUBLISHABLE_KEY', 'VITE_AUTH_REDIRECT_URL', 'VITE_SOCIAL_AUTH_CONFIG']);
 
 function publicWebHost(host: string): boolean {
   if (/^[0-9.]+$/.test(host) || host.includes(':')) return false; // URL normalizes IPv4/IPv6 literals.
@@ -10,13 +11,16 @@ function publicWebHost(host: string): boolean {
 /** Validate syntax without contacting the server or printing configuration values. */
 export function assertReleaseConfig(mode: string, env: Environment): void {
   if (mode !== 'release') return;
+  const rawSocial = env.VITE_SOCIAL_AUTH_CONFIG;
+  if (rawSocial && rawSocial.length > 2048) throw Error('Invalid social readiness configuration');
+  validateSocialConfig(rawSocial ? JSON.parse(rawSocial) : socialConfig, true);
 
   if (Object.entries(env).some(([name, value]) => value && name.startsWith('VITE_')
     && (/SECRET|SERVICE_ROLE|PRIVATE_KEY|PASSWORD/i.test(name) || value.trim().startsWith('sb_secret_')))) {
     throw new Error('출시 앱의 VITE_ 환경에는 서버 비밀을 넣을 수 없습니다. 공개 클라이언트 설정만 사용하세요.');
   }
   if (Object.keys(env).some(name => name.startsWith('VITE_') && !CLIENT_VARIABLES.has(name))) {
-    throw new Error('출시 앱에는 승인된 세 가지 VITE_ 계정 설정만 허용합니다. 다른 공개 환경 변수는 제거하거나 별도 검토하세요.');
+    throw new Error('출시 앱에는 승인된 VITE_ 계정 설정만 허용합니다. 다른 공개 환경 변수는 제거하거나 별도 검토하세요.');
   }
 
   const url = env.VITE_SUPABASE_URL;

@@ -2,6 +2,7 @@ export type AccountBuildConfig = {
   VITE_SUPABASE_URL?: string;
   VITE_SUPABASE_PUBLISHABLE_KEY?: string;
   VITE_AUTH_REDIRECT_URL?: string;
+  VITE_SOCIAL_AUTH_CONFIG?: string;
 };
 
 /** Release has one configuration source, shared with the package verifier. */
@@ -15,7 +16,7 @@ export function readReleaseAccountConfig(document: Pick<Document, 'querySelector
   const value: unknown = JSON.parse(raw);
   const keys = ['VITE_AUTH_REDIRECT_URL', 'VITE_SUPABASE_PUBLISHABLE_KEY', 'VITE_SUPABASE_URL'];
   if (!value || typeof value !== 'object' || Array.isArray(value)
-    || JSON.stringify(Object.keys(value).sort()) !== JSON.stringify(keys)
+    || (Object.keys(value).some(key => ![...keys, 'VITE_SOCIAL_AUTH_CONFIG'].includes(key)) || keys.some(key => !(key in value)))
     || Object.values(value).some(item => typeof item !== 'string' || !item)) {
     throw new Error('Invalid release account configuration.');
   }
@@ -28,5 +29,6 @@ export function accountBuildConfig(): AccountBuildConfig {
     VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,
     VITE_SUPABASE_PUBLISHABLE_KEY: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
     VITE_AUTH_REDIRECT_URL: import.meta.env.VITE_AUTH_REDIRECT_URL,
+    VITE_SOCIAL_AUTH_CONFIG: import.meta.env.VITE_SOCIAL_AUTH_CONFIG,
   };
 }

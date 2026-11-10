@@ -3,6 +3,8 @@
 //  1) 앱 저장소(Preferences)에 남아 있는 저장을 웹뷰 저장소로 되살리고, 이후 저장할 때마다 거울로 같이 쓴다
 //  2) 하드웨어 뒤로가기: 창이 열려 있으면 닫기(브라우저 기록 뒤로), 타이틀이면 앱을 내린다
 import { Capacitor } from '@capacitor/core';
+import { Browser } from '@capacitor/browser';
+import { nativeSocialEntry, webSocialEntry } from './account/social-entry.ts';
 import { App } from '@capacitor/app';
 import { Preferences } from '@capacitor/preferences';
 import { Filesystem } from '@capacitor/filesystem';
@@ -15,12 +17,19 @@ import { nativeAuthStorage } from './account/native-auth.ts';
 
 async function boot(): Promise<void> {
   if (Capacitor.isNativePlatform()) registerRecoveryTransport(nativeRecoveryTransport(Filesystem, Share));
+  const native = Capacitor.isNativePlatform();
+  const social = native ? await nativeSocialEntry({ platform: Capacitor.getPlatform(),
+    onURL: fn => App.addListener('appUrlOpen', event => fn(event.url)),
+    launchURL: async () => (await App.getLaunchUrl())?.url,
+    onFinished: fn => Browser.addListener('browserFinished', fn),
+    open: url => Browser.open({ url, presentationStyle: 'fullscreen' }), close: () => Browser.close(),
+  }) : webSocialEntry();
   const ready = await bootAccount(Capacitor.isNativePlatform() ? {
     get: async key => (await Preferences.get({key})).value,
     set: (key,value) => Preferences.set({key,value}),
     remove: key => Preferences.remove({key}),
     keys: async () => (await Preferences.keys()).keys,
-  } : undefined, Capacitor.isNativePlatform() ? await nativeAuthStorage() : undefined);
+  } : undefined, Capacitor.isNativePlatform() ? await nativeAuthStorage() : undefined, social);
   if (!ready) return;
   if (Capacitor.isNativePlatform()) {
     void App.addListener('backButton', ({canGoBack}) => { if(canGoBack) history.back(); else void App.minimizeApp(); });

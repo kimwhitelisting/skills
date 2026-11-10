@@ -6,7 +6,7 @@ import { assertReleaseConfig } from './release-config.ts';
 export const provenanceFile = 'bento-release.json';
 export const configId = 'bento-release-config';
 export const configKeys = ['VITE_AUTH_REDIRECT_URL', 'VITE_SUPABASE_PUBLISHABLE_KEY', 'VITE_SUPABASE_URL'] as const;
-export type ReleaseConfig = Record<typeof configKeys[number], string>;
+export type ReleaseConfig = Record<typeof configKeys[number], string> & { VITE_SOCIAL_AUTH_CONFIG?: string };
 export type Chunk = { file: string; imports: string[]; entry: boolean; configConsumer: boolean };
 export type Provenance = {
   format: 1; mode: 'release'; testOnly: boolean; sourceDigest: string;
@@ -19,9 +19,9 @@ export function fail(message = 'Release content verification failed.'): never { 
 export const sha = (value: string | Uint8Array): string => createHash('sha256').update(value).digest('hex');
 export function releaseConfig(env: Record<string, string | undefined>): ReleaseConfig {
   assertReleaseConfig('release', env);
-  return Object.fromEntries(configKeys.map(key => [key, env[key]])) as ReleaseConfig;
+  return Object.fromEntries([...configKeys, ...(env.VITE_SOCIAL_AUTH_CONFIG ? ['VITE_SOCIAL_AUTH_CONFIG'] : [])].map(key => [key, env[key]])) as ReleaseConfig;
 }
-export const configJSON = (config: ReleaseConfig): string => JSON.stringify(Object.fromEntries(configKeys.map(key => [key, config[key]])));
+export const configJSON = (config: ReleaseConfig): string => JSON.stringify(Object.fromEntries(Object.entries(config).sort(([a], [b]) => a.localeCompare(b))));
 export const htmlConfigJSON = (config: ReleaseConfig): string => configJSON(config).replace(/</g, '\\u003c').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
 export function safeFile(file: string): boolean {
   return /^[a-zA-Z0-9_.\/-]+$/.test(file) && !file.startsWith('/') && file.split('/').every(part => part !== '' && part !== '.' && part !== '..');
@@ -61,7 +61,7 @@ export function readHTMLConfig(html: string): ReleaseConfig {
   const configs = blocks.filter(match => /\bid=["']bento-release-config["']/i.test(match[1]));
   if (configs.length !== 1 || !/\btype=["']application\/json["']/i.test(configs[0][1])) fail('Missing or duplicate release configuration block.');
   const parsed = JSON.parse(configs[0][2]);
-  if (!parsed || Array.isArray(parsed) || JSON.stringify(Object.keys(parsed).sort()) !== JSON.stringify(configKeys)) fail();
+  if (!parsed || Array.isArray(parsed) || (Object.keys(parsed).some(key => ![...configKeys, 'VITE_SOCIAL_AUTH_CONFIG'].includes(key)) || configKeys.some(key => !(key in parsed)))) fail();
   return releaseConfig(parsed);
 }
 function localReference(reference: string, base: string, files: Set<string>): string {

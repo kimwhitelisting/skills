@@ -9,6 +9,8 @@ export default defineConfig(({ mode }) => {
   assertReleaseConfig(mode, loadEnv(mode, process.cwd(), 'VITE_'));
   return {
   base: './',
+  // Vite injects its dev client before HTML meta tags; protect callback referrers at the response boundary.
+  server: { headers: { 'Referrer-Policy': 'no-referrer' } },
   plugins: [releaseProvenance()],
   build: mode === 'preview-page'
     ? { outDir: `dist-preview/${entry}`, assetsInlineLimit: 100_000_000, cssCodeSplit: false, rollupOptions: { input: `${entry}.html`, output: { inlineDynamicImports: true } } }

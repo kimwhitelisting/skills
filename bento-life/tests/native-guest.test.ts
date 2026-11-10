@@ -265,8 +265,9 @@ it('native entry registers share transport before a guest guard returns false', 
   vi.resetModules();
   const writeFile = vi.fn(async () => ({ uri: 'file://fixture/recovery.json' }));
   const share = vi.fn(async () => ({}));
-  const names = ['@capacitor/core', '@capacitor/filesystem', '@capacitor/share', '../src/account/native-auth.ts', '../src/account/account.ts'];
-  vi.doMock('@capacitor/core', () => ({ Capacitor: { isNativePlatform: () => true } }));
+  const names = ['@capacitor/core', '@capacitor/filesystem', '@capacitor/share', '../src/account/native-auth.ts', '../src/account/account.ts', '../src/account/social-entry.ts'];
+  vi.doMock('@capacitor/core', () => ({ Capacitor: { isNativePlatform: () => true, getPlatform: () => 'ios' } }));
+  vi.doMock('../src/account/social-entry.ts', () => ({ nativeSocialEntry: async () => undefined }));
   vi.doMock('@capacitor/filesystem', () => ({ Directory: { Cache: 'CACHE' }, Encoding: { UTF8: 'utf8' }, Filesystem: { writeFile } }));
   vi.doMock('@capacitor/share', () => ({ Share: { canShare: async () => ({ value: true }), share } }));
   vi.doMock('../src/account/native-auth.ts', () => ({ nativeAuthStorage: async () => ({}) }));

@@ -1,3 +1,4 @@
+vi.mock('../src/account/social-entry.ts', () => ({ webSocialEntry: () => undefined }));
 import { afterEach, expect, it, vi } from 'vitest';
 // These existing modules register passive global listeners; this test isolates main's boot effects.
 vi.mock('../src/proto/follow-core.ts', () => ({ mountFollow: vi.fn(), unmountFollow: vi.fn(), pauseFollow: vi.fn() }));

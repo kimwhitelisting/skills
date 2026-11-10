@@ -6,7 +6,7 @@
 
 ## 빌드와 설정
 
-기존 `.env.release.local` 또는 프로세스의 `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_AUTH_REDIRECT_URL`을 쓴다. 비밀 키는 사용할 수 없다. 실제 값은 Git에 넣지 않는다. [기존 설정 조건](ANDROID.md#출시-계정-설정-2026-11-09)을 따른다.
+기존 `.env.release.local` 또는 프로세스의 `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_AUTH_REDIRECT_URL`을 쓴다. 비밀 키는 사용할 수 없다. 실제 값은 Git에 넣지 않는다. 선택적 `VITE_SOCIAL_AUTH_CONFIG`도 단일 provenance 설정에 포함하며 [소셜 준비·공개 callback 검사](SOCIAL-TRANSPORT.md#준비-설정)를 따른다. 생략하면 비활성화다. [기존 설정 조건](ANDROID.md#출시-계정-설정-2026-11-09)을 따른다.
 
 ```sh
 npm ci
