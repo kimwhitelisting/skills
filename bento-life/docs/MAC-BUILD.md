@@ -187,3 +187,18 @@ ZIP을 만들기 전 `scripts/verify-ios-simulator.mjs`가 Simulator 플랫폼, 
 이번 변경은 네이티브 컴파일·실제 기기 실행·계정 복원·서명된 출시 패키지 검증이 아니다. 웹 내용이 같아도 package/lock provenance가 바뀌었으므로 실제 출시 후보는 [출시 검사 절차](RELEASE-PACKAGING.md)에 따라 새 release 빌드와 sync가 필요하다. 기존 개인 iPhone 확인과 출시 운영 조건은 그대로 남는다.
 
 공식 근거(2026-11-10): [지원 버전](https://vitest.dev/releases), [Vitest 4 이전 요구사항](https://v4.vitest.dev/guide/migration), [4.1.12 수정](https://github.com/vitest-dev/vitest/releases/tag/v4.1.12), [mocker 코드 주입](https://github.com/advisories/GHSA-qxg6-89mg-rqv8), [mocker 파일 읽기](https://github.com/advisories/GHSA-82fw-gwwq-j7x9), [Tinypool worker 옵션](https://github.com/advisories/GHSA-5gmw-xhrv-c9v3), [Tinypool run 옵션](https://github.com/advisories/GHSA-85c8-ppgw-ccpr), [npm optional-peer 오류 보고](https://github.com/npm/cli/issues/9787).
+
+## 2026-11-10 최신 개발용 기기 빌드
+
+소스 `749008ff352edfd96aaf36d209a6210ce72301c3`를 기존 Node 22.23.4/npm 10.9.9와 lockfile로 빌드했다. `npm ci` → `npm test` → `npm run build` → `npm run android:sync` → `npm run ios:sync` → Android `assembleDebug` → generic iOS device 대상 Xcode **Debug build** 순서가 모두 성공했다. 테스트는 **15개 파일, 257개**이며 기존 2,000판 시뮬레이션을 포함한다. Xcode install/archive action이나 Release 검사를 우회하지 않았다.
+
+- Android Debug APK: v2 서명 검증 통과, minSdk 24/targetSdk 36, 기존 패키지 식별자·버전 유지. 실제 Android 기기 설치·실행은 하지 않았다.
+- iPhone 개발용 `.app`: `codesign --verify --deep --strict` 통과, 최소 iOS 16.0, 기존 식별자·버전 유지. 기존 로컬 서명과 유효 프로비저닝을 재사용했으며 인증서를 새로 만들거나 폐기하지 않았다. 프로파일 만료는 **2026-11-14 08:33 KST**이고 등록된 연결 대상 기기의 포함 여부를 확인했다. 이는 기기 통신이나 앱 실행 성공을 뜻하지 않는다.
+- 현재 웹 출력 **14개 파일**이 두 네이티브 패키지에 바이트 단위로 동일하게 포함됐다. Capacitor `loggingBehavior: none`과 원격 `server` override 없음도 확인했다.
+- 이전에 보관한 iPhone 개발 빌드와 새 빌드의 application identifier, team, Keychain group 목록, 계정 서버 호스트를 별도로 비교해 모두 같음을 확인했다. 명시적 Keychain group이 없는 기존 앱/플러그인 구성은 유지했다. 이는 식별자 비교이며 새 빌드의 실제 Keychain 저장·계정 복원을 실행한 증거는 아니다.
+
+기존 개인 계정 설정·로컬 서명 설정·패키지/lockfile·미추적 공유 scheme 파일의 해시가 유지됐다. 빌드 산출물과 상세 로그·해시 manifest는 저장소 밖 비공개 운영 자료로 보관하며 이전 보관 빌드도 유지했다. 실제 Claude Code의 읽기 전용 검토에서 소스 차단 항목은 발견되지 않았다. Happier를 통한 검토 위임은 SDK 실행 오류로 실패했으므로 Happier 위임 성공으로 기록하지 않는다.
+
+**설치와 실기기 검증은 대기 중이다.** 기기 목록 표시와 달리 실제 앱 조회가 connection reset으로 실패했고 재시도도 15초 timeout으로 끝났다. 새 앱을 설치·실행하지 않았으며 기존 앱을 제거하거나 기기 데이터를 초기화하지 않았다. 연결이 복구되면 기존 앱을 보존하는 업데이트 설치부터 이어가야 한다. Owner가 미룬 설치형 앱의 개인 계정 복원 확인은 미확인으로 유지한다.
+
+기존 Tailscale 인증 복귀 주소를 유지했고 공개 SMTP·공개 인증 복귀 주소·운영 서버 데이터는 변경하지 않았다. 따라서 이 결과는 **개발용 설치 후보**이며 공개 출시 후보, 배포용 IPA/AAB, TestFlight 또는 스토어 제출 완료가 아니다. 출시 패키지는 별도로 [출시 검사 절차](RELEASE-PACKAGING.md)를 충족해야 한다.
