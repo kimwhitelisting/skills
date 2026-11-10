@@ -18,7 +18,7 @@ adapter는 단일 `bento-social-transaction:v1` 레코드에 거래 ID·목적(l
 
 - 웹은 시작 앱과 같은 origin의 명시적 HTTPS URL을 쓴다. 별도 계정 도움말 origin은 verifier 저장소를 공유하지 않으므로 쓰지 않는다. 고정 `?bento_social=1`은 단일 HTML 호스팅에서도 사용할 수 있다. callback URL은 주 이메일/Auth client 요청 전에 제거한다. 기존 이메일 recovery fragment는 유지한다.
 - 앱 HTML은 `no-referrer` meta를 사용한다. Vite는 meta 이전에 개발 client를 주입하므로 개발 서버 응답에도 `Referrer-Policy: no-referrer`를 설정한다. JS 실행 전 요청보다 먼저 URL을 지웠다고 주장하지 않는다. 실제 배포의 응답 정책과 callback 전달은 통합 단계에서 대조한다.
-- Native는 공식 **@capacitor/browser 8.0.5**의 시스템 browser 경로를 사용한다. Google 로그인 UI를 앱 WebView에 넣지 않는다. `appUrlOpen`을 먼저 등록하고 `getLaunchUrl`을 조회해 cold/warm 복귀를 모으며 중복은 한 consumer에서 처리한다. 정확한 route는 `com.paranstudio.dosirak://auth/social`이며 scheme·host·port·path·query·fragment를 검사한다. iOS URL scheme과 Android intent filter를 추가했다. Native sync/compile·실기기 동작은 별도 검증이다.
+- Native는 공식 **@capacitor/browser 8.0.5**의 시스템 browser 경로를 사용한다. Google 로그인 UI를 앱 WebView에 넣지 않는다. `appUrlOpen`을 먼저 등록하고 `getLaunchUrl`을 조회해 cold/warm 복귀를 모으며 중복은 한 consumer에서 처리한다. 정확한 route는 `com.paranstudio.dosirak://auth/social`이며 scheme·host·port·path·query·fragment를 검사한다. iOS URL scheme과 Android intent filter를 추가했다. 아래 Native sync/compile은 확인했으며 실제 OS 복귀 동작은 별도 검증이다.
 
 ## 복귀 순서·재시작 보완
 
@@ -48,6 +48,8 @@ Release에서도 이 선택적 JSON은 기존 단일 설정/provenance 문서에
 
 실제 headless 앱·SDK의 HTTPS 합성 provider 왕복과 손상 요청 복구 **15개 검사**는 S256 proof와 단일 교환, 서버 확인 후 첫 계정 저장 선택, URL scrub, 임시 세션 비영속, 이메일 유지, 미준비 Apple 버튼 비노출, code가 없는 asset referrer를 확인했다. Auth/RPC/provider 응답은 모두 격리된 합성이며 운영 API·실제 Google/Apple 계정·메일을 쓰지 않았다. 초기 검사에서 Vite client의 code-bearing referrer를 발견해 응답 정책을 보완한 후 통과했다. 후속 실제 브라우저 검사에서는 초기화 확인·취소·정확한 social 키 제거와 primary/게임 원문 보존도 확인했다.
 
-현재 남은 것은 실제 Google/Apple 준비, 서버의 정확한 callback 허용, 소셜 전용 계정의 서버 검증 재인증·삭제와 Apple grant 취소, iOS AuthenticationServices 및 실제 Native cold/warm 복귀·취소·계정 연결 검증이다. 이번 소스는 개인 미리보기·기존 설치 앱·호스팅을 갱신하지 않는다.
+`a0863ab`로 공식 Android/iOS sync와 Android Debug·generic iOS Debug 컴파일을 통과했다. Browser 플러그인 등록과 콜백 route가 산출물에 포함됐고, 양쪽 웹 자산 15개·서명·기존 계정 설정 보존을 확인했다. [패키지 검증 범위](MAC-BUILD.md#2026-11-11-소셜-전송-개발용-컴파일-후보)를 따른다. 이는 OS의 browser 열기·닫기 순서나 실제 callback 처리를 실행한 검증이 아니다.
+
+현재 남은 것은 실제 Google/Apple 준비, 서버의 정확한 callback 허용, 소셜 전용 계정의 서버 검증 재인증·삭제와 Apple grant 취소, iOS AuthenticationServices 및 실제 Native cold/warm 복귀·취소·계정 연결 검증이다. 공급자는 비활성화 상태다. 총괄의 후속 통합에서 개인 미리보기만 기존 설정·저장 namespace를 유지해 갱신하고 Mac HTTP/HTTPS 응답 일치를 확인했다. 기존 설치 앱·공개 호스팅은 변경하지 않았다.
 
 공식 근거: [Supabase PKCE](https://supabase.com/docs/guides/auth/sessions/pkce-flow), [계정 연결](https://supabase.com/docs/guides/auth/auth-identity-linking), [Capacitor Browser](https://capacitorjs.com/docs/apis/browser), [Capacitor App](https://capacitorjs.com/docs/apis/app). 2026-11-11 changelog와 고정 SDK의 GoTrueClient/helpers 구현을 함께 확인했다.

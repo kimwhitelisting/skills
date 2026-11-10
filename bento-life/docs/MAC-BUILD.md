@@ -213,3 +213,16 @@ ZIP을 만들기 전 `scripts/verify-ios-simulator.mjs`가 Simulator 플랫폼, 
 - 같은 소스의 개인용 미리보기를 기존 설정·저장 namespace 확인 후 교체하고 이전 파일을 보관했다. Mac의 로컬 HTTP와 Tailscale HTTPS가 모두 200 응답으로 동일 바이트를 반환했다.
 
 이번 패키징에서는 기기 조회·설치·앱 실행을 하지 않았다. 물리 기기 저장 내구성, Keychain, 개인 계정 복원, Native 공유 창·파일 저장, 갱신된 미리보기의 아이폰 직접 조작은 확인하지 않았다. 기존 설치 앱과 사용자 데이터를 지우지 않았으며 공개 공급자 설정도 변경하지 않았다. APK는 디버그, iPhone 산출물은 기존 개발 서명 후보로, 출시 후보·TestFlight·스토어 제출 완료가 아니다.
+
+## 2026-11-11 소셜 전송 개발용 컴파일 후보
+
+소스 `a0863ab519f2113522958b03f6b7069b1caac88b`의 324개 테스트/18개 파일·웹 빌드·화면 점검 15개와 독립 Claude 재검토(차단 사항 없음)를 바탕으로 개발용 패키지를 만들었다. `android:sync` → Gradle `--no-daemon assembleDebug` → `ios:sync` → `ios:verify` → Xcode `Debug`, `generic/platform=iOS` 순서로 성공했다. 동기화 과정의 웹 빌드 외 전체 테스트를 반복하지 않았다.
+
+- Browser 8.0.5를 공식 sync가 Android Gradle 두 파일과 iOS SPM에 등록했다. 실제 APK의 Browser 플러그인·콜백 intent 및 iOS의 플러그인·URL scheme 포함을 확인했다.
+- Android v2 서명과 이전 디버그 서명 일치, iOS deep/strict 서명과 ZIP 추출 후 서명을 확인했다. ZIP에는 AppleDouble 메타데이터를 넣지 않았다.
+- 두 패키지의 웹 파일 **15개**가 현재 dist와 정확히 일치했다. 기존 번들·팀·Keychain 그룹·프로파일·계정 서버/공개 클라이언트 설정을 유지했으며, 개인 환경·서명·scheme 파일도 변경하지 않았다. iOS 생성 config는 Browser 플러그인 등록만 추가됐다.
+- 기존 개발 프로파일 만료는 **2026-11-14 08:33 KST**다. 새 인증서·프로파일 생성이나 프로비저닝 갱신 옵션을 사용하지 않았다.
+
+기기 조회·설치·실행이나 GUI 조작은 하지 않았다. 실제 Google/Apple 로그인, Native cold/warm 복귀·browser 닫힘 순서·계정 연결·개인 계정 복원은 미검증이며 공급자 준비 플래그는 계속 꺼져 있다. 개인 미리보기·설치 앱·호스팅은 이번 패키징으로 갱신되지 않았다. 이 산출물은 개발용 APK와 iPhone `.app`/ZIP이며 출시 서명·TestFlight·스토어 제출 후보가 아니다.
+
+후속 통합에서 같은 소스의 미리보기 6개를 빌드하고, 계정 서버/공개 키·저장 namespace를 대조한 뒤 기존 개인용 runtime을 원자 교체했다. 이전 HTML은 보관했다. Mac 로컬 HTTP와 기존 비공개 HTTPS의 응답이 모두 200이며 SHA256 `567ce91631a0b9771448e07ad8e2249a19cd554cb7c5e92a11ac1b9557d16c51`로 일치했다. 서비스 재시작·사용자 저장 변경·물리 아이폰 조작은 하지 않았다.
