@@ -1,3 +1,4 @@
+import { equal } from './equal.ts';
 import { validSnapshot, type Snapshot } from '../game/save.ts';
 export interface CloudSave { revision: number; snapshot: Snapshot | null; updated_at: string | null }
 export interface PutResult extends CloudSave { status: 'saved' | 'conflict'; duplicate?: boolean; operation_revision?: number }
@@ -10,12 +11,6 @@ interface Choice { snapshot: Snapshot; useRemote: boolean; revision: number }
 interface Journal { choice?: Choice; version: 1; owner: string; revision: number; confirmed: Snapshot | null; latest?: Snapshot; flight?: Operation; conflict?: CloudSave; chosen: boolean }
 export type SyncMode = 'loading' | 'choose' | 'ready' | 'conflict' | 'blocked';
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
-function stable(value: unknown): unknown {
-  if (Array.isArray(value)) return value.map(stable);
-  if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).sort(([a], [b]) => a.localeCompare(b)).map(([key, v]) => [key, stable(v)]));
-  return value;
-}
-const equal = (a: unknown, b: unknown) => JSON.stringify(stable(a)) === JSON.stringify(stable(b));
 export function validCloud(value: unknown): value is CloudSave {
   if (!value || typeof value !== 'object') return false;
   const v = value as CloudSave;

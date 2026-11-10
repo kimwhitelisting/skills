@@ -14,6 +14,7 @@ import { bootAccount } from './account/account.ts';
 import { nativeAuthStorage } from './account/native-auth.ts';
 
 async function boot(): Promise<void> {
+  if (Capacitor.isNativePlatform()) registerRecoveryTransport(nativeRecoveryTransport(Filesystem, Share));
   const ready = await bootAccount(Capacitor.isNativePlatform() ? {
     get: async key => (await Preferences.get({key})).value,
     set: (key,value) => Preferences.set({key,value}),
@@ -22,7 +23,6 @@ async function boot(): Promise<void> {
   } : undefined, Capacitor.isNativePlatform() ? await nativeAuthStorage() : undefined);
   if (!ready) return;
   if (Capacitor.isNativePlatform()) {
-    registerRecoveryTransport(nativeRecoveryTransport(Filesystem, Share));
     void App.addListener('backButton', ({canGoBack}) => { if(canGoBack) history.back(); else void App.minimizeApp(); });
     void App.addListener('appStateChange', ({isActive}) => { if(!isActive) { window.dispatchEvent(new Event('bento-background')); void flushStorage(); } });
   }

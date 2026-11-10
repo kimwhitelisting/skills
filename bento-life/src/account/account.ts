@@ -8,7 +8,9 @@ import { acquireWriter } from './writer-lock.ts';
 import { signedRemote } from './remote.ts';
 import { accountPrefix, configureSaveScope } from './scope.ts';
 import { initializeStorage, currentSnapshot, writeKey, SNAPSHOT_KEY, flushStorage, storageStatus, subscribeStorage, validSnapshot, type Snapshot, type NativeStorage } from '../game/save.ts';
-import { activateGuestRecord, guestNeedsResolution, inspectGuestRecords, sameGuestRecords, type GuestRecords, type GuestSource } from './guest-records.ts';
+import { equal } from './equal.ts';
+import { RecoveryExporter } from '../ui/recovery-export.ts';
+import { activateGuestRecord, collectGuestRecovery, guestNeedsResolution, inspectGuestRecords, sameGuestRecords, type GuestRecords, type GuestSource } from './guest-records.ts';
 export { readGuestSnapshot } from './guest-records.ts';
 import { NativeAuthRecoveryPrompt, type NativeAuthRecovery } from './native-auth-recovery.ts';
 
@@ -115,6 +117,7 @@ export async function bootAccount(native?: NativeStorage & { keys?(): Promise<st
       }
     });
   }
+  guestRecords = await inspectGuestRecords(native);
   try {
     for (const key of Object.keys(localStorage)) if (key.startsWith('bento-deleted:')) await removeDeletedLocal(key.slice('bento-deleted:'.length));
     if (url && publishable) {
@@ -136,7 +139,6 @@ export async function bootAccount(native?: NativeStorage & { keys?(): Promise<st
       await client!.auth.signOut({ scope: 'local' });
       user = undefined;
     }
-    guestRecords = await inspectGuestRecords(native);
     if (!user && guestNeedsResolution(guestRecords)) {
       guestResolution = true; opened = true; booted = true;
       renderPanel(); return false;
@@ -176,7 +178,7 @@ export async function bootAccount(native?: NativeStorage & { keys?(): Promise<st
 function guestDetails(button: (action: string, text: string, primary?: boolean) => string, choosing: boolean): string {
   const labels = { web: nativeStore ? '앱 화면 저장소' : '이 브라우저', native: '기기 앱 저장소' };
   const ready = guestRecords.filter(record => record.status === 'ready');
-  const differs = ready.length > 1 && JSON.stringify(ready[0].snapshot) !== JSON.stringify(ready[1].snapshot);
+  const differs = ready.length > 1 && !equal(ready[0].snapshot, ready[1].snapshot);
   const unknown = guestRecords.some(record => record.status === 'unavailable');
   let html = differs ? '<p>기기에 서로 다른 게스트 기록 두 개가 있어요. 최신 기록을 자동으로 정할 수 없으니 이름·나이·하트를 확인해 선택해 주세요. 원본은 모두 남겨요.</p>' : '';
   for (const record of guestRecords) {
@@ -185,12 +187,13 @@ function guestDetails(button: (action: string, text: string, primary?: boolean) 
     if (record.status === 'unavailable') html += `<p>${name}의 게스트 기록을 읽지 못했어요. 저장된 기록이 없는지는 아직 알 수 없어요. 기기 잠금·저장 공간을 확인하고 다시 확인해 주세요.</p>`;
     if (record.status === 'ready') {
       html += `<p>${name}: ${esc(summary(record.snapshot))}</p>`;
-      if (choosing && (!guestResolution || !unknown)) html += button(`guest-${record.source}`, guestResolution ? `${name} 기록으로 이어가기` : `${name} 기록을 계정으로 가져오기`, true);
+      if (!record.cloudEligible) html += '<p>이 기록은 기기에서 읽을 수 있지만 크기 또는 추가 항목 때문에 현재 계정 저장 형식으로 가져올 수 없어요. 손상된 기록은 아니며 원본을 내보내 보관할 수 있어요.</p>';
+      if (choosing && (guestResolution ? !unknown : record.cloudEligible)) html += button(`guest-${record.source}`, guestResolution ? `${name} 기록으로 이어가기` : `${name} 기록을 계정으로 가져오기`, true);
     }
   }
   if (guestRecords.length && guestRecords.every(record => record.status === 'absent')) html += '<p>확인한 기기 저장소에 게스트 기록이 없어요.</p>';
   if (!choosing && ready.length) html += '<p>게스트 원본은 계정 기록과 별도로 보관돼요. 로그아웃하면 기기 기록으로 돌아갈 수 있어요. 현재 계정 기록에 자동으로 합치거나 덮어쓰지 않아요.</p>';
-  return html + button('guest-retry', '게스트 기록 다시 확인');
+  return html + button('guest-retry', '게스트 기록 다시 확인') + button('guest-export', '읽을 수 있는 게스트 원본 내보내기');
 }
 function renderPanel(): void {
   if (!panel) return;
@@ -213,6 +216,7 @@ function renderPanel(): void {
     if (sync?.mode === 'conflict') content += `<p>두 기록을 보관했어요. 하나를 선택하며 하트와 도감을 합치지 않아요.</p><p>기기: ${esc(summary(sync.localCandidate))}</p><p>계정: ${esc(summary(sync.remoteCandidate))}</p>${sync.localCandidate ? button('local', '이 기기 진행으로 이어가기') : ''}${sync.remoteCandidate ? button('remote', '계정 진행으로 이어가기', true) : ''}`;
     content += button('retry', '계정 저장 다시 확인') + button('logout', '로그아웃 · 기기 기록으로 돌아가기') + button('delete', '계정 삭제');
   }
+  if (fatal) content += button('guest-export', '읽을 수 있는 게스트 원본 내보내기');
   panel.innerHTML = `<div class="account-card"><h2>계정과 저장</h2>${content}${nativeRecoveryPrompt?.markup() ?? ''}${feedback ? `<p role="status" class="account-message">${esc(feedback)}</p>` : ''}${!guestResolution && !fatal && (!user || sync?.mode === 'ready') && !recovery ? button('close', '게임으로 돌아가기') : ''}</div>`;
 }
 async function retry(): Promise<void> {
@@ -272,6 +276,14 @@ async function act(action: string): Promise<void> {
       sync?.stop(); location.reload();
     }
     if (action === 'retry') await retry();
+    if (action === 'guest-export') {
+      const owner = user?.id;
+      const result = await collectGuestRecovery(nativeStore);
+      if (suspended || authChanged || user?.id !== owner) throw Error('Account changed');
+      // Construct only on explicit action, after native entry has registered its transport.
+      const exported = await new RecoveryExporter(() => result.json).run();
+      feedback = (result.partial ? '읽지 못한 출처·항목은 파일에 포함되지 않았고 상태만 표시돼요. ' : '') + exported.message;
+    }
     if (action === 'guest-retry' || action === 'guest-web' || action === 'guest-native') {
       const owner = user?.id;
       const expected = guestRecords;
@@ -289,7 +301,7 @@ async function act(action: string): Promise<void> {
           location.reload(); return;
         }
         const chosen = observed.find(record => record.source === source && record.status === 'ready')?.snapshot;
-        if (user && sync?.mode === 'choose' && chosen && await sync.choose(chosen)) location.reload();
+        if (user && sync?.mode === 'choose' && chosen && validSnapshot(chosen) && await sync.choose(chosen)) location.reload();
       }
     }
     if (['fresh', 'local', 'remote'].includes(action)) {

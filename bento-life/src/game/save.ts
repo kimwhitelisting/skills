@@ -38,7 +38,7 @@ let recovered = false;
 const backupKey = (key: string) => `${key}:last-good`;
 const check = (key: string, value: string) => { try {
     const v: unknown = JSON.parse(value);
-    return key === SNAPSHOT_KEY ? object(v) && v.version === 1 && (v.run === undefined || validRun(v.run)) && validDex(v.dex) && validPrefs(v.prefs) : key === RUN_KEY ? validRun(v) : key === DEX_KEY ? validDex(v) : key === PREFS_KEY ? validPrefs(v) : true;
+    return key === SNAPSHOT_KEY ? validLocalSnapshot(v) : key === RUN_KEY ? validRun(v) : key === DEX_KEY ? validDex(v) : key === PREFS_KEY ? validPrefs(v) : true;
 }
 catch {
     return false;
@@ -478,9 +478,13 @@ export async function confirmRecoveryReset(confirmed: boolean): Promise<boolean>
     return errors.size === 0;
 }
 
+/** The rendering/engine contract, independent of cloud transport size and field limits. */
+export function validLocalSnapshot(value: unknown): value is Snapshot {
+    return object(value) && value.version === 1 && (value.run === undefined || validRun(value.run)) && validDex(value.dex) && validPrefs(value.prefs);
+}
 /** Only the same validated game snapshot is eligible for cloud sync; tokens never belong here. */
 export function validSnapshot(value: unknown): value is Snapshot {
-    return object(value) && value.version === 1 && (value.run === undefined || validRun(value.run)) && validDex(value.dex) && validPrefs(value.prefs)
+    return validLocalSnapshot(value)
         && Object.keys(value).every(key => ['version', 'run', 'dex', 'prefs'].includes(key))
         && new TextEncoder().encode(JSON.stringify(value)).length <= 1024 * 1024;
 }
