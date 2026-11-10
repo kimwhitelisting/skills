@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { SocialTransport, SOCIAL_TRANSACTION_KEY, type SocialEnvironment } from '../src/account/social-transport.ts';
+import { SocialTransport, SOCIAL_TRANSACTION_KEY, validateSocialBundle, type SocialEnvironment } from '../src/account/social-transport.ts';
 import { enabledSocialProviders, socialConfig, validateSocialConfig, NATIVE_SOCIAL_CALLBACK, type SocialConfig } from '../src/account/social-config.ts';
 import { nativeSocialEntry, webSocialEntry } from '../src/account/social-entry.ts';
 import type { Session } from '@supabase/supabase-js';
@@ -73,10 +73,61 @@ describe('actual pinned SDK PKCE transport', () => {
     const p = harness(); await p.transport.start('google', 'login'); const wrong = session(); wrong.user = user(UID, 'apple') as Session['user']; p.respond(wrong); await expect(p.transport.consume(p.callback())).rejects.toThrow('identity'); expect(p.env.adopt).not.toHaveBeenCalled();
     const owner = harness(new Map(), session()); await owner.transport.start('google', 'link'); owner.setCurrent(session(OTHER)); await expect(owner.transport.consume(owner.callback())).rejects.toThrow('Account changed'); expect(owner.env.adopt).not.toHaveBeenCalled();
   });
-  it('exact provider cancellation clears only its verifier and preserves the primary record',async()=>{
+  it('provider error leaves pending verifier intact until explicit cancellation',async()=>{
     const h=harness(new Map([['bento-auth:v1','original']]));await h.transport.start('google','login');
     await expect(h.transport.consume(config.webCallback+'&error=access_denied')).rejects.toThrow();
-    expect(JSON.parse(h.shared.get(SOCIAL_TRANSACTION_KEY)!).verifiers).toEqual({});expect(h.shared.get('bento-auth:v1')).toBe('original');expect(h.env.adopt).not.toHaveBeenCalled();
+    expect(h.transport.pending).toBe(true);expect(Object.keys(JSON.parse(h.shared.get(SOCIAL_TRANSACTION_KEY)!).verifiers).length).toBeGreaterThan(0);
+    await h.transport.cancel();expect(JSON.parse(h.shared.get(SOCIAL_TRANSACTION_KEY)!).verifiers).toEqual({});expect(h.shared.get('bento-auth:v1')).toBe('original');expect(h.env.adopt).not.toHaveBeenCalled();
+  });
+  it('retained native launch from a failed old exchange cannot retire a newer flow, while its new code works', async () => {
+    const first=harness(new Map(),null,'android'); await first.transport.start('google','login');
+    const old=NATIVE_SOCIAL_CALLBACK+'?code=old-rejected-code'; await expect(first.transport.consume(old)).rejects.toThrow();
+    const next=harness(first.shared,null,'android'); await next.transport.start('google','login');
+    const pending=first.shared.get(SOCIAL_TRANSACTION_KEY); const cold=harness(first.shared,null,'android');await cold.transport.restore();
+    let receive!:(url:string)=>void;const entry=await nativeSocialEntry({platform:'android',onURL:async(fn)=>{receive=fn},launchURL:async()=>old,onFinished:async()=>{},open:async()=>{},close:async()=>{}});
+    await entry.connect(url=>cold.transport.consume(url),async()=>{});
+    expect(first.shared.get(SOCIAL_TRANSACTION_KEY)).toBe(pending); expect(cold.request).not.toHaveBeenCalled();
+    receive(cold.callback());await vi.waitFor(()=>expect(cold.env.adopt).toHaveBeenCalledOnce());
+    const record=JSON.parse(first.shared.get(SOCIAL_TRANSACTION_KEY)!);expect(record.receipts).toHaveLength(2);expect(record.receipts.every((r:string)=>/^[a-f0-9]{64}$/.test(r))).toBe(true);expect(JSON.stringify(record)).not.toContain('old-rejected-code');
+  });
+  it.each([false,true])('ignored callback after no pending (prior cancelled=%s) survives reload without poisoning new flow', async cancelled => {
+    const first=harness(new Map(),null,'android');if(cancelled){await first.transport.start('google','login');await first.transport.cancel();}
+    const old=NATIVE_SOCIAL_CALLBACK+'?code=old-unconsumed';await first.transport.rememberIgnored(old);
+    const second=harness(first.shared,null,'android');await second.transport.start('google','login');const bytes=first.shared.get(SOCIAL_TRANSACTION_KEY);
+    await second.transport.consume(old);expect(first.shared.get(SOCIAL_TRANSACTION_KEY)).toBe(bytes);expect(second.request).not.toHaveBeenCalled();
+    await second.transport.consume(second.callback());expect(second.env.adopt).toHaveBeenCalledOnce();
+  });
+  it('ignored receipt writes own the operation, stay bounded and fail closed without primary changes', async()=>{
+    const first=harness(new Map([['bento-auth:v1','exact-primary'],['bento-life:snapshot:v1','exact-game']]),null,'android');
+    const set=first.port.setItem.getMockImplementation()!;let release!:()=>void;let entered=false;
+    first.port.setItem.mockImplementation(async(k,v)=>{entered=true;await new Promise<void>(resolve=>{release=resolve});await set(k,v)});
+    const ignored=first.transport.rememberIgnored(NATIVE_SOCIAL_CALLBACK+'?code=old');await vi.waitFor(()=>expect(entered).toBe(true));
+    await expect(first.transport.start('google','login')).rejects.toThrow('already pending');release();await ignored;first.port.setItem.mockImplementation(set);
+    for(let n=0;n<10;n++)await first.transport.rememberIgnored(NATIVE_SOCIAL_CALLBACK+'?code=old-'+n);
+    expect(JSON.parse(first.shared.get(SOCIAL_TRANSACTION_KEY)!).receipts).toHaveLength(8);
+    const bytes=first.shared.get(SOCIAL_TRANSACTION_KEY);await expect(first.transport.rememberIgnored(NATIVE_SOCIAL_CALLBACK+'?code=bad&code=duplicate')).rejects.toThrow();expect(first.shared.get(SOCIAL_TRANSACTION_KEY)).toBe(bytes);
+    const failed=harness(first.shared,null,'android');failed.port.setItem.mockRejectedValue(Error('locked'));
+    await expect(failed.transport.rememberIgnored(NATIVE_SOCIAL_CALLBACK+'?code=unwritten')).rejects.toThrow();await expect(failed.transport.start('google','login')).rejects.toThrow('receipt');
+    expect(first.shared.get('bento-auth:v1')).toBe('exact-primary');expect(first.shared.get('bento-life:snapshot:v1')).toBe('exact-game');expect(failed.env.open).not.toHaveBeenCalled();
+  });
+  it('interrupted consumed receipt is retained for retry, never treated as successful authentication',async()=>{
+    const h=harness(new Map(),null,'android');await h.transport.start('google','login');const set=h.port.setItem.getMockImplementation()!;
+    h.port.setItem.mockImplementation(async(k,v)=>{if(JSON.parse(v).tx.phase==='consuming')await set(k,v);throw Error('interrupted')});
+    const old=NATIVE_SOCIAL_CALLBACK+'?code=before-crash';await expect(h.transport.consume(old)).rejects.toThrow();expect(h.request).not.toHaveBeenCalled();expect(h.env.adopt).not.toHaveBeenCalled();
+    const cold=harness(h.shared,null,'android');await cold.transport.restore();expect(cold.transport.pending).toBe(false);expect(JSON.parse(h.shared.get(SOCIAL_TRANSACTION_KEY)!).tx.phase).toBe('failed');
+    await cold.transport.start('google','login');await cold.transport.consume(old);expect(cold.transport.pending).toBe(true);expect(cold.request).not.toHaveBeenCalled();await cold.transport.consume(cold.callback());expect(cold.env.adopt).toHaveBeenCalledOnce();
+  });
+  it('rejects malformed receipt-only and regular verifier containers without discarding originals',async()=>{
+    for(const verifiers of [true,1,'',[],null])expect(()=>validateSocialBundle({tx:null,verifiers,receipts:[]} as never)).toThrow();
+    for(const receipts of [null,['raw-code'],Array(9).fill('a'.repeat(64)),['a'.repeat(64),'a'.repeat(64)]])expect(()=>validateSocialBundle({tx:null,verifiers:{},receipts} as never)).toThrow();
+    const h=harness();await h.transport.start('google','login');const bundle=JSON.parse(h.shared.get(SOCIAL_TRANSACTION_KEY)!);for(const verifiers of [true,1,''])expect(()=>validateSocialBundle({...bundle,verifiers})).toThrow();await h.transport.cancel();
+  });
+  it('web corrupt reset is explicit, exact-byte scoped and never resets read errors or changed records',async()=>{
+    const shared=new Map([['bento-auth:v1','primary'],['bento-life:snapshot:v1','game'],[SOCIAL_TRANSACTION_KEY,'{bad']]);const h=harness(shared);
+    await expect(h.transport.restore()).rejects.toThrow();expect(h.transport.canResetCorrupt).toBe(true);
+    shared.set(SOCIAL_TRANSACTION_KEY,'changed');await expect(h.transport.resetCorrupt()).rejects.toThrow('changed');expect(h.port.removeItem).not.toHaveBeenCalled();
+    shared.set(SOCIAL_TRANSACTION_KEY,'{bad');await h.transport.resetCorrupt();expect(h.port.removeItem).toHaveBeenCalledExactlyOnceWith(SOCIAL_TRANSACTION_KEY);expect([...shared]).toEqual([['bento-auth:v1','primary'],['bento-life:snapshot:v1','game']]);
+    const blocked=harness();blocked.port.getItem.mockRejectedValue(Error('unavailable'));await expect(blocked.transport.restore()).rejects.toThrow();expect(blocked.transport.canResetCorrupt).toBe(false);await expect(blocked.transport.resetCorrupt()).rejects.toThrow();expect(blocked.port.removeItem).not.toHaveBeenCalled();
   });
   it('single pending transaction survives restart and cannot be overwritten or borrowed', async () => {
     const h = harness(); await h.transport.start('google', 'login'); const cold = harness(h.shared);

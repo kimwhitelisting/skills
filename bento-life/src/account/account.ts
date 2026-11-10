@@ -50,6 +50,7 @@ let socialAdopting = false;
 let socialAdoptionUncertain = false;
 let socialPlatform = 'web';
 let linkProvider: SocialProvider | undefined;
+let socialResetConfirm = false;
 let guestRecords: GuestRecords = [];
 let guestResolution = false;
 const listeners = new Set<() => void>();
@@ -179,13 +180,20 @@ export async function bootAccount(native?: NativeStorage & { keys?(): Promise<st
       await socialEntry.connect(async callback => {
         opened = true;
         if (!social) { feedback = '아직 사용할 수 없는 소셜 인증 복귀예요. 기존 기록과 로그인은 유지했어요.'; renderPanel(); return; }
-        if (!social.pending) { feedback = '진행 중인 소셜 인증이 없어요. 기존 계정과 게임 기록은 바꾸지 않았어요.'; renderPanel(); return; }
+        if (!social.pending) {
+          try { await social.rememberIgnored(callback); feedback = '진행 중인 소셜 인증이 없어요. 기존 계정과 게임 기록은 바꾸지 않았어요.'; }
+          catch { feedback = '인증 복귀 기록을 확인하지 못했어요. 새 인증을 시작하기 전에 앱을 다시 열어 주세요.'; }
+          renderPanel(); return;
+        }
         socialHolding = true; gameWrites.freeze();
         try { await social.consume(callback); }
         catch { feedback = socialAdoptionUncertain ? '' : '소셜 인증을 확인하지 못했어요. 게임 기록은 유지했어요. 인증을 취소하고 다시 시작해 주세요.'; }
         notify(); renderPanel();
       }, async () => {
-        if (social?.acceptingBrowserClose) { try { await social.cancel(); location.reload(); } catch { opened = true; feedback = '인증 취소를 확인하지 못했어요. 기존 기록은 유지했어요. 다시 취소하거나 앱을 다시 열어 주세요.'; renderPanel(); } }
+        if (social?.acceptingBrowserClose) {
+          opened = true; feedback = '인증 창이 닫혔어요. 앱으로 돌아오는 인증 결과를 기다리고 있어요. 다시 시도하려면 아래에서 인증을 취소해 주세요.';
+          renderPanel();
+        }
       });
       if (socialAdopted || socialAdoptionUncertain || authChanged || suspended) return false;
     }
@@ -280,6 +288,7 @@ function renderPanel(): void {
     }
     if (linkProvider && user) content += '<p>선택한 로그인을 현재 계정에 연결할까요? 같은 계정의 로그인 수단만 추가하며 다른 계정의 게임 기록은 합치지 않아요.</p>' + button('social-confirm-link', '현재 계정에 연결 계속') + button('social-link-cancel', '연결하지 않기');
   }
+  if (fatal && social?.canResetCorrupt) content += socialResetConfirm ? '<p>손상된 소셜 인증 요청만 초기화할까요? 기존 로그인과 게임 기록은 지우지 않아요. 이전 요청은 다시 시작해야 해요.</p>' + button('social-reset-confirm', '확인 · 소셜 인증 요청만 초기화') + button('social-reset-cancel', '초기화하지 않기') : button('social-reset', '손상된 소셜 인증 요청 초기화');
   if (fatal) content += button('guest-export', '읽을 수 있는 게스트 원본 내보내기');
   panel.innerHTML = `<div class="account-card"><h2>계정과 저장</h2>${content}${nativeRecoveryPrompt?.markup() ?? ''}${feedback ? `<p role="status" class="account-message">${esc(feedback)}</p>` : ''}${!socialHolding && !guestResolution && !fatal && (!user || sync?.mode === 'ready') && !recovery ? button('close', '게임으로 돌아가기') : ''}</div>`;
 }
@@ -306,6 +315,7 @@ async function act(action: string): Promise<void> {
     }
     return;
   }
+  if (action === 'social-reset' || action === 'social-reset-cancel') { socialResetConfirm = action === 'social-reset'; renderPanel(); return; }
   if (action === 'social-link-cancel') { linkProvider = undefined; renderPanel(); return; }
   if (action === 'social-link-google' || action === 'social-link-apple') {
     if (user && social) linkProvider = action.endsWith('google') ? 'google' : 'apple';
@@ -345,6 +355,7 @@ async function act(action: string): Promise<void> {
       sync?.stop(); location.reload();
     }
     if (action === 'retry') await retry();
+    if (action === 'social-reset-confirm' && socialResetConfirm && social?.canResetCorrupt) { await social.resetCorrupt(); location.reload(); return; }
     if (action === 'social-cancel' && social) { await social.cancel(); location.reload(); return; }
     if (social && (action === 'social-login-google' || action === 'social-login-apple' || action === 'social-confirm-link')) {
       const linking = action === 'social-confirm-link';

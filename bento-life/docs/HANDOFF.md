@@ -7,7 +7,7 @@
 
 ## 소셜 인증 전송 — 기본 비활성화 (2026-11-11)
 
-Google·웹/Android Apple PKCE와 Native cold/warm callback, 같은 UID의 명시적 연결 경로를 추가했다. 실제 제공자·삭제·Native 검증이 남아 기본 readiness는 꺼져 있고 버튼을 표시하지 않는다. 기존 이메일 client/게스트 기록을 유지한다. [구현 경계·설정·검증](SOCIAL-TRANSPORT.md)을 따른다. Browser 8.0.5만 exact 추가했으며 개인 미리보기·설치 앱은 아직 이 소스로 갱신하지 않았다.
+Google·웹/Android Apple PKCE와 Native cold/warm callback, 같은 UID의 명시적 연결 경로를 추가했다. 실제 제공자·삭제·Native 검증이 남아 기본 readiness는 꺼져 있고 버튼을 표시하지 않는다. 기존 이메일 client/게스트 기록을 유지한다. [구현 경계·설정·검증](SOCIAL-TRANSPORT.md)을 따른다. Browser 8.0.5만 exact 추가했으며 개인 미리보기·설치 앱은 아직 이 소스로 갱신하지 않았다. Android 닫힘/복귀 순서를 비종결 처리하고, 최근 8개 callback 해시로 reload 재전달을 구분한다. 손상된 웹 요청은 명시적으로 해당 키만 초기화한다. 324개 테스트·웹 빌드와 격리 headless 15개 검사를 통과했으며 실제 기기 복귀는 아직 미확인이다.
 
 ## Native 게스트 원본 보존 (2026-11-11)
 

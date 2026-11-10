@@ -4,7 +4,7 @@ export interface SocialEntry {
   platform: string;
   open(url: string): Promise<void>;
   close(): Promise<void>;
-  connect(callback: (url: string) => Promise<void>, cancelled: () => Promise<void>): Promise<void>;
+  connect(callback: (url: string) => Promise<void>, finished: () => Promise<void>): Promise<void>;
 }
 function exactNative(raw: string): boolean {
   try { if (raw.length > 8192) return false; const u = new URL(raw), base = new URL(NATIVE_SOCIAL_CALLBACK); return u.protocol === base.protocol && u.hostname === base.hostname && u.port === '' && u.pathname === base.pathname; } catch { return false; }
@@ -31,12 +31,12 @@ export interface NativeSocialAPI {
 export async function nativeSocialEntry(api: NativeSocialAPI): Promise<SocialEntry> {
   const queue: string[] = [];
   const seen = new Set<string>();
-  let consume: ((url: string) => Promise<void>) | undefined, cancel: (() => Promise<void>) | undefined;
+  let consume: ((url: string) => Promise<void>) | undefined, finished: (() => Promise<void>) | undefined;
   let work = Promise.resolve();
   const drain = () => { work = work.then(async () => { while (consume && queue.length) { try { await consume(queue.shift()!); } catch { /* Consumer owns its error UI; keep future callbacks usable. */ } } }); return work; };
   const receive = (url: string) => { if (exactNative(url) && !seen.has(url)) { seen.add(url); if (seen.size > 8) seen.delete(seen.values().next().value!); if (queue.length < 8) queue.push(url); void drain(); } };
   await api.onURL(receive);
-  await api.onFinished(() => { if (cancel) void cancel().catch(() => {}); });
+  await api.onFinished(() => { if (finished) void finished().catch(() => {}); });
   const initial = await api.launchURL(); if (initial) receive(initial);
-  return { platform: api.platform, open: api.open, close: api.close, connect: async (consumer, cancelled) => { consume = consumer; cancel = cancelled; await drain(); } };
+  return { platform: api.platform, open: api.open, close: api.close, connect: async (consumer, onFinished) => { consume = consumer; finished = onFinished; await drain(); } };
 }

@@ -7,15 +7,18 @@ export interface SocialPort { getItem(key: string): string | null | Promise<stri
 type Purpose = 'login' | 'link';
 type Phase = 'preparing' | 'pending' | 'consuming' | 'complete' | 'cancelled' | 'failed';
 interface Transaction { version: 1; id: string; purpose: Purpose; provider: SocialProvider; owner: string | null; callback: string; started: number; expires: number; phase: Phase; flowId?: string }
-interface Bundle { tx: Transaction; verifiers: Record<string, string> }
+interface Bundle { tx: Transaction; verifiers: Record<string, string>; receipts?: string[] }
+interface ReceiptOnly { tx: null; verifiers: Record<string, never>; receipts: string[] }
 const flowPattern = /^[a-zA-Z0-9_-]{8,64}$/;
 function verifierKey(key: string): boolean { return key === `${SOCIAL_KEY}-code-verifier` || key === `${SOCIAL_KEY}-flows-code-verifier` || new RegExp(`^${SOCIAL_KEY}-flow-[a-zA-Z0-9_-]{8,64}-code-verifier$`).test(key); }
-export function validateSocialBundle(bundle: Bundle): void {
+export function validateSocialBundle(bundle: Bundle | ReceiptOnly): void {
+  if (bundle?.receipts !== undefined && (!Array.isArray(bundle.receipts) || bundle.receipts.length > 8 || new Set(bundle.receipts).size !== bundle.receipts.length || !bundle.receipts.every(value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value)))) throw Error('Invalid social callback receipts');
+  if (bundle?.tx === null && Object.keys(bundle).sort().join() === 'receipts,tx,verifiers' && Array.isArray(bundle.receipts) && bundle.verifiers && typeof bundle.verifiers === 'object' && !Array.isArray(bundle.verifiers) && Object.keys(bundle.verifiers).length === 0) return;
   const t = bundle?.tx;
-  if (!bundle || Object.keys(bundle).sort().join() !== 'tx,verifiers' || !t || Object.keys(t).some(key => !['version','id','purpose','provider','owner','callback','started','expires','phase','flowId'].includes(key)) || t.version !== 1 || !/^[a-f0-9]{64}$/.test(t.id) || !['login', 'link'].includes(t.purpose) || !['google', 'apple'].includes(t.provider)
+  if (!bundle || !['tx,verifiers', 'receipts,tx,verifiers'].includes(Object.keys(bundle).sort().join()) || !t || Object.keys(t).some(key => !['version','id','purpose','provider','owner','callback','started','expires','phase','flowId'].includes(key)) || t.version !== 1 || !/^[a-f0-9]{64}$/.test(t.id) || !['login', 'link'].includes(t.purpose) || !['google', 'apple'].includes(t.provider)
     || (t.purpose === 'login' ? t.owner !== null : typeof t.owner !== 'string' || !/^[a-f0-9-]{36}$/i.test(t.owner))
     || !Number.isSafeInteger(t.started) || t.started < 0 || t.expires !== t.started + TTL || !['preparing', 'pending', 'consuming', 'complete', 'cancelled', 'failed'].includes(t.phase)
-    || typeof t.callback !== 'string' || (t.flowId !== undefined && !flowPattern.test(t.flowId)) || !bundle.verifiers || Array.isArray(bundle.verifiers)
+    || typeof t.callback !== 'string' || (t.flowId !== undefined && !flowPattern.test(t.flowId)) || !bundle.verifiers || typeof bundle.verifiers !== 'object' || Array.isArray(bundle.verifiers)
     || Object.keys(bundle.verifiers).length > 3 || (['pending','consuming'].includes(t.phase) && !t.flowId) || (['complete','cancelled','failed'].includes(t.phase) && Object.keys(bundle.verifiers).length !== 0)) throw Error('Invalid social transaction');
   for (const [key, raw] of Object.entries(bundle.verifiers)) {
     if (!verifierKey(key) || typeof raw !== 'string' || raw.length > 1024) throw Error('Invalid social verifier');
@@ -80,6 +83,9 @@ export class SocialTransport {
   private committing = false;
   private adopted = false;
   private loaded = false;
+  private corruptRaw?: string;
+  private ignoredReceipts: string[] = [];
+  private receiptFailure = false;
   constructor(private env: SocialEnvironment) {}
   get pending(): boolean { return !!this.storage && ['preparing', 'pending', 'consuming'].includes(this.storage.bundle.tx.phase); }
   private callback(): string {
@@ -105,10 +111,54 @@ export class SocialTransport {
     if (this.loaded) return;
     const raw = await this.env.port.getItem(SOCIAL_TRANSACTION_KEY);
     if (raw === null) { this.loaded = true; return; }
-    if (raw.length > 8192) throw Error('Invalid social transaction');
-    const bundle = JSON.parse(raw) as Bundle; validateSocialBundle(bundle);
-    this.storage = new TransportStorage(this.env.port, bundle); this.loaded = true;
+    let bundle: Bundle | ReceiptOnly;
+    try { if (raw.length > 8192) throw Error('Invalid social transaction'); bundle = JSON.parse(raw) as Bundle | ReceiptOnly; validateSocialBundle(bundle); }
+    catch (error) { this.corruptRaw = raw; throw error; }
+    if (bundle.tx === null) { this.ignoredReceipts = bundle.receipts; this.loaded = true; return; }
+    this.storage = new TransportStorage(this.env.port, bundle as Bundle); this.loaded = true;
     if (this.pending && (bundle.tx.expires < (this.env.now?.() ?? Date.now()) || bundle.tx.phase !== 'pending')) await this.storage.retire('failed');
+  }
+  /** Record a delivered but inactive code before a later flow can see getLaunchUrl replay it. */
+  async rememberIgnored(raw: string): Promise<void> {
+    if (this.operations) throw Error('Social transaction is active');
+    this.operations++; const generation = this.generation; let recording = false;
+    try {
+      if (!this.loaded) await this.restore();
+      if (this.pending || generation !== this.generation) throw Error('Social transaction is active');
+      const callback = this.callback(), u = new URL(raw), base = new URL(callback);
+      if (raw.length > 8192 || u.protocol !== base.protocol || u.hostname !== base.hostname || u.port !== base.port || u.pathname !== base.pathname || u.username || u.password || u.hash) throw Error('Wrong social callback');
+      const keys = [...u.searchParams.keys()];
+      if (new Set(keys).size !== keys.length || keys.some(k => !['code', 'error', 'error_code', 'error_description', ...base.searchParams.keys()].includes(k)) || [...base.searchParams].some(([k,v]) => u.searchParams.get(k) !== v)) throw Error('Wrong social callback fields');
+      if (u.searchParams.has('error')) return;
+      const code = u.searchParams.get('code');
+      if (!code || code.length > 2048 || /[\s\x00-\x1f]/.test(code)) throw Error('Invalid callback code');
+      recording = true;
+      const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(callback + '\n' + code));
+      const receipt = Array.from(new Uint8Array(digest), value => value.toString(16).padStart(2, '0')).join('');
+      if (generation !== this.generation) throw Error('Social transaction changed');
+      const previous = this.storage?.bundle.receipts ?? this.ignoredReceipts;
+      if (previous.includes(receipt)) return;
+      const receipts = [...previous, receipt].slice(-8);
+      if (this.storage) { this.storage.bundle.receipts = receipts; await this.storage.persist(); }
+      else {
+        const bytes = JSON.stringify({ tx: null, verifiers: {}, receipts } satisfies ReceiptOnly);
+        await this.env.port.setItem(SOCIAL_TRANSACTION_KEY, bytes);
+        if (await this.env.port.getItem(SOCIAL_TRANSACTION_KEY) !== bytes) throw Error('Callback receipt read-back failed');
+        this.ignoredReceipts = receipts;
+      }
+    } catch (error) { if (recording) this.receiptFailure = true; throw error; }
+    finally { this.operations--; }
+  }
+  get canResetCorrupt(): boolean { return this.env.platform === 'web' && this.corruptRaw !== undefined; }
+  async resetCorrupt(): Promise<void> {
+    if (!this.canResetCorrupt || this.operations || this.storage) throw Error('No confirmed corrupt web transaction');
+    this.operations++;
+    try {
+      if (await this.env.port.getItem(SOCIAL_TRANSACTION_KEY) !== this.corruptRaw) throw Error('Social transaction changed');
+      await this.env.port.removeItem(SOCIAL_TRANSACTION_KEY);
+      if (await this.env.port.getItem(SOCIAL_TRANSACTION_KEY) !== null) throw Error('Social reset read-back failed');
+      this.corruptRaw = undefined; this.loaded = true;
+    } finally { this.operations--; }
   }
   async start(provider: SocialProvider, purpose: Purpose): Promise<void> {
     if (this.operations) throw Error('A social transaction is already pending');
@@ -118,6 +168,7 @@ export class SocialTransport {
       if (!this.loaded) await this.restore();
       active();
       if (this.pending) throw Error('A social transaction is already pending');
+      if (this.receiptFailure) throw Error('Reload to verify callback receipt storage');
       if (!enabledSocialProviders(this.env.config, this.env.platform).includes(provider) || !['login', 'link'].includes(purpose)) throw Error('Social provider is not ready');
       if (!globalThis.crypto?.getRandomValues || !globalThis.crypto?.subtle) throw Error('Secure PKCE unavailable');
       await crypto.subtle.digest('SHA-256', new Uint8Array([1, 2, 3]));
@@ -127,7 +178,7 @@ export class SocialTransport {
       if (purpose === 'login' ? !!session : !session) throw Error('Wrong social purpose for active account');
       const now = this.env.now?.() ?? Date.now();
       const id = Array.from(crypto.getRandomValues(new Uint8Array(32)), n => n.toString(16).padStart(2, '0')).join('');
-      this.storage = new TransportStorage(this.env.port, { tx: { version: 1, id, provider, purpose, owner: session?.user.id ?? null, callback: this.callback(), started: now, expires: now + TTL, phase: 'preparing' }, verifiers: {} });
+      this.storage = new TransportStorage(this.env.port, { tx: { version: 1, id, provider, purpose, owner: session?.user.id ?? null, callback: this.callback(), started: now, expires: now + TTL, phase: 'preparing' }, verifiers: {}, receipts: [...(this.storage?.bundle.receipts ?? this.ignoredReceipts)] });
       owns = true; await this.disposeClient(); await this.storage.persist(); active(); await this.env.checkpoint(); active();
       const sdk = this.sdk();
       if (purpose === 'link') {
@@ -165,12 +216,20 @@ export class SocialTransport {
     const keys = [...u.searchParams.keys()];
     if (new Set(keys).size !== keys.length || keys.some(k => !['code', 'error', 'error_code', 'error_description', ...base.searchParams.keys()].includes(k))
       || [...base.searchParams].some(([k,v]) => u.searchParams.get(k) !== v)) throw Error('Wrong social callback fields');
-    if (!enabledSocialProviders(this.env.config, this.env.platform).includes(t.provider) || t.expires < (this.env.now?.() ?? Date.now()) || t.started > (this.env.now?.() ?? Date.now()) + 30_000 || u.searchParams.has('error')) {
+    // A browser dismissal/provider error is not proof of cancellation; a delayed URL may still arrive.
+    if (u.searchParams.has('error')) throw Error('Provider returned an error; explicit cancellation required');
+    const code = u.searchParams.get('code');
+    if (!code || code.length > 2048 || /[\s\x00-\x1f]/.test(code)) throw Error('Social login was cancelled or rejected');
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(base.href + '\n' + code));
+    const receipt = Array.from(new Uint8Array(digest), value => value.toString(16).padStart(2, '0')).join('');
+    if (this.storage?.bundle.tx !== t || t.phase !== 'pending') throw Error('Social transaction changed');
+    // getLaunchUrl can replay an earlier result after a WebView reload and a new sign-in.
+    if (this.storage.bundle.receipts?.includes(receipt)) return;
+    if (!enabledSocialProviders(this.env.config, this.env.platform).includes(t.provider) || t.expires < (this.env.now?.() ?? Date.now()) || t.started > (this.env.now?.() ?? Date.now()) + 30_000) {
       await this.cancel(); throw Error('Social transaction expired or rejected');
     }
-    const code = u.searchParams.get('code');
-    if (!code || code.length > 2048 || /[\s\x00-\x1f]/.test(code) || u.searchParams.has('error')) throw Error('Social login was cancelled or rejected');
     this.operations++; t.phase = 'consuming'; const generation = ++this.generation;
+    this.storage.bundle.receipts = [...(this.storage.bundle.receipts ?? []), receipt].slice(-8);
     try {
       await this.verifyOwner();
       if (generation !== this.generation) throw Error('Social transaction cancelled');
