@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>냠냠졸졸 · 이메일을 확인해 주세요</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f6fa;color:#172333;font-family:Arial,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;font-size:16px;line-height:1.7;">
+  <table role="presentation" style="border-collapse:collapse;width:100%;">
+    <tr><td align="center" style="padding:24px 12px;">
+      <table role="presentation" style="border-collapse:collapse;width:100%;max-width:560px;background-color:#ffffff;">
+        <tr><td style="padding:28px 24px;">
+          <p style="margin:0 0 12px;color:#335477;font-size:16px;font-weight:bold;">냠냠졸졸</p>
+          <h1 style="margin:0 0 20px;font-size:24px;line-height:1.5;">이메일을 확인해 주세요</h1>
+          <p style="margin:0 0 20px;">냠냠졸졸 가입을 신청하셨다면 아래 버튼으로 이메일 주소를 확인해 주세요.</p>
+          <p style="margin:0 0 24px;"><a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:12px 20px;background-color:#183f68;color:#ffffff;font-weight:bold;text-decoration:underline;border-radius:6px;">이메일 확인하기</a></p>
+          <p style="margin:0 0 16px;">이메일 확인을 마친 뒤 냠냠졸졸에서 로그인을 이어가 주세요.</p>
+          <p style="margin:0 0 16px;">직접 요청하지 않으셨다면 버튼을 누르지 말고 이 메일을 무시해 주세요. 인증 링크는 다른 사람에게 전달하지 마세요.</p>
+          <p style="margin:0 0 8px;">버튼이 열리지 않으면 아래 링크를 복사해 브라우저 주소창에 붙여 넣어 주세요. 링크가 만료되었거나 이미 사용되었다면 앱 또는 계정 관리 화면에서 새 메일을 요청해 주세요.</p>
+          <p style="margin:0 0 24px;font-size:14px;word-break:break-all;overflow-wrap:anywhere;"><a href="{{ .ConfirmationURL }}" style="color:#183f68;text-decoration:underline;word-break:break-all;">{{ .ConfirmationURL }}</a></p>
+          <hr style="border:0;border-top:1px solid #d9e0e8;margin:24px 0;">
+          <p style="margin:0;font-size:14px;color:#43556b;">오프블루 스튜디오 · 도움이 필요하면 <a href="mailto:support@offbluestudio.com" style="color:#183f68;text-decoration:underline;">support@offbluestudio.com</a>으로 새 메일을 보내 주세요. 비밀번호나 인증 링크를 보내지 마세요.</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>
